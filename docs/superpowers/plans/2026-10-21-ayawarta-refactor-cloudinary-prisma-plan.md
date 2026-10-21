@@ -57,7 +57,7 @@ Add compatible releases for:
 - a deployment-safe password hashing package;
 - Vitest and minimal testing utilities.
 
-Use versions compatible with Node.js 22, Next.js 16, React 19, and the selected Prisma generation model. Do not adopt Prisma 8 if it requires a newer Node runtime than the project uses.
+Use stable versions compatible with the audited runtime Node.js 24.15.0, Next.js 16, React 19, Vercel, PostgreSQL, and the selected Prisma generation model. Select the Prisma major version from current official compatibility guidance and document the generator, driver-adapter, migration, and deployment implications.
 
 ### Files
 

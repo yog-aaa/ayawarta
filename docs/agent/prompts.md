@@ -61,7 +61,7 @@ Baca semua dokumen wajib di AGENTS.md, terutama implementation plan Phase 1, doc
 Tugas:
 1. Konfirmasi worktree sesuai hasil review Stage 0.
 2. Gunakan npm sebagai package manager dan jangan mengubah pnpm-lock.yaml.
-3. Pilih dependency yang kompatibel dengan Node 22, Next.js 16, React 19, dan PostgreSQL untuk Prisma, Auth.js, Cloudinary, Zod, password hashing yang aman di Vercel, serta Vitest.
+3. Pilih dependency stabil yang kompatibel dengan runtime aktual Node 24.15.0, Next.js 16, React 19, Vercel, dan PostgreSQL untuk Prisma, Auth.js, Cloudinary, Zod, password hashing, serta Vitest. Gunakan dokumentasi resmi dan laporkan alasan pemilihan major version.
 4. Perbaiki script lint yang tidak kompatibel dengan Next.js 16.
 5. Tambahkan script typecheck, test, Prisma generate/validate/migrate/seed/studio, media dry-run/migrate/verify, dan admin bootstrap sesuai rencana.
 6. Siapkan prisma.config.ts dan environment validation scaffolding, tetapi jangan membuat model aplikasi atau menjalankan migration.
