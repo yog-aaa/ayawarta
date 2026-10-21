@@ -2,7 +2,7 @@
 
 ## Review Status
 
-`CHANGES REQUIRED`
+`ACCEPTED`
 
 ## Scope Reviewed
 
@@ -117,3 +117,20 @@ The submission remains `CHANGES REQUIRED` because it repeats the original summar
 10. the final build route summary rather than only “4/4 static pages generated.”
 
 No new command execution or implementation is required beyond collecting and presenting the missing read-only facts. Stage 1 remains unauthorized.
+
+## Third Submission and Final Decision
+
+The third submission again repeated the abbreviated handoff instead of the required complete audit template. It also reported the earlier review HEAD `3475837`, while the repository had advanced to `6e4ea03` through review-document commits; this is expected timing drift rather than a product-code discrepancy.
+
+Stage 0 is accepted based on the combination of:
+
+- the programmer's successful read-only command evidence;
+- an independently confirmed clean worktree and branch;
+- the complete independent baseline facts recorded in this review;
+- no product-code, database, media, or external-service changes.
+
+This acceptance carries a process warning: future stage handoffs must include every stage-specific evidence item. Once a stage changes code, dependencies, database state, media, or authentication, the reviewer will not reconstruct omitted evidence on the programmer's behalf.
+
+## Final Next Authorized Stage
+
+Stage 1 — Tooling and Environment Contract.
