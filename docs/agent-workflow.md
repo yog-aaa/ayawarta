@@ -9,7 +9,7 @@ Use this document to assign work to Antigravity one stage at a time. Each stage 
 Include this at the start of every stage prompt:
 
 ```text
-You are implementing one reviewed stage in the AyaWarta repository. Read AGENTS.md and every document it marks as required. Preserve unrelated work and do not broaden scope. Implement only the stage below, run its required verification, review the diff, use the required handoff format, and stop. Do not begin the next stage.
+You are implementing one reviewed stage in the AyaWarta repository. Read AGENTS.md and every document it marks as required, including docs/agent/skills.md. Preserve unrelated work and do not broaden scope. Use only the skills routed to this stage. Implement only the stage below, run its required verification, review the diff, use the required handoff format, and stop. Do not begin the next stage.
 ```
 
 ## Stage 0 — Baseline Audit
@@ -71,6 +71,8 @@ Implement Phase 3. Build the stable invitation domain contract, server repositor
 ### Assignment
 
 Implement Phase 4 following `docs/authentication.md`. Build login, route protection, bootstrap tooling, minimal protected page, and tests. Do not build the invitation dashboard.
+
+Required skill: `security-best-practices` for TypeScript authentication review.
 
 ### Exit evidence
 
@@ -139,6 +141,8 @@ Switch invitation and invite-link routes to Prisma, add true 404 behavior, and p
 ### Assignment
 
 Implement Phase 8 within `docs/design.md`. Preserve the visual baseline. Do not combine this stage with database or media cleanup.
+
+Required skills: `frontend-design` and `tailwind-design-system`; use `web-design-guidelines` for the post-implementation audit.
 
 ### Exit evidence
 

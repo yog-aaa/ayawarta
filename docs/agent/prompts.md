@@ -28,6 +28,7 @@ Sebelum bekerja, baca sampai selesai:
 - docs/deployment.md
 - docs/qa-checklist.md
 - docs/agent-workflow.md
+- docs/agent/skills.md
 - docs/superpowers/specs/2026-10-21-ayawarta-refactor-cloudinary-prisma-design.md
 - docs/superpowers/plans/2026-10-21-ayawarta-refactor-cloudinary-prisma-plan.md
 
@@ -40,6 +41,7 @@ Tugas:
 6. Buat daftar referensi source untuk path media lokal dan URL Cloudinary lama.
 7. Periksa hanya nama key di .env.local; jangan pernah mencetak nilainya.
 8. Laporkan risiko awal yang dapat memengaruhi tahap berikutnya.
+9. Inventarisasi skill yang tersedia di Antigravity dan cocokkan dengan docs/agent/skills.md; jangan menjalankan skill implementasi pada tahap read-only ini.
 
 Batasan:
 - Read-only: jangan edit, install dependency, migrate database, upload file, mengubah .env.local, atau commit.
@@ -129,6 +131,8 @@ Handoff wajib menjelaskan query/include strategy, urutan relasi, test coverage, 
 Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 4 — Admin Authentication. Stage 3 telah diterima.
 
 Baca semua dokumen wajib di AGENTS.md, khususnya docs/authentication.md, docs/design.md bagian Admin Login, dan implementation plan Phase 4.
+
+Skill wajib: gunakan `security-best-practices` untuk TypeScript dan laporkan temuan/pengaruhnya. Skill tidak boleh memperluas scope di luar autentikasi admin tahap ini.
 
 Tugas:
 1. Implementasikan Auth.js Credentials dengan JWT session.
@@ -257,6 +261,8 @@ Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 8 — U
 
 Baca semua dokumen wajib di AGENTS.md, terutama docs/design.md dan implementation plan Phase 8.
 
+Skill wajib: gunakan `frontend-design` dan `tailwind-design-system`. Setelah implementasi, gunakan `web-design-guidelines` sebagai audit. Ikuti docs/agent/skills.md; skill tidak boleh mengubah refactor ini menjadi redesign.
+
 Tugas:
 1. Pertahankan UI saat ini sebagai visual baseline.
 2. Tambahkan semantic Tailwind v4 tokens untuk landing UI tanpa memaksakan token landing ke Classic Rose.
@@ -334,6 +340,8 @@ Handoff wajib menyertakan gate checklist, daftar exact deletion, stale-reference
 Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 11 — Documentation and Final QA. Stage 10 telah diterima.
 
 Baca seluruh dokumen wajib di AGENTS.md dan bandingkan dengan implementasi aktual.
+
+Gunakan `humanizer` hanya bila dokumentasi yang disentuh memiliki pola tulisan AI yang mengganggu. Jangan ubah makna teknis, command, nama file, atau acceptance criteria.
 
 Tugas:
 1. Update README dan dokumen operasional agar command, path, dependency, dan perilaku benar-benar sesuai implementasi.

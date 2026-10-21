@@ -31,8 +31,9 @@ Read these documents before making changes:
 8. `docs/qa-checklist.md`
 9. `docs/agent-workflow.md`
 10. `docs/agent/prompts.md`
-11. `docs/superpowers/specs/2026-10-21-ayawarta-refactor-cloudinary-prisma-design.md`
-12. `docs/superpowers/plans/2026-10-21-ayawarta-refactor-cloudinary-prisma-plan.md`
+11. `docs/agent/skills.md`
+12. `docs/superpowers/specs/2026-10-21-ayawarta-refactor-cloudinary-prisma-design.md`
+13. `docs/superpowers/plans/2026-10-21-ayawarta-refactor-cloudinary-prisma-plan.md`
 
 If documents conflict, the approved specification controls product behavior, the implementation plan controls ordering, and this file controls agent execution discipline. Ask before resolving any remaining ambiguity.
 
@@ -73,6 +74,10 @@ If documents conflict, the approved specification controls product behavior, the
 - Preserve existing public route behavior unless the approved design explicitly changes it.
 - Do not use destructive Git commands.
 
+## Installed Skills
+
+Antigravity has the `AGENT-SKILLS` collection installed. Follow `docs/agent/skills.md` for stage-specific routing. Skill instructions guide execution but do not authorize broader scope, destructive actions, production operations, or unapproved design changes.
+
 ## Verification Minimum
 
 Every stage must run the checks assigned in `docs/agent-workflow.md`. Before final handoff, the complete project must pass:
@@ -106,6 +111,9 @@ Data or external effects:
 
 Risks / follow-ups:
 - item
+
+Skills used:
+- skill-name: purpose and impact, or "none"
 
 Commit:
 - hash, or "not committed"
