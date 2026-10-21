@@ -16,6 +16,7 @@ This directory index is the entry point for programmer agents and reviewers.
 | `docs/authentication.md` | Admin-only authentication and authorization contract. |
 | `docs/deployment.md` | Local, Vercel, and future Aiven operational model. |
 | `docs/agent-workflow.md` | Stage assignment, exit criteria, and prompts for Antigravity. |
+| `docs/agent/prompts.md` | Complete copy-ready prompts for implementation, correction, commit, and review. |
 | `docs/qa-checklist.md` | Evidence required for review and final acceptance. |
 | `docs/reviews/STAGE-REVIEW-TEMPLATE.md` | Persistent review record for each implementation stage. |
 
