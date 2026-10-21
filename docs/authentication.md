@@ -123,4 +123,3 @@ Adding any deferred feature requires a separate reviewed design.
 - [ ] Session augmentation is typed.
 - [ ] Bootstrap output is safe.
 - [ ] Tests cover the matrix above.
-

@@ -159,4 +159,3 @@ For any stage touching UI, the programmer must provide:
 - a list of intentional visual differences;
 - keyboard and reduced-motion results;
 - confirmation that no new horizontal overflow appears.
-

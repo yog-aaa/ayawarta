@@ -170,4 +170,3 @@ The initial implementation prepares Aiven/Vercel configuration but does not perf
 - Server secrets never cross the server/client boundary.
 - Production seed and media migration are idempotent.
 - Old Cloudinary data remains untouched as a rollback source.
-

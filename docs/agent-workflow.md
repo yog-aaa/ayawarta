@@ -210,4 +210,3 @@ Required correction:
 - ...
 Do not begin the next stage.
 ```
-

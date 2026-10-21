@@ -111,4 +111,3 @@ Commit:
 ```
 
 Do not begin the next stage in the same response.
-

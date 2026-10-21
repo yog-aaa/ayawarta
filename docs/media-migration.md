@@ -160,4 +160,3 @@ The programmer must provide:
 - generated report path;
 - exact files proposed for cleanup;
 - repository-size comparison after approved cleanup.
-

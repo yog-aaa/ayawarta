@@ -133,4 +133,3 @@ The final report must include:
 - known risks;
 - deferred work;
 - exact Aiven/Vercel cutover steps still requiring owner authorization.
-

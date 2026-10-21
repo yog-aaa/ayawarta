@@ -45,4 +45,3 @@ State why the stage is accepted or what must change.
 ## Next Authorized Stage
 
 Name the next stage, or state that no further stage is authorized.
-

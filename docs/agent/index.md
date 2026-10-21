@@ -44,4 +44,3 @@ Owner assigns the next stage
 ```
 
 No stage may silently expand its scope because a later task appears convenient.
-

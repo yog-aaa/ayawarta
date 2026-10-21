@@ -120,4 +120,3 @@ If the new deployment fails:
 - Deleting Cloudinary resources.
 
 Each requires an explicitly assigned cutover or operations stage.
-

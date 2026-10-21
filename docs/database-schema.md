@@ -170,4 +170,3 @@ The repository returns `null` for a missing slug. It does not substitute `defaul
 - Do not run `db push` against production.
 - Do not run an Aiven migration until the production-cutover stage is explicitly assigned.
 - Backward-incompatible schema changes require a new reviewed plan.
-
