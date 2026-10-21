@@ -98,3 +98,22 @@ Stage 0 is not yet accepted because the required audit evidence is incomplete. N
 ## Next Authorized Stage
 
 None. Stage 1 is not authorized until the corrected Stage 0 handoff is accepted.
+
+## Second Submission Review
+
+The second submission was reviewed against commit `3475837`. Branch `develop`, HEAD, and a clean worktree were independently reconfirmed.
+
+The submission remains `CHANGES REQUIRED` because it repeats the original summary and still omits the explicitly requested evidence:
+
+1. dependency versions other than Node, npm, and Next.js;
+2. public route inventory with source files;
+3. current data-source and external-integration inventory;
+4. Server/Client Component boundary summary and `use client` count;
+5. media count and total size for each directory and combined;
+6. local dynamic-media and old-Cloudinary reference counts;
+7. the 15 environment key names;
+8. an explicit statement about whether `.env.local` was written during Stage 0;
+9. installed Antigravity skill inventory and comparison with `docs/agent/skills.md`;
+10. the final build route summary rather than only “4/4 static pages generated.”
+
+No new command execution or implementation is required beyond collecting and presenting the missing read-only facts. Stage 1 remains unauthorized.
