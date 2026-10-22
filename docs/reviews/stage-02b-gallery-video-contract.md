@@ -69,4 +69,4 @@ The reviewed implementation was committed as `ea5ebc85677c7fdea17fd3f6e928ceb90c
 - TypeScript validation passes;
 - four migrations are present and the local schema is up to date.
 
-Stage 2B is closed. Stage 3 — Invitation Domain, Repository, and Mapper is authorized.
+Stage 2B is closed. Its initial Stage 3 authorization was later superseded by the owner-confirmed Stage 1B pnpm tooling correction. Stage 3 begins only after Stage 1B is accepted and committed.

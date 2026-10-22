@@ -60,7 +60,7 @@ Baca semua dokumen wajib di AGENTS.md, terutama implementation plan Phase 1, doc
 
 Tugas:
 1. Konfirmasi worktree sesuai hasil review Stage 0.
-2. Gunakan npm sebagai package manager dan jangan mengubah pnpm-lock.yaml.
+2. Gunakan pnpm sebagai satu-satunya package manager, pin versi yang disetujui di `package.json#packageManager`, dan jadikan `pnpm-lock.yaml` satu-satunya lockfile.
 3. Pilih dependency stabil yang kompatibel dengan runtime aktual Node 24.15.0, Next.js 16, React 19, Vercel, dan PostgreSQL untuk Prisma, Auth.js, Cloudinary, Zod, password hashing, serta Vitest. Gunakan dokumentasi resmi dan laporkan alasan pemilihan major version.
 4. Perbaiki script lint yang tidak kompatibel dengan Next.js 16.
 5. Tambahkan script typecheck, test, Prisma generate/validate/migrate/seed/studio, media dry-run/migrate/verify, dan admin bootstrap sesuai rencana.
@@ -148,17 +148,46 @@ Batasan:
 - Jangan seed data.
 - Jangan mengubah domain type, repository, mapper, route, UI, Cloudinary, Firestore, auth, Aiven, atau Vercel.
 - Jangan reset/drop database dan jangan mengedit migration lama.
-- Jangan mengubah `.env.local` atau `pnpm-lock.yaml`.
+- Jangan mengubah `.env.local`; perubahan `pnpm-lock.yaml` hanya diizinkan dalam stage tooling yang secara eksplisit ditugaskan.
 - Jangan commit. Berhenti setelah handoff untuk review.
-- Gunakan `cmd.exe /c` atau `npm.cmd` untuk npm/Prisma di Windows.
+- Gunakan `cmd.exe /c` atau `pnpm.cmd` untuk pnpm/Prisma di Windows.
 
 Handoff wajib menyertakan target database aman, nama dan SQL migration, bukti tiga migration lama tidak berubah, hasil Prisma validate/generate/migrate status, unit test, integration test, typecheck, lint, build, serta konfirmasi tidak ada seed atau external effect.
+```
+
+## Stage 1B — pnpm Tooling Contract Correction
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 1B — pnpm Tooling Contract Correction. Pemilik mengonfirmasi Vercel menggunakan pnpm, sedangkan Stage 1 sebelumnya memperbarui package-lock.json dan meninggalkan pnpm-lock.yaml dalam keadaan stale.
+
+Baca AGENTS.md, docs/deployment.md, implementation plan Phase 1, dan docs/reviews/stage-01b-pnpm-tooling-contract.md.
+
+Tugas:
+1. Catat versi Node dan pnpm yang tersedia tanpa mengubah global tooling.
+2. Tambahkan `"packageManager": "pnpm@10.34.7"` pada root package.json tanpa mengubah dependency ranges, scripts, atau metadata lain.
+3. Regenerate `pnpm-lock.yaml` menggunakan pnpm 10.34.7 dari package.json saat ini.
+4. Hapus tracked `package-lock.json` agar repository hanya memiliki satu lockfile.
+5. Verifikasi lockfile baru memuat seluruh dependency root saat ini, termasuk Prisma/adapter-pg, Auth.js, Cloudinary, bcryptjs, server-only, Zod, Vitest, dan tsx.
+6. Jalankan `pnpm install --frozen-lockfile` untuk membuktikan reproducibility.
+7. Jalankan seluruh script proyek dengan pnpm, termasuk Prisma validate/generate, unit test, live local DB integration test, typecheck, lint, dan build.
+8. Scan repository aktif agar instruksi operasional tidak lagi memerintahkan npm; review history boleh tetap mencatat command historis.
+
+Batasan:
+- Jangan mengubah versi/range dependency atau script package.json.
+- Jangan mengubah product code, Prisma schema/migration, generated Prisma output selain bila generate menghasilkan byte-identical content, data, route, UI, atau environment file.
+- Jangan menjalankan seed atau migration baru.
+- Jangan menyentuh Cloudinary, Firestore, Auth.js runtime, Aiven, atau Vercel dashboard.
+- Jangan menginstal package baru di luar dependency manifest yang sudah disetujui.
+- Jangan commit. Berhenti setelah handoff untuk review.
+- Di Windows gunakan `cmd.exe /c` atau executable `.cmd` yang sesuai.
+
+Handoff wajib menyertakan package-manager version, package.json diff, lockfile replacement summary, dependency equivalence, frozen-install result, semua verification, dan konfirmasi hanya filesystem dependency layout lokal yang berubah di luar tracked files.
 ```
 
 ## Stage 3 — Invitation Domain, Repository, and Mapper
 
 ```text
-Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 3 — Invitation Domain, Repository, and Mapper. Stage 2B telah diterima dan dikomit.
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 3 — Invitation Domain, Repository, and Mapper. Stage 1B telah diterima dan dikomit. Gunakan pnpm untuk seluruh command.
 
 Baca semua dokumen wajib di AGENTS.md, khususnya docs/architecture.md, docs/database-schema.md, dan implementation plan Phase 3.
 
@@ -177,7 +206,7 @@ Tugas:
 Batasan:
 - Jangan switch route publik ke Prisma.
 - Jangan seed data, upload media, implement auth, mengubah UI, atau menghapus sumber data lama.
-- Jangan membuat unit test bergantung pada PostgreSQL; suite live tetap hanya melalui `npm run test:db`.
+- Jangan membuat unit test bergantung pada PostgreSQL; suite live tetap hanya melalui `pnpm test:db`.
 - Jangan commit. Berhenti setelah handoff untuk review.
 
 Handoff wajib menjelaskan query/include strategy, urutan relasi, test coverage, dan konfirmasi route masih menggunakan sumber lama.

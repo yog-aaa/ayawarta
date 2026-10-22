@@ -82,11 +82,26 @@ Before Stage 3, add the approved nullable `Invitation.galleryVideoUrl` scalar th
 - local migration status and read-only database integration result;
 - confirmation no seed or external service was touched.
 
+## Stage 1B — pnpm Tooling Contract Correction
+
+### Assignment
+
+Before Stage 3, replace the historical npm lockfile contract with the owner's pnpm/Vercel contract. Pin `pnpm@10.34.7` in `package.json#packageManager`, regenerate `pnpm-lock.yaml` from the current manifest, remove `package-lock.json`, and verify a frozen pnpm install plus all project checks. Do not change dependency ranges, product code, database state, or external services.
+
+### Exit evidence
+
+- exact pinned pnpm version;
+- dependency-manifest equivalence before and after;
+- synchronized pnpm lockfile containing Prisma/Auth/Cloudinary/test dependencies;
+- proof `package-lock.json` is removed and only `pnpm-lock.yaml` remains;
+- `pnpm install --frozen-lockfile` and project verification results;
+- confirmation no application, database, or external-service effect.
+
 ## Stage 3 — Domain, Repository, and Mapper
 
 ### Assignment
 
-Begin only after Stage 2B is accepted and committed. Implement Phase 3. Build the stable invitation domain contract, server repository, mapper, and tests. The repository must load the explicit hero media and gallery-video scalar; the mapper must preserve `couple.heroImage` and `gallery.videoUrl`. Do not switch public routes yet.
+Begin only after Stage 1B is accepted and committed. Implement Phase 3. Build the stable invitation domain contract, server repository, mapper, and tests. The repository must load the explicit hero media and gallery-video scalar; the mapper must preserve `couple.heroImage` and `gallery.videoUrl`. Do not switch public routes yet. Use pnpm for every command.
 
 ### Exit evidence
 

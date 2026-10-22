@@ -134,5 +134,5 @@ Stage 2 is reopened as Stage 2A for this correction. Stage 3 is not authorized u
 
 The approved correction was implemented and committed as `b55eed5bc336b25420c23428c2503cfe59e73ef7` (`feat: add required invitation hero relation`). The final review is recorded in `docs/reviews/stage-02a-hero-media-relation-review.md`.
 
-Stage 2 and Stage 2A are closed. The separately discovered gallery-video persistence gap was resolved by Stage 2B commit `ea5ebc85677c7fdea17fd3f6e928ceb90c6bebc3`. Stage 3 is authorized from the reviewed schema foundation.
+Stage 2 and Stage 2A are closed. The separately discovered gallery-video persistence gap was resolved by Stage 2B commit `ea5ebc85677c7fdea17fd3f6e928ceb90c6bebc3`. The schema foundation is accepted; Stage 3 is temporarily gated only by the separate Stage 1B pnpm tooling correction.
 

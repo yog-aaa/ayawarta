@@ -6,7 +6,7 @@ Implement the approved design in `docs/superpowers/specs/2026-10-21-ayawarta-ref
 
 ## Working Rules
 
-- Use `npm` as the package manager because `package-lock.json` is the most recently updated lockfile.
+- Use pnpm exclusively because Vercel production is configured around pnpm. Pin the reviewed version in `package.json#packageManager`, keep `pnpm-lock.yaml` as the sole lockfile, and do not recreate `package-lock.json`.
 - Keep Firestore behavior unchanged except for isolated cleanup required by the component refactor.
 - Never print environment values or Cloudinary credentials.
 - Never import server-only Prisma, Cloudinary, or password code into Client Components.
@@ -62,13 +62,14 @@ Use stable versions compatible with the audited runtime Node.js 24.15.0, Next.js
 ### Files
 
 - `package.json`
-- `package-lock.json`
+- `pnpm-lock.yaml`
 - `.env.local`
 - `.env.example`
 - `prisma.config.ts`
 
 ### Actions
 
+0. Correct the historical Stage 1 npm assumption before Phase 3: pin the approved pnpm version, regenerate `pnpm-lock.yaml` from `package.json`, remove `package-lock.json`, and prove a frozen pnpm install.
 1. Replace the obsolete `next lint` script with an ESLint command compatible with Next.js 16.
 2. Add scripts for type checking, tests, Prisma generation, migration, seed, Studio, media migration, media verification, and administrator bootstrap.
 3. Add safe placeholder names to `.env.example`.

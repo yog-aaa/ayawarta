@@ -39,7 +39,7 @@ Do not add `NEXT_PUBLIC_` to database, auth, password, Cloudinary API key, or Cl
 
 The programmer agent defines exact commands in `package.json`, but the workflow must cover:
 
-1. dependency installation with `npm`;
+1. dependency installation with the pinned pnpm version and `pnpm install --frozen-lockfile`;
 2. Prisma generation;
 3. applying the local development migration;
 4. media migration dry run;
@@ -69,7 +69,7 @@ Before cutover:
 2. Confirm no preview environment unintentionally points to the production database unless explicitly desired.
 3. Apply migrations to Aiven from a controlled job or operator environment.
 4. Run the production seed once and verify idempotency.
-5. Build using the same dependency lockfile committed to the repository.
+5. Build using the committed `pnpm-lock.yaml`; `package-lock.json` must not exist.
 6. Deploy without deleting the previous healthy deployment.
 
 ## Production Cutover Checklist

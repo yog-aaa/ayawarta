@@ -64,7 +64,9 @@ If documents conflict, the approved specification controls product behavior, the
 
 ## Repository Practices
 
-- Use `npm`; do not update `pnpm-lock.yaml`.
+- Use pnpm exclusively. The repository pins the approved pnpm version in `package.json#packageManager` and `pnpm-lock.yaml` is the sole dependency lockfile.
+- Run package scripts with `pnpm`/`pnpm.cmd`; do not create or restore `package-lock.json`.
+- Dependency verification must include `pnpm install --frozen-lockfile` before deployment-oriented build evidence.
 - Use `apply_patch` or normal editor changes; avoid broad generated rewrites.
 - Do not reformat unrelated files.
 - Use PascalCase for React component filenames.

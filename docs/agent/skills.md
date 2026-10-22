@@ -21,6 +21,7 @@ The skills from the `AGENT-SKILLS` repository are installed in Antigravity. Prog
 | --- | --- | --- |
 | Stage 0 | None | Read-only baseline; inventory available skills only. |
 | Stage 1 | None | Follow approved tooling plan and official package documentation. |
+| Stage 1B | None | Reconcile the pnpm/Vercel lockfile contract without changing dependency scope. |
 | Stage 2 | None | Follow approved Prisma schema and database contract. |
 | Stage 3 | None | Follow repository and mapper contract. |
 | Stage 4 | `security-best-practices` | Review TypeScript authentication, secret boundaries, password handling, session authorization, and secure defaults. |

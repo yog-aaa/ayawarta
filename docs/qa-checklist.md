@@ -23,6 +23,14 @@ The programmer completes stage-specific items and attaches evidence. The reviewe
 - [ ] Errors are handled at the correct boundary.
 - [ ] No unrelated dependency or formatting churn.
 
+## Package Manager and Reproducibility
+
+- [ ] `package.json#packageManager` pins the approved pnpm version.
+- [ ] `pnpm-lock.yaml` is the sole dependency lockfile.
+- [ ] `package-lock.json` does not exist.
+- [ ] `pnpm install --frozen-lockfile` succeeds.
+- [ ] Dependency and script verification uses pnpm consistently.
+
 ## Database
 
 - [ ] Prisma schema matches `docs/database-schema.md`.

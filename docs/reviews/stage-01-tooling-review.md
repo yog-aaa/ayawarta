@@ -2,7 +2,7 @@
 
 ## Review Status
 
-`ACCEPTED`
+`ACCEPTED — PACKAGE MANAGER CONTRACT SUPERSEDED BY STAGE 1B`
 
 ## Scope Reviewed
 
