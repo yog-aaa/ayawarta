@@ -31,6 +31,7 @@ export type InvitationMinAggregateOutputType = {
   variant: string | null
   weddingDate: Date | null
   heroAssetId: string | null
+  galleryVideoUrl: string | null
   musicAssetId: string | null
   ownerId: string | null
   createdAt: Date | null
@@ -44,6 +45,7 @@ export type InvitationMaxAggregateOutputType = {
   variant: string | null
   weddingDate: Date | null
   heroAssetId: string | null
+  galleryVideoUrl: string | null
   musicAssetId: string | null
   ownerId: string | null
   createdAt: Date | null
@@ -57,6 +59,7 @@ export type InvitationCountAggregateOutputType = {
   variant: number
   weddingDate: number
   heroAssetId: number
+  galleryVideoUrl: number
   musicAssetId: number
   ownerId: number
   createdAt: number
@@ -72,6 +75,7 @@ export type InvitationMinAggregateInputType = {
   variant?: true
   weddingDate?: true
   heroAssetId?: true
+  galleryVideoUrl?: true
   musicAssetId?: true
   ownerId?: true
   createdAt?: true
@@ -85,6 +89,7 @@ export type InvitationMaxAggregateInputType = {
   variant?: true
   weddingDate?: true
   heroAssetId?: true
+  galleryVideoUrl?: true
   musicAssetId?: true
   ownerId?: true
   createdAt?: true
@@ -98,6 +103,7 @@ export type InvitationCountAggregateInputType = {
   variant?: true
   weddingDate?: true
   heroAssetId?: true
+  galleryVideoUrl?: true
   musicAssetId?: true
   ownerId?: true
   createdAt?: true
@@ -184,6 +190,7 @@ export type InvitationGroupByOutputType = {
   variant: string
   weddingDate: Date
   heroAssetId: string
+  galleryVideoUrl: string | null
   musicAssetId: string | null
   ownerId: string | null
   createdAt: Date
@@ -218,6 +225,7 @@ export type InvitationWhereInput = {
   variant?: Prisma.StringFilter<"Invitation"> | string
   weddingDate?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   heroAssetId?: Prisma.StringFilter<"Invitation"> | string
+  galleryVideoUrl?: Prisma.StringNullableFilter<"Invitation"> | string | null
   musicAssetId?: Prisma.StringNullableFilter<"Invitation"> | string | null
   ownerId?: Prisma.StringNullableFilter<"Invitation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Invitation"> | Date | string
@@ -240,6 +248,7 @@ export type InvitationOrderByWithRelationInput = {
   variant?: Prisma.SortOrder
   weddingDate?: Prisma.SortOrder
   heroAssetId?: Prisma.SortOrder
+  galleryVideoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   musicAssetId?: Prisma.SortOrderInput | Prisma.SortOrder
   ownerId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -265,6 +274,7 @@ export type InvitationWhereUniqueInput = Prisma.AtLeast<{
   variant?: Prisma.StringFilter<"Invitation"> | string
   weddingDate?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   heroAssetId?: Prisma.StringFilter<"Invitation"> | string
+  galleryVideoUrl?: Prisma.StringNullableFilter<"Invitation"> | string | null
   musicAssetId?: Prisma.StringNullableFilter<"Invitation"> | string | null
   ownerId?: Prisma.StringNullableFilter<"Invitation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Invitation"> | Date | string
@@ -287,6 +297,7 @@ export type InvitationOrderByWithAggregationInput = {
   variant?: Prisma.SortOrder
   weddingDate?: Prisma.SortOrder
   heroAssetId?: Prisma.SortOrder
+  galleryVideoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   musicAssetId?: Prisma.SortOrderInput | Prisma.SortOrder
   ownerId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -306,6 +317,7 @@ export type InvitationScalarWhereWithAggregatesInput = {
   variant?: Prisma.StringWithAggregatesFilter<"Invitation"> | string
   weddingDate?: Prisma.DateTimeWithAggregatesFilter<"Invitation"> | Date | string
   heroAssetId?: Prisma.StringWithAggregatesFilter<"Invitation"> | string
+  galleryVideoUrl?: Prisma.StringNullableWithAggregatesFilter<"Invitation"> | string | null
   musicAssetId?: Prisma.StringNullableWithAggregatesFilter<"Invitation"> | string | null
   ownerId?: Prisma.StringNullableWithAggregatesFilter<"Invitation"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Invitation"> | Date | string
@@ -318,6 +330,7 @@ export type InvitationCreateInput = {
   theme?: string
   variant: string
   weddingDate: Date | string
+  galleryVideoUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   owner?: Prisma.UserCreateNestedOneWithoutInvitationsInput
@@ -338,6 +351,7 @@ export type InvitationUncheckedCreateInput = {
   variant: string
   weddingDate: Date | string
   heroAssetId: string
+  galleryVideoUrl?: string | null
   musicAssetId?: string | null
   ownerId?: string | null
   createdAt?: Date | string
@@ -356,6 +370,7 @@ export type InvitationUpdateInput = {
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneWithoutInvitationsNestedInput
@@ -376,6 +391,7 @@ export type InvitationUncheckedUpdateInput = {
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heroAssetId?: Prisma.StringFieldUpdateOperationsInput | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   musicAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -395,6 +411,7 @@ export type InvitationCreateManyInput = {
   variant: string
   weddingDate: Date | string
   heroAssetId: string
+  galleryVideoUrl?: string | null
   musicAssetId?: string | null
   ownerId?: string | null
   createdAt?: Date | string
@@ -407,6 +424,7 @@ export type InvitationUpdateManyMutationInput = {
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -418,6 +436,7 @@ export type InvitationUncheckedUpdateManyInput = {
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heroAssetId?: Prisma.StringFieldUpdateOperationsInput | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   musicAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -441,6 +460,7 @@ export type InvitationCountOrderByAggregateInput = {
   variant?: Prisma.SortOrder
   weddingDate?: Prisma.SortOrder
   heroAssetId?: Prisma.SortOrder
+  galleryVideoUrl?: Prisma.SortOrder
   musicAssetId?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -454,6 +474,7 @@ export type InvitationMaxOrderByAggregateInput = {
   variant?: Prisma.SortOrder
   weddingDate?: Prisma.SortOrder
   heroAssetId?: Prisma.SortOrder
+  galleryVideoUrl?: Prisma.SortOrder
   musicAssetId?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -467,6 +488,7 @@ export type InvitationMinOrderByAggregateInput = {
   variant?: Prisma.SortOrder
   weddingDate?: Prisma.SortOrder
   heroAssetId?: Prisma.SortOrder
+  galleryVideoUrl?: Prisma.SortOrder
   musicAssetId?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -694,6 +716,7 @@ export type InvitationCreateWithoutOwnerInput = {
   theme?: string
   variant: string
   weddingDate: Date | string
+  galleryVideoUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   heroAsset: Prisma.MediaAssetCreateNestedOneWithoutHeroInvitationsInput
@@ -713,6 +736,7 @@ export type InvitationUncheckedCreateWithoutOwnerInput = {
   variant: string
   weddingDate: Date | string
   heroAssetId: string
+  galleryVideoUrl?: string | null
   musicAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -760,6 +784,7 @@ export type InvitationScalarWhereInput = {
   variant?: Prisma.StringFilter<"Invitation"> | string
   weddingDate?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   heroAssetId?: Prisma.StringFilter<"Invitation"> | string
+  galleryVideoUrl?: Prisma.StringNullableFilter<"Invitation"> | string | null
   musicAssetId?: Prisma.StringNullableFilter<"Invitation"> | string | null
   ownerId?: Prisma.StringNullableFilter<"Invitation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Invitation"> | Date | string
@@ -772,6 +797,7 @@ export type InvitationCreateWithoutHeroAssetInput = {
   theme?: string
   variant: string
   weddingDate: Date | string
+  galleryVideoUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   owner?: Prisma.UserCreateNestedOneWithoutInvitationsInput
@@ -790,6 +816,7 @@ export type InvitationUncheckedCreateWithoutHeroAssetInput = {
   theme?: string
   variant: string
   weddingDate: Date | string
+  galleryVideoUrl?: string | null
   musicAssetId?: string | null
   ownerId?: string | null
   createdAt?: Date | string
@@ -818,6 +845,7 @@ export type InvitationCreateWithoutMusicAssetInput = {
   theme?: string
   variant: string
   weddingDate: Date | string
+  galleryVideoUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   owner?: Prisma.UserCreateNestedOneWithoutInvitationsInput
@@ -837,6 +865,7 @@ export type InvitationUncheckedCreateWithoutMusicAssetInput = {
   variant: string
   weddingDate: Date | string
   heroAssetId: string
+  galleryVideoUrl?: string | null
   ownerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -896,6 +925,7 @@ export type InvitationCreateWithoutSectionsInput = {
   theme?: string
   variant: string
   weddingDate: Date | string
+  galleryVideoUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   owner?: Prisma.UserCreateNestedOneWithoutInvitationsInput
@@ -915,6 +945,7 @@ export type InvitationUncheckedCreateWithoutSectionsInput = {
   variant: string
   weddingDate: Date | string
   heroAssetId: string
+  galleryVideoUrl?: string | null
   musicAssetId?: string | null
   ownerId?: string | null
   createdAt?: Date | string
@@ -948,6 +979,7 @@ export type InvitationUpdateWithoutSectionsInput = {
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneWithoutInvitationsNestedInput
@@ -967,6 +999,7 @@ export type InvitationUncheckedUpdateWithoutSectionsInput = {
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heroAssetId?: Prisma.StringFieldUpdateOperationsInput | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   musicAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -984,6 +1017,7 @@ export type InvitationCreateWithoutPartnersInput = {
   theme?: string
   variant: string
   weddingDate: Date | string
+  galleryVideoUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   owner?: Prisma.UserCreateNestedOneWithoutInvitationsInput
@@ -1003,6 +1037,7 @@ export type InvitationUncheckedCreateWithoutPartnersInput = {
   variant: string
   weddingDate: Date | string
   heroAssetId: string
+  galleryVideoUrl?: string | null
   musicAssetId?: string | null
   ownerId?: string | null
   createdAt?: Date | string
@@ -1036,6 +1071,7 @@ export type InvitationUpdateWithoutPartnersInput = {
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneWithoutInvitationsNestedInput
@@ -1055,6 +1091,7 @@ export type InvitationUncheckedUpdateWithoutPartnersInput = {
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heroAssetId?: Prisma.StringFieldUpdateOperationsInput | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   musicAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1072,6 +1109,7 @@ export type InvitationCreateWithoutEventsInput = {
   theme?: string
   variant: string
   weddingDate: Date | string
+  galleryVideoUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   owner?: Prisma.UserCreateNestedOneWithoutInvitationsInput
@@ -1091,6 +1129,7 @@ export type InvitationUncheckedCreateWithoutEventsInput = {
   variant: string
   weddingDate: Date | string
   heroAssetId: string
+  galleryVideoUrl?: string | null
   musicAssetId?: string | null
   ownerId?: string | null
   createdAt?: Date | string
@@ -1124,6 +1163,7 @@ export type InvitationUpdateWithoutEventsInput = {
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneWithoutInvitationsNestedInput
@@ -1143,6 +1183,7 @@ export type InvitationUncheckedUpdateWithoutEventsInput = {
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heroAssetId?: Prisma.StringFieldUpdateOperationsInput | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   musicAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1160,6 +1201,7 @@ export type InvitationCreateWithoutGalleryItemsInput = {
   theme?: string
   variant: string
   weddingDate: Date | string
+  galleryVideoUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   owner?: Prisma.UserCreateNestedOneWithoutInvitationsInput
@@ -1179,6 +1221,7 @@ export type InvitationUncheckedCreateWithoutGalleryItemsInput = {
   variant: string
   weddingDate: Date | string
   heroAssetId: string
+  galleryVideoUrl?: string | null
   musicAssetId?: string | null
   ownerId?: string | null
   createdAt?: Date | string
@@ -1212,6 +1255,7 @@ export type InvitationUpdateWithoutGalleryItemsInput = {
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneWithoutInvitationsNestedInput
@@ -1231,6 +1275,7 @@ export type InvitationUncheckedUpdateWithoutGalleryItemsInput = {
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heroAssetId?: Prisma.StringFieldUpdateOperationsInput | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   musicAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1248,6 +1293,7 @@ export type InvitationCreateWithoutLoveStoriesInput = {
   theme?: string
   variant: string
   weddingDate: Date | string
+  galleryVideoUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   owner?: Prisma.UserCreateNestedOneWithoutInvitationsInput
@@ -1267,6 +1313,7 @@ export type InvitationUncheckedCreateWithoutLoveStoriesInput = {
   variant: string
   weddingDate: Date | string
   heroAssetId: string
+  galleryVideoUrl?: string | null
   musicAssetId?: string | null
   ownerId?: string | null
   createdAt?: Date | string
@@ -1300,6 +1347,7 @@ export type InvitationUpdateWithoutLoveStoriesInput = {
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneWithoutInvitationsNestedInput
@@ -1319,6 +1367,7 @@ export type InvitationUncheckedUpdateWithoutLoveStoriesInput = {
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heroAssetId?: Prisma.StringFieldUpdateOperationsInput | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   musicAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1336,6 +1385,7 @@ export type InvitationCreateWithoutGiftAccountsInput = {
   theme?: string
   variant: string
   weddingDate: Date | string
+  galleryVideoUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   owner?: Prisma.UserCreateNestedOneWithoutInvitationsInput
@@ -1355,6 +1405,7 @@ export type InvitationUncheckedCreateWithoutGiftAccountsInput = {
   variant: string
   weddingDate: Date | string
   heroAssetId: string
+  galleryVideoUrl?: string | null
   musicAssetId?: string | null
   ownerId?: string | null
   createdAt?: Date | string
@@ -1388,6 +1439,7 @@ export type InvitationUpdateWithoutGiftAccountsInput = {
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneWithoutInvitationsNestedInput
@@ -1407,6 +1459,7 @@ export type InvitationUncheckedUpdateWithoutGiftAccountsInput = {
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heroAssetId?: Prisma.StringFieldUpdateOperationsInput | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   musicAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1425,6 +1478,7 @@ export type InvitationCreateManyOwnerInput = {
   variant: string
   weddingDate: Date | string
   heroAssetId: string
+  galleryVideoUrl?: string | null
   musicAssetId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1436,6 +1490,7 @@ export type InvitationUpdateWithoutOwnerInput = {
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heroAsset?: Prisma.MediaAssetUpdateOneRequiredWithoutHeroInvitationsNestedInput
@@ -1455,6 +1510,7 @@ export type InvitationUncheckedUpdateWithoutOwnerInput = {
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heroAssetId?: Prisma.StringFieldUpdateOperationsInput | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   musicAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1473,6 +1529,7 @@ export type InvitationUncheckedUpdateManyWithoutOwnerInput = {
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heroAssetId?: Prisma.StringFieldUpdateOperationsInput | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   musicAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1484,6 +1541,7 @@ export type InvitationCreateManyHeroAssetInput = {
   theme?: string
   variant: string
   weddingDate: Date | string
+  galleryVideoUrl?: string | null
   musicAssetId?: string | null
   ownerId?: string | null
   createdAt?: Date | string
@@ -1497,6 +1555,7 @@ export type InvitationCreateManyMusicAssetInput = {
   variant: string
   weddingDate: Date | string
   heroAssetId: string
+  galleryVideoUrl?: string | null
   ownerId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1508,6 +1567,7 @@ export type InvitationUpdateWithoutHeroAssetInput = {
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneWithoutInvitationsNestedInput
@@ -1526,6 +1586,7 @@ export type InvitationUncheckedUpdateWithoutHeroAssetInput = {
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   musicAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1544,6 +1605,7 @@ export type InvitationUncheckedUpdateManyWithoutHeroAssetInput = {
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   musicAssetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1556,6 +1618,7 @@ export type InvitationUpdateWithoutMusicAssetInput = {
   theme?: Prisma.StringFieldUpdateOperationsInput | string
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneWithoutInvitationsNestedInput
@@ -1575,6 +1638,7 @@ export type InvitationUncheckedUpdateWithoutMusicAssetInput = {
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heroAssetId?: Prisma.StringFieldUpdateOperationsInput | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1593,6 +1657,7 @@ export type InvitationUncheckedUpdateManyWithoutMusicAssetInput = {
   variant?: Prisma.StringFieldUpdateOperationsInput | string
   weddingDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   heroAssetId?: Prisma.StringFieldUpdateOperationsInput | string
+  galleryVideoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1672,6 +1737,7 @@ export type InvitationSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   variant?: boolean
   weddingDate?: boolean
   heroAssetId?: boolean
+  galleryVideoUrl?: boolean
   musicAssetId?: boolean
   ownerId?: boolean
   createdAt?: boolean
@@ -1695,6 +1761,7 @@ export type InvitationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   variant?: boolean
   weddingDate?: boolean
   heroAssetId?: boolean
+  galleryVideoUrl?: boolean
   musicAssetId?: boolean
   ownerId?: boolean
   createdAt?: boolean
@@ -1711,6 +1778,7 @@ export type InvitationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   variant?: boolean
   weddingDate?: boolean
   heroAssetId?: boolean
+  galleryVideoUrl?: boolean
   musicAssetId?: boolean
   ownerId?: boolean
   createdAt?: boolean
@@ -1727,13 +1795,14 @@ export type InvitationSelectScalar = {
   variant?: boolean
   weddingDate?: boolean
   heroAssetId?: boolean
+  galleryVideoUrl?: boolean
   musicAssetId?: boolean
   ownerId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type InvitationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "theme" | "variant" | "weddingDate" | "heroAssetId" | "musicAssetId" | "ownerId" | "createdAt" | "updatedAt", ExtArgs["result"]["invitation"]>
+export type InvitationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "slug" | "theme" | "variant" | "weddingDate" | "heroAssetId" | "galleryVideoUrl" | "musicAssetId" | "ownerId" | "createdAt" | "updatedAt", ExtArgs["result"]["invitation"]>
 export type InvitationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   owner?: boolean | Prisma.Invitation$ownerArgs<ExtArgs>
   heroAsset?: boolean | Prisma.MediaAssetDefaultArgs<ExtArgs>
@@ -1777,6 +1846,7 @@ export type $InvitationPayload<ExtArgs extends runtime.Types.Extensions.Internal
     variant: string
     weddingDate: Date
     heroAssetId: string
+    galleryVideoUrl: string | null
     musicAssetId: string | null
     ownerId: string | null
     createdAt: Date
@@ -2219,6 +2289,7 @@ export interface InvitationFieldRefs {
   readonly variant: Prisma.FieldRef<"Invitation", 'String'>
   readonly weddingDate: Prisma.FieldRef<"Invitation", 'DateTime'>
   readonly heroAssetId: Prisma.FieldRef<"Invitation", 'String'>
+  readonly galleryVideoUrl: Prisma.FieldRef<"Invitation", 'String'>
   readonly musicAssetId: Prisma.FieldRef<"Invitation", 'String'>
   readonly ownerId: Prisma.FieldRef<"Invitation", 'String'>
   readonly createdAt: Prisma.FieldRef<"Invitation", 'DateTime'>

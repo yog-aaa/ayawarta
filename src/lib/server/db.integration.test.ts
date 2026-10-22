@@ -53,6 +53,18 @@ describe("Database live integration and connection contract", () => {
     expect(Array.isArray(invitations)).toBe(true);
   });
 
+  it("verifies Invitation model supports galleryVideoUrl field via read-only select query", async () => {
+    const invitations = await client.invitation.findMany({
+      take: 1,
+      select: {
+        id: true,
+        slug: true,
+        galleryVideoUrl: true,
+      },
+    });
+    expect(Array.isArray(invitations)).toBe(true);
+  });
+
   it("successfully queries all 9 application tables returning non-negative counts", async () => {
     const [
       users,
