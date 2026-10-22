@@ -84,7 +84,7 @@ Use stable versions compatible with the audited runtime Node.js 24.15.0, Next.js
 
 ## Phase 2 — Prisma Schema and Database Foundation
 
-> Current correction gate: the original Stage 2 commit omitted the required hero relation. Stage 2A must add it through a third forward-only migration before Phase 3 begins.
+> Correction history: Stage 2A added the required hero relation through the third forward-only migration. Stage 2B must add nullable `galleryVideoUrl` through a fourth forward-only migration before Phase 3 begins.
 
 ### Files
 
@@ -112,6 +112,8 @@ Implement:
 Add unique keys and indexes required by slug lookup, ordered child records, public IDs, and normalized email lookup.
 
 `Invitation` must have a required indexed `heroAssetId` relation to `MediaAsset` with `onDelete: Restrict`. This relation is the sole source for `couple.heroImage` and is independent from gallery ordering.
+
+`Invitation` must also preserve the optional external `galleryVideoUrl` scalar used by the existing gallery embed. It is not a Cloudinary media relation.
 
 ### Actions
 
@@ -145,14 +147,16 @@ Add unique keys and indexes required by slug lookup, ordered child records, publ
 2. Implement one server-only repository query that loads an invitation with ordered relations and media.
 3. Map Prisma results to the existing template contract.
 4. Map the explicit required hero relation to `couple.heroImage`.
-5. Preserve optional gallery, love story, gifts, and music semantics.
-6. Return `null` for missing slugs.
-7. Remove data-access concerns from template components.
+5. Map nullable `galleryVideoUrl` to the gallery contract, using an empty string only at the compatibility boundary when the gallery exists without a video.
+6. Preserve optional gallery, love story, gifts, and music semantics.
+7. Return `null` for missing slugs.
+8. Remove data-access concerns from template components.
 
 ### Tests
 
 - Complete invitation maps correctly.
 - Required hero media maps independently from gallery order.
+- A persisted gallery-video URL is preserved, while null maps to the existing empty-string compatibility value.
 - Disabled or absent optional sections map correctly.
 - Gallery and event ordering is stable.
 - Audio URLs map correctly.
@@ -256,10 +260,11 @@ Do not update invitation records or remove local files unless every required pro
 3. Upsert invitations by slug.
 4. Upsert media by public ID.
 5. Resolve and assign each invitation's required `heroAssetId` from the verified media report.
-6. Replace ordered child relations inside a controlled transaction.
-7. Seed `rika-fauzi`, `shidqi-mita`, `dudi-aini`, and `default-preview` as production records.
-8. Keep owner relations null unless the bootstrap administrator is explicitly assigned.
-9. Run the seed twice and compare record counts.
+6. Preserve the `default-preview` gallery-video URL as `galleryVideoUrl`; normalize empty legacy gallery-video strings for other invitations to null.
+7. Replace ordered child relations inside a controlled transaction.
+8. Seed `rika-fauzi`, `shidqi-mita`, `dudi-aini`, and `default-preview` as production records.
+9. Keep owner relations null unless the bootstrap administrator is explicitly assigned.
+10. Run the seed twice and compare record counts.
 
 ### Tests
 

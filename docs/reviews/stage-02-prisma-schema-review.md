@@ -2,7 +2,7 @@
 
 ## Review Status
 
-`ACCEPTED — CORRECTED BY STAGE 2A`
+`ACCEPTED THROUGH STAGE 2A — STAGE 2B PENDING`
 
 ## Scope Reviewed
 
@@ -134,5 +134,5 @@ Stage 2 is reopened as Stage 2A for this correction. Stage 3 is not authorized u
 
 The approved correction was implemented and committed as `b55eed5bc336b25420c23428c2503cfe59e73ef7` (`feat: add required invitation hero relation`). The final review is recorded in `docs/reviews/stage-02a-hero-media-relation-review.md`.
 
-Stage 2 and Stage 2A are closed. Stage 3 is authorized from the reviewed implementation commit.
+Stage 2 and Stage 2A are closed. The earlier Stage 3 authorization was later suspended by the separately discovered Stage 2B gallery-video persistence gap. Stage 3 remains blocked until the approved Stage 2B correction is implemented, reviewed, and committed.
 

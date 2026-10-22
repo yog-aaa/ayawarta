@@ -29,6 +29,7 @@ The programmer completes stage-specific items and attaches evidence. The reviewe
 - [ ] Unique constraints protect slugs, roles, order, and public IDs.
 - [ ] Foreign-key delete behavior is intentional.
 - [ ] Every invitation has a required indexed hero `MediaAsset` relation with `Restrict`; hero is not inferred from gallery order.
+- [ ] Optional `galleryVideoUrl` persists external embed content; empty legacy values normalize to null and are not converted to `MediaAsset`.
 - [ ] Migration is committed and validates locally.
 - [ ] Production migration was not run.
 - [ ] Seed is idempotent.

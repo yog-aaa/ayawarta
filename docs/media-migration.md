@@ -21,6 +21,7 @@ Move all dynamic invitation media to the new Cloudinary account, organize it und
 - Social icons.
 - Payment logos.
 - Classic Rose backgrounds, frames, flowers, dividers, and bismillah artwork.
+- External embed/content pointers such as `Invitation.galleryVideoUrl`; these are persisted in PostgreSQL and are not uploaded to Cloudinary.
 - Deleting or renaming assets in the old Cloudinary account.
 
 ## Target Hierarchy
@@ -97,6 +98,7 @@ Manifest entries must be typed, unique by target public ID, and reviewable witho
 - Upsert `MediaAsset` rows by `publicId`.
 - Resolve one required hero row per invitation and assign it through `Invitation.heroAssetId`.
 - Seed partner, gallery, and optional music relations using verified media rows.
+- Persist external `galleryVideoUrl` content separately from `MediaAsset`, preserving the approved `default-preview` URL and normalizing legacy empty strings to null.
 - Query every invitation through the application repository.
 
 ### 5. Application Cutover

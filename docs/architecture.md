@@ -117,7 +117,7 @@ The exact generated Prisma location may follow the compatible Prisma release, bu
 1. `[slug]/page.tsx` receives the slug.
 2. A server-only repository queries the invitation and ordered relations.
 3. The query includes the required hero `MediaAsset` separately from gallery items, partner photos, and optional music.
-4. A mapper converts the persistence result to the stable invitation domain contract, including the hero URL as `couple.heroImage`.
+4. A mapper converts the persistence result to the stable invitation domain contract, including the hero URL as `couple.heroImage` and nullable `galleryVideoUrl` as `gallery.videoUrl`.
 5. Missing data triggers `notFound()`.
 6. The selected theme configuration and invitation domain object are passed to the Classic Rose view.
 7. Client components handle only behavior that needs browser APIs or client-side subscriptions.
@@ -183,6 +183,7 @@ The initial implementation prepares Aiven/Vercel configuration but does not perf
 - Ordered child records use explicit `position` fields.
 - Dynamic media is referenced through `MediaAsset`.
 - Every invitation has one explicit required hero-media relation; hero media is never inferred from gallery order.
+- The optional gallery-video URL is stored as invitation content, not treated as a Cloudinary-managed upload.
 - Static payment logos remain local paths.
 - Unknown slugs do not show another invitation.
 - Server secrets never cross the server/client boundary.

@@ -80,6 +80,7 @@ Represents one published or preview invitation.
 - `variant`: theme variant such as `red`, `green`, `blue`, `orange`, `black`, or `white`.
 - `weddingDate`: canonical event date used by countdowns.
 - `heroAssetId`: required Cloudinary media relation mapped to `couple.heroImage`.
+- `galleryVideoUrl`: optional external gallery-video embed URL mapped to `gallery.videoUrl`.
 - `musicAssetId`: optional Cloudinary media relation.
 - `ownerId`: optional administrator relation during initial migration.
 - `createdAt` and `updatedAt`.
@@ -167,6 +168,8 @@ Public invitation routes query Prisma from Server Components. A repository funct
 
 The repository loads the required hero asset explicitly and the mapper assigns its verified delivery URL to `couple.heroImage`. It must not derive the hero from gallery position because current production records can use a hero image that is not present in the gallery.
 
+The repository also returns nullable `galleryVideoUrl` as invitation content. The mapper preserves it as `gallery.videoUrl`, falling back to the existing empty-string representation only when a gallery exists without a video. External embed URLs are not uploaded to or represented as Cloudinary `MediaAsset` records.
+
 Unknown slugs return a real 404 response. They must not silently display default preview data. The default preview receives its own explicit production slug and database record.
 
 The client-side invitation-link generator must no longer import hard-coded invitation data. It receives invitation data through a server boundary or a narrowly scoped server endpoint.
@@ -238,7 +241,7 @@ The migration is designed to be repeatable and fail-safe.
 6. Record upload results and errors without recording credentials.
 7. Verify each returned URL and compare expected versus uploaded asset counts.
 8. Apply the Prisma migration to the local `ayawarta` database.
-9. Seed `MediaAsset`, explicit hero/partner/gallery/music relations, invitations, and the initial administrator inside controlled transactions and upserts.
+9. Seed `MediaAsset`, explicit hero/partner/gallery/music relations, `galleryVideoUrl`, invitations, and the initial administrator inside controlled transactions and upserts.
 10. Query all invitations back through the repository and mapper.
 11. Smoke-test every public invitation and the default preview.
 12. Remove the dynamic local media directories and hard-coded invitation records only after verification succeeds.

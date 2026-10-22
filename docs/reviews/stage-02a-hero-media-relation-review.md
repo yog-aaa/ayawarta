@@ -67,5 +67,5 @@ The reviewed implementation was committed as `b55eed5bc336b25420c23428c2503cfe59
 - TypeScript validation passes;
 - three migrations are present and the local database schema is up to date.
 
-Stage 2A is closed. Stage 3 — Invitation Domain, Repository, and Mapper is authorized.
+Stage 2A is closed. Its initial Stage 3 authorization was later superseded by the separately discovered Stage 2B gallery-video persistence correction; see `docs/reviews/stage-02b-gallery-video-contract.md`.
 

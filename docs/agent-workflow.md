@@ -68,11 +68,25 @@ Before Stage 3, add the approved required `Invitation.heroAssetId` relation thro
 - local migration status and database integration result;
 - confirmation no seed or external service was touched.
 
+## Stage 2B — Gallery Video Persistence Correction
+
+### Assignment
+
+Before Stage 3, add the approved nullable `Invitation.galleryVideoUrl` scalar through a fourth forward-only local migration. It preserves the external gallery-video embed URL used by `default-preview`; it is not a Cloudinary `MediaAsset`. Normalize legacy empty strings during the later seed, not in this migration. Do not edit earlier migrations or seed data.
+
+### Exit evidence
+
+- schema and generated-client diff;
+- migration SQL showing only the nullable scalar addition;
+- confirmation `default-preview` source content remains unchanged;
+- local migration status and read-only database integration result;
+- confirmation no seed or external service was touched.
+
 ## Stage 3 — Domain, Repository, and Mapper
 
 ### Assignment
 
-Begin only after Stage 2A is accepted and committed. Implement Phase 3. Build the stable invitation domain contract, server repository, mapper, and tests. The repository must load the explicit hero media and the mapper must preserve `couple.heroImage`. Do not switch public routes yet.
+Begin only after Stage 2B is accepted and committed. Implement Phase 3. Build the stable invitation domain contract, server repository, mapper, and tests. The repository must load the explicit hero media and gallery-video scalar; the mapper must preserve `couple.heroImage` and `gallery.videoUrl`. Do not switch public routes yet.
 
 ### Exit evidence
 

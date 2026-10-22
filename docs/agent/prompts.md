@@ -127,20 +127,48 @@ Batasan:
 Handoff wajib menyertakan preflight count `Invitation` tanpa data row, nama migration baru, SQL inspection, bukti target database lokal, hasil migration status/test/typecheck/lint/build, dan konfirmasi database tetap tanpa seed.
 ```
 
+## Stage 2B — Gallery Video Persistence Correction
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 2B — Gallery Video Persistence Correction. Stage 2A telah diterima dan dikomit, tetapi audit contract UI menemukan `InvitationData.gallery.videoUrl` belum memiliki sumber persistence.
+
+Baca AGENTS.md, docs/database-schema.md, docs/architecture.md, implementation plan Phase 2/3/6, dan docs/reviews/stage-02b-gallery-video-contract.md.
+
+Tugas:
+1. Verifikasi target database hanya PostgreSQL Laragon lokal `localhost:5432/ayawarta` tanpa mencetak credential atau URL mentah.
+2. Tambahkan scalar nullable `galleryVideoUrl String?` pada model `Invitation`.
+3. Jangan membuat relasi `MediaAsset`: field ini menyimpan external gallery-video embed URL, bukan upload Cloudinary.
+4. Buat migration forward-only keempat bernama jelas tanpa mengubah tiga migration sebelumnya. SQL hanya boleh menambahkan kolom nullable `galleryVideoUrl`; jangan melakukan backfill atau data mutation.
+5. Terapkan migration hanya ke database lokal `ayawarta`.
+6. Regenerate Prisma Client.
+7. Tambahkan atau sesuaikan integration test read-only agar field `galleryVideoUrl` terkompilasi dan queryable tanpa menulis data.
+8. Verifikasi source `default-preview` tetap memiliki URL video yang sama; jangan memindahkan atau mengubah hard-coded content pada stage ini.
+
+Batasan:
+- Jangan seed data.
+- Jangan mengubah domain type, repository, mapper, route, UI, Cloudinary, Firestore, auth, Aiven, atau Vercel.
+- Jangan reset/drop database dan jangan mengedit migration lama.
+- Jangan mengubah `.env.local` atau `pnpm-lock.yaml`.
+- Jangan commit. Berhenti setelah handoff untuk review.
+- Gunakan `cmd.exe /c` atau `npm.cmd` untuk npm/Prisma di Windows.
+
+Handoff wajib menyertakan target database aman, nama dan SQL migration, bukti tiga migration lama tidak berubah, hasil Prisma validate/generate/migrate status, unit test, integration test, typecheck, lint, build, serta konfirmasi tidak ada seed atau external effect.
+```
+
 ## Stage 3 — Invitation Domain, Repository, and Mapper
 
 ```text
-Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 3 — Invitation Domain, Repository, and Mapper. Stage 2A telah diterima dan dikomit.
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 3 — Invitation Domain, Repository, and Mapper. Stage 2B telah diterima dan dikomit.
 
 Baca semua dokumen wajib di AGENTS.md, khususnya docs/architecture.md, docs/database-schema.md, dan implementation plan Phase 3.
 
 Tugas:
 1. Ekstrak contract InvitationData menjadi domain type yang stabil dan tidak bergantung pada dummy-data.
 2. Buat repository server-only untuk query invitation beserta relasi terurut.
-3. Buat mapper Prisma ke domain contract yang tetap kompatibel dengan template Classic Rose, termasuk mapping relasi hero wajib ke `couple.heroImage`.
-4. Pertahankan semantik section opsional, gallery, love story, gift, dan music; hero tidak boleh diinfer dari urutan gallery.
+3. Buat mapper Prisma ke domain contract yang tetap kompatibel dengan template Classic Rose, termasuk mapping relasi hero wajib ke `couple.heroImage` dan `galleryVideoUrl` nullable ke `gallery.videoUrl`.
+4. Pertahankan semantik section opsional, gallery, gallery video, love story, gift, dan music; hero tidak boleh diinfer dari urutan gallery dan gallery video tidak boleh diinfer dari `MediaAsset`.
 5. Missing slug harus menghasilkan null di repository.
-6. Tambahkan unit test untuk mapping lengkap, hero yang berbeda dari gallery, data opsional, ordering, audio, dan missing slug.
+6. Tambahkan unit test untuk mapping lengkap, hero yang berbeda dari gallery, gallery video bernilai URL maupun null, data opsional, ordering, audio, dan missing slug.
 7. Jalankan typecheck, tests, dan lint yang relevan.
 
 Batasan:
@@ -198,6 +226,7 @@ Tugas:
 
 Batasan keras:
 - Jangan upload, mengunduh ulang remote asset, mengubah database, mengganti URL aplikasi, atau menghapus file.
+- Jangan masukkan external `galleryVideoUrl` ke manifest Cloudinary; field tersebut adalah content pointer PostgreSQL.
 - Jangan mencetak credential.
 - Jangan commit. Berhenti setelah handoff untuk review manifest.
 
@@ -242,11 +271,12 @@ Tugas:
 1. Ubah data hard-coded saat ini menjadi typed seed data tanpa mengubah konten pelanggan.
 2. Resolve seluruh dynamic media melalui verified public ID/report.
 3. Upsert MediaAsset dan empat invitation production secara transaction-safe.
-4. Pertahankan hero eksplisit, section flags, urutan, string tanggal/waktu, gift account, music, dan optional data.
+4. Pertahankan hero eksplisit, section flags, urutan, string tanggal/waktu, gift account, music, gallery video, dan optional data.
 5. Implementasikan bootstrap admin idempotent jika credential operator sudah tersedia.
 6. Jalankan seed dua kali ke database Laragon lokal.
 7. Bandingkan row count dan query empat slug melalui repository.
 8. Pastikan setiap hasil repository memiliki `couple.heroImage` dari relasi hero eksplisit dan seed gagal bila hero wajib tidak ditemukan.
+9. Simpan URL gallery video `default-preview` pada `galleryVideoUrl` dan normalisasi string gallery video kosong milik invitation lain menjadi null.
 
 Batasan:
 - Jangan menyentuh Aiven/Vercel.

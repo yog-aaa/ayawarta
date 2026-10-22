@@ -37,11 +37,14 @@ Because `Invitation` has both hero and music relations to `MediaAsset`, both Pri
 | `variant` | Classic Rose variant key. |
 | `weddingDate` | Canonical timestamp used by countdowns. |
 | `heroAssetId` | Required Cloudinary media relation for `couple.heroImage`. |
+| `galleryVideoUrl` | Optional external gallery-video embed URL; empty legacy values normalize to `null`. |
 | `musicAssetId` | Optional media relation. |
 | `ownerId` | Optional admin relation during initial migration. |
 | timestamps | Created and updated timestamps. |
 
 Index `slug` and `heroAssetId`; use explicit foreign-key delete policies. Deleting an owner must not delete production invitations. A hero asset referenced by an invitation must use `RESTRICT` and must not be inferred from the first gallery item.
+
+`galleryVideoUrl` preserves the existing `InvitationData.gallery.videoUrl` contract. It is an external content pointer, currently a YouTube watch URL for `default-preview`, not a managed Cloudinary asset. The mapper returns an empty string when the nullable database field is absent but an enabled gallery is mapped.
 
 ### Partner
 
@@ -165,6 +168,7 @@ The invitation repository returns:
 - the required hero media URL;
 - ordered events;
 - optional ordered gallery;
+- the optional external gallery-video URL without deriving it from a media asset;
 - optional ordered love story;
 - optional ordered gift accounts;
 - section flags;
