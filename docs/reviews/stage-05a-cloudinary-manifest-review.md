@@ -2,7 +2,7 @@
 
 ## Status
 
-`ACCEPTED — READY FOR IMPLEMENTATION COMMIT`
+`ACCEPTED — CLOSED`
 
 ## Review Scope
 
@@ -120,3 +120,11 @@ The Stage 5A implementation is accepted for commit.
 Commit only the approved Stage 5A implementation files and `.gitignore`. Do not include `.media-migration` output, environment files, credentials, unrelated files, or generated build artifacts. Re-run the fast verification matrix after staging and report the exact committed file list and commit hash.
 
 Acceptance of Stage 5A does not authorize Stage 5B. Before any live upload, the owner must resolve the three YouTube music sources and the Stage 5B preflight must load and confirm the actual new Cloudinary cloud name instead of the dry-run placeholder.
+
+## Finalization
+
+- Implementation commit: `3a2f72967c69b9c6cd6901fe50e35a6c544b1c1d` (`feat: add deterministic cloudinary media manifest`).
+- The commit contains exactly the ten approved Stage 5A paths.
+- `.media-migration`, environment files, credentials, lockfiles, build output, database files, and unrelated changes are absent from the commit.
+- Post-commit worktree is clean.
+- Stage 5A is closed. Stage 5B remains blocked pending the owner decision for the three unresolved music sources and an explicit live-upload authorization after new-account preflight is defined.
