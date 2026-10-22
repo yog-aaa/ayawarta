@@ -160,6 +160,22 @@ PostgreSQL must not be introduced into this real-time path during the refactor.
 
 The initial implementation prepares Aiven/Vercel configuration but does not perform production cutover.
 
+## Tooling and Dependency Decisions
+
+### Prisma 7 and `@prisma/adapter-pg`
+- **Rationale:** Prisma 7 (`7.10.1`) is the current stable production release supporting Node.js 24 (`v24.15.0`) and Next.js 16 with native ESM (`"type": "module"`). It decouples connection configuration into `prisma.config.ts`, keeping `prisma/schema.prisma` strictly focused on data models and explicit output locations (`src/generated/prisma`).
+- **Driver Adapter:** `@prisma/adapter-pg` paired with `pg` (`8.23.1`) provides standard connection pooling compatible with both local PostgreSQL (Laragon) and serverless Vercel execution connecting to Aiven via TLS.
+
+### Auth.js v5 Prerelease (`next-auth@5.0.0-beta.32`)
+- **Rationale:** Auth.js v5 is specifically architected for Next.js App Router and React 19 Server Components/Actions. Its official peer dependencies explicitly support Next.js `^16.0.0` and React `^19.0.0`. NextAuth v4 is tied to legacy Pages Router middleware architectures and does not natively support React 19 Server Components.
+- **Prerelease Risk & Policy:** `5.0.0-beta.32` is a prerelease and is not stable. Breaking API changes can occur between beta releases. To protect against unexpected upstream changes, the dependency is pinned exactly to `"next-auth": "5.0.0-beta.32"` (no caret range). Any future upgrade requires explicit review and regression verification of the authentication flow.
+
+### Password Hashing (`bcryptjs`)
+- **Rationale:** `bcryptjs` (`3.0.3`) is a pure JavaScript implementation of bcrypt with built-in TypeScript declarations. It avoids native C++ compilation (node-gyp), ensuring seamless portability across Windows local development and Vercel Amazon Linux serverless environments without binary mismatch or cold-start compilation failures.
+
+### Test Runner (`Vitest`)
+- **Rationale:** Vitest 5 (`5.0.5`) natively supports Node 24 and ESM. It provides lightweight, fast unit and integration testing without Jest/Babel polyfill overhead, using project path aliases and isolating server-only module checks.
+
 ## Architectural Invariants
 
 - One invitation slug identifies one invitation.
