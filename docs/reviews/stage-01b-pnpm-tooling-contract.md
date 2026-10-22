@@ -2,7 +2,7 @@
 
 ## Status
 
-`APPROVED — AWAITING IMPLEMENTATION`
+`ACCEPTED — AWAITING IMPLEMENTATION COMMIT`
 
 ## Owner Decision
 
@@ -39,3 +39,38 @@ The version choice follows Vercel's documented pnpm support through major versio
 ## Gate
 
 Stage 3 is not authorized until Stage 1B is implemented, reviewed, and committed.
+
+## Implementation Review
+
+Reviewed scope:
+
+- `package.json`;
+- regenerated `pnpm-lock.yaml`;
+- removal of `package-lock.json`.
+
+No blocking implementation finding was found. The implementation satisfies the approved correction:
+
+- `packageManager` is exactly `pnpm@10.34.7`;
+- dependency names, ranges, scripts, and other package metadata are unchanged;
+- the pnpm root importer contains all 29 declared dependencies and dev dependencies;
+- `pnpm-lock.yaml` uses lockfile format 9.0;
+- `package-lock.json` is removed;
+- a frozen pnpm install succeeds without modifying the lockfile;
+- Prisma-generated files, schema, migrations, application source, and environment files remain unchanged.
+
+Reviewer verification passed:
+
+- project pnpm version resolves to 10.34.7;
+- `pnpm install --frozen-lockfile`;
+- root dependency listing with 29 packages and no missing dependency;
+- Prisma schema validation and client generation;
+- 5/5 hermetic unit tests;
+- 5/5 live read-only local-database integration tests;
+- TypeScript validation;
+- ESLint with zero errors and the same two pre-existing warnings;
+- production build;
+- four migrations found with the local schema up to date.
+
+pnpm reports ignored dependency build scripts. This is accepted as a non-blocking observation for the current dependency graph because a frozen install followed by Prisma generation, native-backed Next/Tailwind compilation, all tests, and the production build succeeds. Do not add an allowlist unless a future reviewed failure demonstrates it is required.
+
+The programmer may commit exactly the reviewed package-manager files. Stage 3 remains blocked until that commit is reported and the worktree is clean.
