@@ -42,6 +42,17 @@ describe("Database live integration and connection contract", () => {
     expect(Number(result[0].result)).toBe(1);
   });
 
+  it("verifies Invitation model supports heroAsset and musicAsset relations via read-only query", async () => {
+    const invitations = await client.invitation.findMany({
+      take: 1,
+      include: {
+        heroAsset: true,
+        musicAsset: true,
+      },
+    });
+    expect(Array.isArray(invitations)).toBe(true);
+  });
+
   it("successfully queries all 9 application tables returning non-negative counts", async () => {
     const [
       users,

@@ -282,6 +282,7 @@ export type MediaAssetWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"MediaAsset"> | Date | string
   partners?: Prisma.PartnerListRelationFilter
   galleryItems?: Prisma.GalleryItemListRelationFilter
+  heroInvitations?: Prisma.InvitationListRelationFilter
   musicInvitations?: Prisma.InvitationListRelationFilter
 }
 
@@ -300,6 +301,7 @@ export type MediaAssetOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   partners?: Prisma.PartnerOrderByRelationAggregateInput
   galleryItems?: Prisma.GalleryItemOrderByRelationAggregateInput
+  heroInvitations?: Prisma.InvitationOrderByRelationAggregateInput
   musicInvitations?: Prisma.InvitationOrderByRelationAggregateInput
 }
 
@@ -321,6 +323,7 @@ export type MediaAssetWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"MediaAsset"> | Date | string
   partners?: Prisma.PartnerListRelationFilter
   galleryItems?: Prisma.GalleryItemListRelationFilter
+  heroInvitations?: Prisma.InvitationListRelationFilter
   musicInvitations?: Prisma.InvitationListRelationFilter
 }, "id" | "publicId">
 
@@ -377,6 +380,7 @@ export type MediaAssetCreateInput = {
   updatedAt?: Date | string
   partners?: Prisma.PartnerCreateNestedManyWithoutPhotoAssetInput
   galleryItems?: Prisma.GalleryItemCreateNestedManyWithoutAssetInput
+  heroInvitations?: Prisma.InvitationCreateNestedManyWithoutHeroAssetInput
   musicInvitations?: Prisma.InvitationCreateNestedManyWithoutMusicAssetInput
 }
 
@@ -395,6 +399,7 @@ export type MediaAssetUncheckedCreateInput = {
   updatedAt?: Date | string
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutPhotoAssetInput
   galleryItems?: Prisma.GalleryItemUncheckedCreateNestedManyWithoutAssetInput
+  heroInvitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutHeroAssetInput
   musicInvitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutMusicAssetInput
 }
 
@@ -413,6 +418,7 @@ export type MediaAssetUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partners?: Prisma.PartnerUpdateManyWithoutPhotoAssetNestedInput
   galleryItems?: Prisma.GalleryItemUpdateManyWithoutAssetNestedInput
+  heroInvitations?: Prisma.InvitationUpdateManyWithoutHeroAssetNestedInput
   musicInvitations?: Prisma.InvitationUpdateManyWithoutMusicAssetNestedInput
 }
 
@@ -431,6 +437,7 @@ export type MediaAssetUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutPhotoAssetNestedInput
   galleryItems?: Prisma.GalleryItemUncheckedUpdateManyWithoutAssetNestedInput
+  heroInvitations?: Prisma.InvitationUncheckedUpdateManyWithoutHeroAssetNestedInput
   musicInvitations?: Prisma.InvitationUncheckedUpdateManyWithoutMusicAssetNestedInput
 }
 
@@ -536,14 +543,14 @@ export type MediaAssetSumOrderByAggregateInput = {
   height?: Prisma.SortOrder
 }
 
-export type MediaAssetNullableScalarRelationFilter = {
-  is?: Prisma.MediaAssetWhereInput | null
-  isNot?: Prisma.MediaAssetWhereInput | null
-}
-
 export type MediaAssetScalarRelationFilter = {
   is?: Prisma.MediaAssetWhereInput
   isNot?: Prisma.MediaAssetWhereInput
+}
+
+export type MediaAssetNullableScalarRelationFilter = {
+  is?: Prisma.MediaAssetWhereInput | null
+  isNot?: Prisma.MediaAssetWhereInput | null
 }
 
 export type EnumResourceTypeFieldUpdateOperationsInput = {
@@ -562,10 +569,24 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type MediaAssetCreateNestedOneWithoutHeroInvitationsInput = {
+  create?: Prisma.XOR<Prisma.MediaAssetCreateWithoutHeroInvitationsInput, Prisma.MediaAssetUncheckedCreateWithoutHeroInvitationsInput>
+  connectOrCreate?: Prisma.MediaAssetCreateOrConnectWithoutHeroInvitationsInput
+  connect?: Prisma.MediaAssetWhereUniqueInput
+}
+
 export type MediaAssetCreateNestedOneWithoutMusicInvitationsInput = {
   create?: Prisma.XOR<Prisma.MediaAssetCreateWithoutMusicInvitationsInput, Prisma.MediaAssetUncheckedCreateWithoutMusicInvitationsInput>
   connectOrCreate?: Prisma.MediaAssetCreateOrConnectWithoutMusicInvitationsInput
   connect?: Prisma.MediaAssetWhereUniqueInput
+}
+
+export type MediaAssetUpdateOneRequiredWithoutHeroInvitationsNestedInput = {
+  create?: Prisma.XOR<Prisma.MediaAssetCreateWithoutHeroInvitationsInput, Prisma.MediaAssetUncheckedCreateWithoutHeroInvitationsInput>
+  connectOrCreate?: Prisma.MediaAssetCreateOrConnectWithoutHeroInvitationsInput
+  upsert?: Prisma.MediaAssetUpsertWithoutHeroInvitationsInput
+  connect?: Prisma.MediaAssetWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MediaAssetUpdateToOneWithWhereWithoutHeroInvitationsInput, Prisma.MediaAssetUpdateWithoutHeroInvitationsInput>, Prisma.MediaAssetUncheckedUpdateWithoutHeroInvitationsInput>
 }
 
 export type MediaAssetUpdateOneWithoutMusicInvitationsNestedInput = {
@@ -606,6 +627,47 @@ export type MediaAssetUpdateOneRequiredWithoutGalleryItemsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.MediaAssetUpdateToOneWithWhereWithoutGalleryItemsInput, Prisma.MediaAssetUpdateWithoutGalleryItemsInput>, Prisma.MediaAssetUncheckedUpdateWithoutGalleryItemsInput>
 }
 
+export type MediaAssetCreateWithoutHeroInvitationsInput = {
+  id?: string
+  publicId: string
+  secureUrl: string
+  folder: string
+  resourceType: $Enums.ResourceType
+  format?: string | null
+  bytes: number
+  width?: number | null
+  height?: number | null
+  originalName?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  partners?: Prisma.PartnerCreateNestedManyWithoutPhotoAssetInput
+  galleryItems?: Prisma.GalleryItemCreateNestedManyWithoutAssetInput
+  musicInvitations?: Prisma.InvitationCreateNestedManyWithoutMusicAssetInput
+}
+
+export type MediaAssetUncheckedCreateWithoutHeroInvitationsInput = {
+  id?: string
+  publicId: string
+  secureUrl: string
+  folder: string
+  resourceType: $Enums.ResourceType
+  format?: string | null
+  bytes: number
+  width?: number | null
+  height?: number | null
+  originalName?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutPhotoAssetInput
+  galleryItems?: Prisma.GalleryItemUncheckedCreateNestedManyWithoutAssetInput
+  musicInvitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutMusicAssetInput
+}
+
+export type MediaAssetCreateOrConnectWithoutHeroInvitationsInput = {
+  where: Prisma.MediaAssetWhereUniqueInput
+  create: Prisma.XOR<Prisma.MediaAssetCreateWithoutHeroInvitationsInput, Prisma.MediaAssetUncheckedCreateWithoutHeroInvitationsInput>
+}
+
 export type MediaAssetCreateWithoutMusicInvitationsInput = {
   id?: string
   publicId: string
@@ -621,6 +683,7 @@ export type MediaAssetCreateWithoutMusicInvitationsInput = {
   updatedAt?: Date | string
   partners?: Prisma.PartnerCreateNestedManyWithoutPhotoAssetInput
   galleryItems?: Prisma.GalleryItemCreateNestedManyWithoutAssetInput
+  heroInvitations?: Prisma.InvitationCreateNestedManyWithoutHeroAssetInput
 }
 
 export type MediaAssetUncheckedCreateWithoutMusicInvitationsInput = {
@@ -638,11 +701,59 @@ export type MediaAssetUncheckedCreateWithoutMusicInvitationsInput = {
   updatedAt?: Date | string
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutPhotoAssetInput
   galleryItems?: Prisma.GalleryItemUncheckedCreateNestedManyWithoutAssetInput
+  heroInvitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutHeroAssetInput
 }
 
 export type MediaAssetCreateOrConnectWithoutMusicInvitationsInput = {
   where: Prisma.MediaAssetWhereUniqueInput
   create: Prisma.XOR<Prisma.MediaAssetCreateWithoutMusicInvitationsInput, Prisma.MediaAssetUncheckedCreateWithoutMusicInvitationsInput>
+}
+
+export type MediaAssetUpsertWithoutHeroInvitationsInput = {
+  update: Prisma.XOR<Prisma.MediaAssetUpdateWithoutHeroInvitationsInput, Prisma.MediaAssetUncheckedUpdateWithoutHeroInvitationsInput>
+  create: Prisma.XOR<Prisma.MediaAssetCreateWithoutHeroInvitationsInput, Prisma.MediaAssetUncheckedCreateWithoutHeroInvitationsInput>
+  where?: Prisma.MediaAssetWhereInput
+}
+
+export type MediaAssetUpdateToOneWithWhereWithoutHeroInvitationsInput = {
+  where?: Prisma.MediaAssetWhereInput
+  data: Prisma.XOR<Prisma.MediaAssetUpdateWithoutHeroInvitationsInput, Prisma.MediaAssetUncheckedUpdateWithoutHeroInvitationsInput>
+}
+
+export type MediaAssetUpdateWithoutHeroInvitationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
+  secureUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  folder?: Prisma.StringFieldUpdateOperationsInput | string
+  resourceType?: Prisma.EnumResourceTypeFieldUpdateOperationsInput | $Enums.ResourceType
+  format?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bytes?: Prisma.IntFieldUpdateOperationsInput | number
+  width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  originalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  partners?: Prisma.PartnerUpdateManyWithoutPhotoAssetNestedInput
+  galleryItems?: Prisma.GalleryItemUpdateManyWithoutAssetNestedInput
+  musicInvitations?: Prisma.InvitationUpdateManyWithoutMusicAssetNestedInput
+}
+
+export type MediaAssetUncheckedUpdateWithoutHeroInvitationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
+  secureUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  folder?: Prisma.StringFieldUpdateOperationsInput | string
+  resourceType?: Prisma.EnumResourceTypeFieldUpdateOperationsInput | $Enums.ResourceType
+  format?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bytes?: Prisma.IntFieldUpdateOperationsInput | number
+  width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  originalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  partners?: Prisma.PartnerUncheckedUpdateManyWithoutPhotoAssetNestedInput
+  galleryItems?: Prisma.GalleryItemUncheckedUpdateManyWithoutAssetNestedInput
+  musicInvitations?: Prisma.InvitationUncheckedUpdateManyWithoutMusicAssetNestedInput
 }
 
 export type MediaAssetUpsertWithoutMusicInvitationsInput = {
@@ -671,6 +782,7 @@ export type MediaAssetUpdateWithoutMusicInvitationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partners?: Prisma.PartnerUpdateManyWithoutPhotoAssetNestedInput
   galleryItems?: Prisma.GalleryItemUpdateManyWithoutAssetNestedInput
+  heroInvitations?: Prisma.InvitationUpdateManyWithoutHeroAssetNestedInput
 }
 
 export type MediaAssetUncheckedUpdateWithoutMusicInvitationsInput = {
@@ -688,6 +800,7 @@ export type MediaAssetUncheckedUpdateWithoutMusicInvitationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutPhotoAssetNestedInput
   galleryItems?: Prisma.GalleryItemUncheckedUpdateManyWithoutAssetNestedInput
+  heroInvitations?: Prisma.InvitationUncheckedUpdateManyWithoutHeroAssetNestedInput
 }
 
 export type MediaAssetCreateWithoutPartnersInput = {
@@ -704,6 +817,7 @@ export type MediaAssetCreateWithoutPartnersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   galleryItems?: Prisma.GalleryItemCreateNestedManyWithoutAssetInput
+  heroInvitations?: Prisma.InvitationCreateNestedManyWithoutHeroAssetInput
   musicInvitations?: Prisma.InvitationCreateNestedManyWithoutMusicAssetInput
 }
 
@@ -721,6 +835,7 @@ export type MediaAssetUncheckedCreateWithoutPartnersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   galleryItems?: Prisma.GalleryItemUncheckedCreateNestedManyWithoutAssetInput
+  heroInvitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutHeroAssetInput
   musicInvitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutMusicAssetInput
 }
 
@@ -754,6 +869,7 @@ export type MediaAssetUpdateWithoutPartnersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   galleryItems?: Prisma.GalleryItemUpdateManyWithoutAssetNestedInput
+  heroInvitations?: Prisma.InvitationUpdateManyWithoutHeroAssetNestedInput
   musicInvitations?: Prisma.InvitationUpdateManyWithoutMusicAssetNestedInput
 }
 
@@ -771,6 +887,7 @@ export type MediaAssetUncheckedUpdateWithoutPartnersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   galleryItems?: Prisma.GalleryItemUncheckedUpdateManyWithoutAssetNestedInput
+  heroInvitations?: Prisma.InvitationUncheckedUpdateManyWithoutHeroAssetNestedInput
   musicInvitations?: Prisma.InvitationUncheckedUpdateManyWithoutMusicAssetNestedInput
 }
 
@@ -788,6 +905,7 @@ export type MediaAssetCreateWithoutGalleryItemsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   partners?: Prisma.PartnerCreateNestedManyWithoutPhotoAssetInput
+  heroInvitations?: Prisma.InvitationCreateNestedManyWithoutHeroAssetInput
   musicInvitations?: Prisma.InvitationCreateNestedManyWithoutMusicAssetInput
 }
 
@@ -805,6 +923,7 @@ export type MediaAssetUncheckedCreateWithoutGalleryItemsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   partners?: Prisma.PartnerUncheckedCreateNestedManyWithoutPhotoAssetInput
+  heroInvitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutHeroAssetInput
   musicInvitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutMusicAssetInput
 }
 
@@ -838,6 +957,7 @@ export type MediaAssetUpdateWithoutGalleryItemsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partners?: Prisma.PartnerUpdateManyWithoutPhotoAssetNestedInput
+  heroInvitations?: Prisma.InvitationUpdateManyWithoutHeroAssetNestedInput
   musicInvitations?: Prisma.InvitationUpdateManyWithoutMusicAssetNestedInput
 }
 
@@ -855,6 +975,7 @@ export type MediaAssetUncheckedUpdateWithoutGalleryItemsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   partners?: Prisma.PartnerUncheckedUpdateManyWithoutPhotoAssetNestedInput
+  heroInvitations?: Prisma.InvitationUncheckedUpdateManyWithoutHeroAssetNestedInput
   musicInvitations?: Prisma.InvitationUncheckedUpdateManyWithoutMusicAssetNestedInput
 }
 
@@ -866,12 +987,14 @@ export type MediaAssetUncheckedUpdateWithoutGalleryItemsInput = {
 export type MediaAssetCountOutputType = {
   partners: number
   galleryItems: number
+  heroInvitations: number
   musicInvitations: number
 }
 
 export type MediaAssetCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   partners?: boolean | MediaAssetCountOutputTypeCountPartnersArgs
   galleryItems?: boolean | MediaAssetCountOutputTypeCountGalleryItemsArgs
+  heroInvitations?: boolean | MediaAssetCountOutputTypeCountHeroInvitationsArgs
   musicInvitations?: boolean | MediaAssetCountOutputTypeCountMusicInvitationsArgs
 }
 
@@ -902,6 +1025,13 @@ export type MediaAssetCountOutputTypeCountGalleryItemsArgs<ExtArgs extends runti
 /**
  * MediaAssetCountOutputType without action
  */
+export type MediaAssetCountOutputTypeCountHeroInvitationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InvitationWhereInput
+}
+
+/**
+ * MediaAssetCountOutputType without action
+ */
 export type MediaAssetCountOutputTypeCountMusicInvitationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.InvitationWhereInput
 }
@@ -922,6 +1052,7 @@ export type MediaAssetSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   updatedAt?: boolean
   partners?: boolean | Prisma.MediaAsset$partnersArgs<ExtArgs>
   galleryItems?: boolean | Prisma.MediaAsset$galleryItemsArgs<ExtArgs>
+  heroInvitations?: boolean | Prisma.MediaAsset$heroInvitationsArgs<ExtArgs>
   musicInvitations?: boolean | Prisma.MediaAsset$musicInvitationsArgs<ExtArgs>
   _count?: boolean | Prisma.MediaAssetCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["mediaAsset"]>
@@ -975,6 +1106,7 @@ export type MediaAssetOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs
 export type MediaAssetInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   partners?: boolean | Prisma.MediaAsset$partnersArgs<ExtArgs>
   galleryItems?: boolean | Prisma.MediaAsset$galleryItemsArgs<ExtArgs>
+  heroInvitations?: boolean | Prisma.MediaAsset$heroInvitationsArgs<ExtArgs>
   musicInvitations?: boolean | Prisma.MediaAsset$musicInvitationsArgs<ExtArgs>
   _count?: boolean | Prisma.MediaAssetCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -986,6 +1118,7 @@ export type $MediaAssetPayload<ExtArgs extends runtime.Types.Extensions.Internal
   objects: {
     partners: Prisma.$PartnerPayload<ExtArgs>[]
     galleryItems: Prisma.$GalleryItemPayload<ExtArgs>[]
+    heroInvitations: Prisma.$InvitationPayload<ExtArgs>[]
     musicInvitations: Prisma.$InvitationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1397,6 +1530,7 @@ export interface Prisma__MediaAssetClient<T, Null = never, ExtArgs extends runti
   readonly [Symbol.toStringTag]: "PrismaPromise"
   partners<T extends Prisma.MediaAsset$partnersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MediaAsset$partnersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PartnerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   galleryItems<T extends Prisma.MediaAsset$galleryItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MediaAsset$galleryItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GalleryItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  heroInvitations<T extends Prisma.MediaAsset$heroInvitationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MediaAsset$heroInvitationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   musicInvitations<T extends Prisma.MediaAsset$musicInvitationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MediaAsset$musicInvitationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1877,6 +2011,30 @@ export type MediaAsset$galleryItemsArgs<ExtArgs extends runtime.Types.Extensions
   take?: number
   skip?: number
   distinct?: Prisma.GalleryItemScalarFieldEnum | Prisma.GalleryItemScalarFieldEnum[]
+}
+
+/**
+ * MediaAsset.heroInvitations
+ */
+export type MediaAsset$heroInvitationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Invitation
+   */
+  select?: Prisma.InvitationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Invitation
+   */
+  omit?: Prisma.InvitationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InvitationInclude<ExtArgs> | null
+  where?: Prisma.InvitationWhereInput
+  orderBy?: Prisma.InvitationOrderByWithRelationInput | Prisma.InvitationOrderByWithRelationInput[]
+  cursor?: Prisma.InvitationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InvitationScalarFieldEnum | Prisma.InvitationScalarFieldEnum[]
 }
 
 /**

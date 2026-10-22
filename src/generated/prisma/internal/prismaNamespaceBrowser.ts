@@ -118,6 +118,7 @@ export const InvitationScalarFieldEnum = {
   theme: 'theme',
   variant: 'variant',
   weddingDate: 'weddingDate',
+  heroAssetId: 'heroAssetId',
   musicAssetId: 'musicAssetId',
   ownerId: 'ownerId',
   createdAt: 'createdAt',

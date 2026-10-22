@@ -52,7 +52,8 @@ model MediaAsset {
   updatedAt        DateTime      @updatedAt
   partners         Partner[]
   galleryItems     GalleryItem[]
-  musicInvitations Invitation[]
+  heroInvitations  Invitation[]  @relation("InvitationHeroAsset")
+  musicInvitations Invitation[]  @relation("InvitationMusicAsset")
 }
 
 model Invitation {
@@ -61,12 +62,14 @@ model Invitation {
   theme        String              @default("classic-rose")
   variant      String
   weddingDate  DateTime
+  heroAssetId  String
   musicAssetId String?
   ownerId      String?
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
   owner        User?               @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  musicAsset   MediaAsset?         @relation(fields: [musicAssetId], references: [id], onDelete: Restrict)
+  heroAsset    MediaAsset          @relation("InvitationHeroAsset", fields: [heroAssetId], references: [id], onDelete: Restrict)
+  musicAsset   MediaAsset?         @relation("InvitationMusicAsset", fields: [musicAssetId], references: [id], onDelete: Restrict)
   sections     InvitationSections?
   partners     Partner[]
   events       Event[]
@@ -75,6 +78,7 @@ model Invitation {
   giftAccounts GiftAccount[]
 
   @@index([ownerId])
+  @@index([heroAssetId])
   @@index([musicAssetId])
 }
 
