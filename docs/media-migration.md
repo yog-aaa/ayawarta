@@ -95,7 +95,8 @@ Manifest entries must be typed, unique by target public ID, and reviewable witho
 ### 4. Database Seed
 
 - Upsert `MediaAsset` rows by `publicId`.
-- Seed invitation relations using verified media rows.
+- Resolve one required hero row per invitation and assign it through `Invitation.heroAssetId`.
+- Seed partner, gallery, and optional music relations using verified media rows.
 - Query every invitation through the application repository.
 
 ### 5. Application Cutover

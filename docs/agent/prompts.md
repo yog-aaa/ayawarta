@@ -86,7 +86,7 @@ Baca semua dokumen wajib di AGENTS.md, khususnya docs/database-schema.md dan imp
 
 Tugas:
 1. Implementasikan schema Prisma persis sesuai kontrak database.
-2. Tambahkan enum, relasi, unique constraint, index, timestamp, dan delete behavior yang aman.
+2. Tambahkan enum, relasi, unique constraint, index, timestamp, dan delete behavior yang aman, termasuk relasi wajib `Invitation.heroAssetId` ke `MediaAsset` dengan `onDelete: Restrict`.
 3. Buat Prisma Client singleton server-only dan environment access yang tidak dapat masuk client bundle.
 4. Validasi koneksi hanya ke PostgreSQL Laragon lokal database ayawarta.
 5. Buat dan terapkan migration development bernama jelas ke database lokal saja.
@@ -101,20 +101,46 @@ Batasan:
 Handoff wajib menyertakan ringkasan model/constraint, nama migration, bukti database lokal yang dituju, dan hasil semua pemeriksaan.
 ```
 
+## Stage 2A — Required Hero Media Relation Correction
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya koreksi Stage 2A — Required Hero Media Relation. Stage 2 telah dikomit, tetapi review lintas tahap menemukan bahwa contract UI `couple.heroImage` belum memiliki relasi persistence eksplisit.
+
+Baca AGENTS.md, docs/database-schema.md, docs/architecture.md, docs/media-migration.md, implementation plan Phase 2/3/5/6, dan review Stage 2.
+
+Tugas:
+1. Verifikasi secara read-only bahwa tabel `Invitation` lokal masih berisi 0 row; jika tidak, STOP dan minta rencana backfill/migration yang direview. Jangan menambah kolom wajib secara langsung.
+2. Tambahkan `Invitation.heroAssetId` sebagai relasi wajib ke `MediaAsset`.
+3. Beri nama eksplisit pada kedua pasangan relasi `Invitation` ↔ `MediaAsset` agar Prisma tidak ambigu: gunakan misalnya `InvitationHeroAsset` untuk hero dan `InvitationMusicAsset` untuk relasi musik yang sudah ada, termasuk reverse relation masing-masing pada `MediaAsset`. Perubahan nama relasi musik hanya metadata Prisma dan tidak boleh mengubah kolom/foreign key SQL yang sudah ada.
+4. Gunakan `onDelete: Restrict` dan index pada `heroAssetId`.
+5. Jangan menggunakan gallery pertama sebagai hero dan jangan menambah model media generik baru.
+6. Buat migration forward-only baru tanpa mengubah dua migration yang sudah diterapkan. SQL harus menambah kolom wajib, index, dan foreign key hero tanpa drop/reset.
+7. Terapkan migration hanya ke PostgreSQL Laragon lokal `ayawarta`, yang masih belum memiliki seed.
+8. Regenerate Prisma Client dan perbarui integration test agar memverifikasi delegate/query tetap sehat tanpa menulis data.
+
+Batasan:
+- Jangan seed media/invitation/admin.
+- Jangan mengubah route, mapper, hard-coded data, UI, Cloudinary, Firestore, Aiven, atau Vercel.
+- Jangan reset/drop database dan jangan mengedit migration lama.
+- Jangan commit. Berhenti setelah handoff untuk review.
+
+Handoff wajib menyertakan preflight count `Invitation` tanpa data row, nama migration baru, SQL inspection, bukti target database lokal, hasil migration status/test/typecheck/lint/build, dan konfirmasi database tetap tanpa seed.
+```
+
 ## Stage 3 — Invitation Domain, Repository, and Mapper
 
 ```text
-Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 3 — Invitation Domain, Repository, and Mapper. Stage 2 telah diterima.
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 3 — Invitation Domain, Repository, and Mapper. Stage 2A telah diterima dan dikomit.
 
 Baca semua dokumen wajib di AGENTS.md, khususnya docs/architecture.md, docs/database-schema.md, dan implementation plan Phase 3.
 
 Tugas:
 1. Ekstrak contract InvitationData menjadi domain type yang stabil dan tidak bergantung pada dummy-data.
 2. Buat repository server-only untuk query invitation beserta relasi terurut.
-3. Buat mapper Prisma ke domain contract yang tetap kompatibel dengan template Classic Rose.
-4. Pertahankan semantik section opsional, gallery, love story, gift, dan music.
+3. Buat mapper Prisma ke domain contract yang tetap kompatibel dengan template Classic Rose, termasuk mapping relasi hero wajib ke `couple.heroImage`.
+4. Pertahankan semantik section opsional, gallery, love story, gift, dan music; hero tidak boleh diinfer dari urutan gallery.
 5. Missing slug harus menghasilkan null di repository.
-6. Tambahkan unit test untuk mapping lengkap, data opsional, ordering, audio, dan missing slug.
+6. Tambahkan unit test untuk mapping lengkap, hero yang berbeda dari gallery, data opsional, ordering, audio, dan missing slug.
 7. Jalankan typecheck, tests, dan lint yang relevan.
 
 Batasan:
@@ -163,7 +189,7 @@ Baca semua dokumen wajib di AGENTS.md, khususnya docs/media-migration.md dan imp
 
 Tugas:
 1. Buat typed manifest untuk seluruh media dinamis lokal dan semua URL Cloudinary akun lama.
-2. Cakup rika-fauzi, shidqi-mita, dudi-aini, dan default-preview sebagai data production.
+2. Cakup rika-fauzi, shidqi-mita, dudi-aini, dan default-preview sebagai data production, termasuk tepat satu hero eksplisit per slug.
 3. Target wajib mengikuti ayawarta/production/invitations/{slug}/{category}/...
 4. Buat generator public ID deterministik, validasi input/path traversal, dan unit test.
 5. Buat migration script dengan mode dry-run dan safe report contract.
@@ -191,8 +217,9 @@ Tugas:
 3. Upload local sources dan salin/re-upload URL akun lama ke public ID baru yang telah disetujui.
 4. Gunakan perilaku idempotent/deterministik agar retry tidak membuat duplikat acak.
 5. Verifikasi HTTPS delivery URL, cloud name, resource type, byte size, dimension jika relevan, serta audio dudi-aini.
-6. Simpan safe migration report tanpa credential.
-7. Bandingkan expected dan actual count.
+6. Verifikasi tepat satu hero wajib untuk setiap production slug dan pastikan hasilnya dapat di-resolve ke `Invitation.heroAssetId`.
+7. Simpan safe migration report tanpa credential.
+8. Bandingkan expected dan actual count.
 
 Batasan keras:
 - Jangan menghapus atau rename aset akun lama.
@@ -215,10 +242,11 @@ Tugas:
 1. Ubah data hard-coded saat ini menjadi typed seed data tanpa mengubah konten pelanggan.
 2. Resolve seluruh dynamic media melalui verified public ID/report.
 3. Upsert MediaAsset dan empat invitation production secara transaction-safe.
-4. Pertahankan section flags, urutan, string tanggal/waktu, gift account, music, dan optional data.
+4. Pertahankan hero eksplisit, section flags, urutan, string tanggal/waktu, gift account, music, dan optional data.
 5. Implementasikan bootstrap admin idempotent jika credential operator sudah tersedia.
 6. Jalankan seed dua kali ke database Laragon lokal.
 7. Bandingkan row count dan query empat slug melalui repository.
+8. Pastikan setiap hasil repository memiliki `couple.heroImage` dari relasi hero eksplisit dan seed gagal bila hero wajib tidak ditemukan.
 
 Batasan:
 - Jangan menyentuh Aiven/Vercel.

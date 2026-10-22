@@ -15,10 +15,15 @@ User 1 ─────── 0..* Invitation
                      ├── 0..* GalleryItem ─── 1 MediaAsset
                      ├── 0..* LoveStory
                      ├── 0..* GiftAccount
+                     ├── 1 hero ───────────── 1 MediaAsset
                      └── 0..1 music ───────── 1 MediaAsset
 
 Partner 0..* ──────── 1 MediaAsset
 ```
+
+Each invitation references exactly one hero asset. `heroAssetId` is indexed but not unique, so a `MediaAsset` may be deliberately reused by multiple invitations or also appear in a gallery.
+
+Because `Invitation` has both hero and music relations to `MediaAsset`, both Prisma relation pairs must use distinct explicit relation names. Naming the existing music relation must remain a Prisma metadata-only change and must not recreate its existing database column or foreign key.
 
 ## Models
 
@@ -31,11 +36,12 @@ Partner 0..* ──────── 1 MediaAsset
 | `theme` | Initially `classic-rose`; keep extensible. |
 | `variant` | Classic Rose variant key. |
 | `weddingDate` | Canonical timestamp used by countdowns. |
+| `heroAssetId` | Required Cloudinary media relation for `couple.heroImage`. |
 | `musicAssetId` | Optional media relation. |
 | `ownerId` | Optional admin relation during initial migration. |
 | timestamps | Created and updated timestamps. |
 
-Index `slug`; use an explicit foreign-key delete policy. Deleting an owner must not delete production invitations.
+Index `slug` and `heroAssetId`; use explicit foreign-key delete policies. Deleting an owner must not delete production invitations. A hero asset referenced by an invitation must use `RESTRICT` and must not be inferred from the first gallery item.
 
 ### Partner
 
@@ -115,6 +121,8 @@ Unique constraint on `invitationId`.
 
 Do not infer resource type only from a URL extension.
 
+Hero media is a first-class required invitation relation. Gallery membership and ordering are independent from the hero relation, even when the same Cloudinary asset is intentionally reused in both places.
+
 ### User
 
 | Field | Contract |
@@ -145,7 +153,7 @@ The seed must:
 2. run inside controlled transactions;
 3. replace ordered child collections deterministically;
 4. resolve media by verified public ID;
-5. fail if required media is missing;
+5. resolve every required partner photo and hero relation explicitly and fail if required media is missing;
 6. preserve optional sections and current customer content;
 7. produce identical record counts on a second run.
 
@@ -154,6 +162,7 @@ The seed must:
 The invitation repository returns:
 
 - both partners;
+- the required hero media URL;
 - ordered events;
 - optional ordered gallery;
 - optional ordered love story;

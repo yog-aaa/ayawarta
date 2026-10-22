@@ -2,7 +2,7 @@
 
 ## Review Status
 
-`ACCEPTED`
+`CHANGES REQUIRED`
 
 ## Scope Reviewed
 
@@ -111,5 +111,22 @@ Post-commit verification confirmed:
 - branch `develop` has a clean worktree;
 - the programmer reports both local migrations applied and the local schema up to date.
 
-Stage 2 is closed. Stage 3 is authorized from the current reviewed HEAD.
+Stage 2 was initially closed from the reviewed HEAD, subject to the cross-stage contract review below.
+
+## Post-Finalization Cross-Stage Contract Gap
+
+While preparing the Stage 3 repository/mapper prompt, the reviewer traced every required `InvitationData` field back to persistence and found one missing required relation: `couple.heroImage` has no database source. The committed schema relates media for partner photos, gallery items, and optional music, but not for the invitation hero.
+
+This is blocking because current production invitations can use hero images that are distinct from every gallery item. Inferring the hero from gallery position would lose data and make optional gallery state affect required hero rendering.
+
+The owner approved the bounded correction:
+
+- add required `Invitation.heroAssetId` and an explicit reverse `MediaAsset` relation;
+- use `onDelete: Restrict` and index `heroAssetId`;
+- keep hero independent from gallery ordering;
+- create a third forward-only local migration without editing the two committed migrations;
+- apply it before any invitation/media seed exists;
+- update generated Prisma output and non-destructive integration coverage.
+
+Stage 2 is reopened as Stage 2A for this correction. Stage 3 is not authorized until Stage 2A is implemented, reviewed, and committed.
 

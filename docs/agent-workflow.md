@@ -44,20 +44,35 @@ Implement Phase 1 only. Add compatible dependencies, scripts, environment valida
 
 ### Assignment
 
-Implement Phase 2 and the model contract in `docs/database-schema.md`. Apply the migration only to local Laragon PostgreSQL. Do not seed invitation or admin data.
+Implement Phase 2 and the model contract in `docs/database-schema.md`, including the required explicit invitation hero-media relation. Apply migrations only to local Laragon PostgreSQL. Do not seed invitation or admin data.
 
 ### Exit evidence
 
 - schema diff;
 - Prisma validate/generate results;
 - migration name and local result;
+- proof the required hero relation uses `Restrict` and is independent from gallery ordering;
 - proof no production database was contacted.
+
+## Stage 2A — Required Hero Media Relation Correction
+
+### Assignment
+
+Before Stage 3, add the approved required `Invitation.heroAssetId` relation through a third forward-only local migration. Give the hero and existing music relations to `MediaAsset` distinct explicit Prisma relation names without recreating the existing music database relation. Verify the local `Invitation` table is empty first. If it is not empty, stop and request a reviewed backfill plan instead of adding a required column blindly. Do not edit the two committed migrations or seed any data.
+
+### Exit evidence
+
+- zero-row preflight for the local `Invitation` table;
+- authored schema and generated-client diff;
+- migration SQL showing only the required hero column, index, and `Restrict` foreign key;
+- local migration status and database integration result;
+- confirmation no seed or external service was touched.
 
 ## Stage 3 — Domain, Repository, and Mapper
 
 ### Assignment
 
-Implement Phase 3. Build the stable invitation domain contract, server repository, mapper, and tests. Do not switch public routes yet.
+Begin only after Stage 2A is accepted and committed. Implement Phase 3. Build the stable invitation domain contract, server repository, mapper, and tests. The repository must load the explicit hero media and the mapper must preserve `couple.heroImage`. Do not switch public routes yet.
 
 ### Exit evidence
 

@@ -28,6 +28,7 @@ The programmer completes stage-specific items and attaches evidence. The reviewe
 - [ ] Prisma schema matches `docs/database-schema.md`.
 - [ ] Unique constraints protect slugs, roles, order, and public IDs.
 - [ ] Foreign-key delete behavior is intentional.
+- [ ] Every invitation has a required indexed hero `MediaAsset` relation with `Restrict`; hero is not inferred from gallery order.
 - [ ] Migration is committed and validates locally.
 - [ ] Production migration was not run.
 - [ ] Seed is idempotent.
@@ -41,6 +42,7 @@ The programmer completes stage-specific items and attaches evidence. The reviewe
 - [ ] Target public IDs are deterministic and unique.
 - [ ] New account cloud name is verified without exposing credentials.
 - [ ] Expected and actual counts match.
+- [ ] Exactly one verified hero manifest entry exists for every production invitation slug.
 - [ ] Delivery URLs and resource types are verified.
 - [ ] Old-account resources remain untouched.
 - [ ] Local assets remain until cleanup approval.

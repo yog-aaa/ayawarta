@@ -84,6 +84,8 @@ Use stable versions compatible with the audited runtime Node.js 24.15.0, Next.js
 
 ## Phase 2 — Prisma Schema and Database Foundation
 
+> Current correction gate: the original Stage 2 commit omitted the required hero relation. Stage 2A must add it through a third forward-only migration before Phase 3 begins.
+
 ### Files
 
 - `prisma/schema.prisma`
@@ -108,6 +110,8 @@ Implement:
 - enums for partner role, user role, and media resource type
 
 Add unique keys and indexes required by slug lookup, ordered child records, public IDs, and normalized email lookup.
+
+`Invitation` must have a required indexed `heroAssetId` relation to `MediaAsset` with `onDelete: Restrict`. This relation is the sole source for `couple.heroImage` and is independent from gallery ordering.
 
 ### Actions
 
@@ -140,13 +144,15 @@ Add unique keys and indexes required by slug lookup, ordered child records, publ
 1. Extract the current `InvitationData` shape from the dummy-data module into a stable domain type.
 2. Implement one server-only repository query that loads an invitation with ordered relations and media.
 3. Map Prisma results to the existing template contract.
-4. Preserve optional gallery, love story, gifts, and music semantics.
-5. Return `null` for missing slugs.
-6. Remove data-access concerns from template components.
+4. Map the explicit required hero relation to `couple.heroImage`.
+5. Preserve optional gallery, love story, gifts, and music semantics.
+6. Return `null` for missing slugs.
+7. Remove data-access concerns from template components.
 
 ### Tests
 
 - Complete invitation maps correctly.
+- Required hero media maps independently from gallery order.
 - Disabled or absent optional sections map correctly.
 - Gallery and event ordering is stable.
 - Audio URLs map correctly.
@@ -211,6 +217,7 @@ Add unique keys and indexes required by slug lookup, ordered child records, publ
 - Existing Cloudinary images for `shidqi-mita`.
 - Existing Cloudinary images and audio for `dudi-aini`.
 - Explicit production media for `default-preview`.
+- One explicit hero manifest entry for each production invitation slug.
 
 ### Actions
 
@@ -248,16 +255,17 @@ Do not update invitation records or remove local files unless every required pro
 2. Resolve every dynamic-media relation from the verified Cloudinary report.
 3. Upsert invitations by slug.
 4. Upsert media by public ID.
-5. Replace ordered child relations inside a controlled transaction.
-6. Seed `rika-fauzi`, `shidqi-mita`, `dudi-aini`, and `default-preview` as production records.
-7. Keep owner relations null unless the bootstrap administrator is explicitly assigned.
-8. Run the seed twice and compare record counts.
+5. Resolve and assign each invitation's required `heroAssetId` from the verified media report.
+6. Replace ordered child relations inside a controlled transaction.
+7. Seed `rika-fauzi`, `shidqi-mita`, `dudi-aini`, and `default-preview` as production records.
+8. Keep owner relations null unless the bootstrap administrator is explicitly assigned.
+9. Run the seed twice and compare record counts.
 
 ### Tests
 
 - First seed creates the expected records.
 - Second seed produces no duplicates.
-- Every partner, gallery item, and music reference points to a valid `MediaAsset`.
+- Every hero, partner, gallery item, and music reference points to a valid `MediaAsset`.
 - Repository queries reconstruct all four invitations.
 
 ## Phase 7 — Public Route Cutover
