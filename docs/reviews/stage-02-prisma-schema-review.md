@@ -2,7 +2,7 @@
 
 ## Review Status
 
-`CHANGES REQUIRED`
+`ACCEPTED — CORRECTED BY STAGE 2A`
 
 ## Scope Reviewed
 
@@ -129,4 +129,10 @@ The owner approved the bounded correction:
 - update generated Prisma output and non-destructive integration coverage.
 
 Stage 2 is reopened as Stage 2A for this correction. Stage 3 is not authorized until Stage 2A is implemented, reviewed, and committed.
+
+## Stage 2A Resolution
+
+The approved correction was implemented and committed as `b55eed5bc336b25420c23428c2503cfe59e73ef7` (`feat: add required invitation hero relation`). The final review is recorded in `docs/reviews/stage-02a-hero-media-relation-review.md`.
+
+Stage 2 and Stage 2A are closed. Stage 3 is authorized from the reviewed implementation commit.
 

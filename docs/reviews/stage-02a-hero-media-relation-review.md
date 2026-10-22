@@ -55,3 +55,17 @@ The first reviewer attempts to access PostgreSQL and Google Fonts failed inside 
 
 Stage 2A satisfies the approved correction contract. The programmer may commit exactly the reviewed implementation files. Stage 3 becomes authorized only after that implementation commit is reported and the worktree is clean.
 
+## Post-Commit Finalization
+
+The reviewed implementation was committed as `b55eed5bc336b25420c23428c2503cfe59e73ef7` (`feat: add required invitation hero relation`). Post-commit verification confirmed:
+
+- the commit contains exactly the eight reviewed implementation files;
+- the worktree is clean on `develop`;
+- Prisma schema validation passes;
+- unit tests pass 5/5;
+- live local-database integration tests pass 4/4;
+- TypeScript validation passes;
+- three migrations are present and the local database schema is up to date.
+
+Stage 2A is closed. Stage 3 — Invitation Domain, Repository, and Mapper is authorized.
+
