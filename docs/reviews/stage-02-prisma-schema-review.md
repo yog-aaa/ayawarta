@@ -97,3 +97,19 @@ Stage 2 is accepted. The relational contract, foreign-key behavior, deterministi
 
 Finalize and commit Stage 2 only. After the commit is verified, Stage 3 — Invitation Domain, Repository, and Mapper — is authorized.
 
+## Commit Finalization Verification
+
+Stage 2 was finalized as commit `529349a5437da2e5ad53eacf8c2d4801e4e6a9d4` (`feat: add invitation database schema`).
+
+Post-commit verification confirmed:
+
+- the commit is directly based on the Stage 2 acceptance review commit;
+- all 26 changed files belong to the approved Stage 2 scope;
+- both ordered migrations and `migration_lock.toml` are committed;
+- the corrective migration contains only the approved gift-order index replacement;
+- `.env.local`, `pnpm-lock.yaml`, seed data, routes, authentication, and UI are absent from the commit;
+- branch `develop` has a clean worktree;
+- the programmer reports both local migrations applied and the local schema up to date.
+
+Stage 2 is closed. Stage 3 is authorized from the current reviewed HEAD.
+
