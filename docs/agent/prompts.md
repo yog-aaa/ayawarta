@@ -337,28 +337,71 @@ Jangan commit. Handoff wajib memuat mapping ketiga audio, ukuran dan SHA-256 akt
 ## Stage 5B — Cloudinary Upload and Verification
 
 ```text
-Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 5B — Cloudinary Upload and Verification. Manifest Stage 5A telah direview dan disetujui.
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 5B — Cloudinary Upload and Verification. Pemilik telah memberi otorisasi eksplisit pada 22 Oktober 2026 untuk melakukan upload nyata ke akun Cloudinary baru. Otorisasi ini hanya mencakup migrasi media yang tercantum dalam manifest final; tidak mencakup database, deployment, route cutover, atau penghapusan apa pun.
 
-Baca ulang AGENTS.md dan docs/media-migration.md. Gunakan manifest yang telah disetujui tanpa memperluas daftar aset.
+Stage 5A ditutup pada commit `3a2f729`. Stage 5A.1 ditutup pada commit `97d7364`. Baca ulang `AGENTS.md`, `docs/media-migration.md`, `docs/reviews/stage-05a-cloudinary-manifest-review.md`, dan `docs/reviews/stage-05a1-local-audio-resolution-review.md`.
 
-Tugas:
-1. Jalankan preflight credential berdasarkan nama key tanpa mencetak nilai.
-2. Pastikan cloud name adalah akun baru yang dituju.
-3. Upload local sources dan salin/re-upload URL akun lama ke public ID baru yang telah disetujui.
-4. Gunakan perilaku idempotent/deterministik agar retry tidak membuat duplikat acak.
-5. Verifikasi HTTPS delivery URL, cloud name, resource type, byte size, dimension jika relevan, serta audio dudi-aini.
-6. Verifikasi tepat satu hero wajib untuk setiap production slug dan pastikan hasilnya dapat di-resolve ke `Invitation.heroAssetId`.
-7. Simpan safe migration report tanpa credential.
-8. Bandingkan expected dan actual count.
+Manifest final yang tidak boleh diperluas:
+- 31 physical assets dan 37 logical usages;
+- 15 local assets dan 16 remote assets dari Cloudinary lama;
+- 27 image assets, 4 audio assets, 0 video assets;
+- 4 hero mappings, tepat satu per production slug;
+- 0 unresolved music blockers;
+- 3 MP3 lokal berada di `.media-migration/input/audio/` dan wajib lolos `pnpm media:verify-audio`;
+- audio Dudi–Aini bersumber dari `https://res.cloudinary.com/doig3gwek/video/upload/v1764532212/lagu_ruirls.mp3`;
+- audio memakai domain category `audio` tetapi Cloudinary SDK `resource_type: "video"`.
 
-Batasan keras:
-- Jangan menghapus atau rename aset akun lama.
-- Jangan menghapus file lokal.
-- Jangan switch source aplikasi atau seed database.
-- Jika satu required asset gagal, hentikan stage sebagai gagal dan pertahankan semua fallback.
-- Jangan commit. Berhenti setelah handoff untuk review.
+Preflight wajib sebelum mutasi:
+1. Pastikan worktree bersih dan HEAD memuat commit Stage 5A.1.
+2. Jalankan `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm media:verify-audio`, `pnpm media:dry-run`, dan `pnpm media:verify`.
+3. Baca hanya keberadaan dan status non-empty key `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, dan `CLOUDINARY_API_SECRET`; jangan pernah mencetak nilainya.
+4. Validasi kredensial dengan panggilan read-only Cloudinary yang aman. Pastikan target cloud bukan akun lama `doig3gwek`. Bila cloud name kosong, sama dengan akun lama, autentikasi gagal, atau report/manifest tidak cocok dengan baseline 31/37, berhenti sebelum upload.
+5. Inventarisasi seluruh 31 target public ID pada akun baru terlebih dahulu. Jangan overwrite aset existing yang tidak dapat dibuktikan cocok. Aset existing yang cocok boleh berstatus `existing_verified`; konflik public ID harus menghentikan stage tanpa overwrite atau delete.
 
-Handoff wajib melaporkan count sukses/gagal per slug/category, report path, verifikasi akun baru, dan konfirmasi aset lama serta file lokal tidak dihapus.
+Implementasi dan eksekusi:
+1. Ubah jalur `media:migrate` dari guard Stage 5A menjadi mutator Stage 5B yang hanya dapat berjalan dengan flag eksplisit, misalnya `--execute`, serta tetap menyediakan dry-run aman sebagai default.
+2. Gunakan tepat 31 physical assets dari manifest canonical. Jangan membuat upload dari 37 logical usages dan jangan membuat public ID baru di luar manifest.
+3. Upload 15 sumber lokal dan minta Cloudinary mengambil/re-upload 16 HTTPS source dari akun lama ke akun baru. Jangan mengambil sumber lain dan jangan memakai URL YouTube.
+4. Gunakan target public ID deterministik yang sudah disetujui, `unique_filename: false`, tanpa transformasi eager, tanpa rename, tanpa delete, dan dengan perilaku retry yang konvergen. Lindungi aset target existing dari overwrite tidak sengaja.
+5. Gunakan `resource_type: "image"` untuk image dan `resource_type: "video"` untuk seluruh audio. Jangan memakai `resource_type: "auto"` untuk mengaburkan kontrak manifest.
+6. Catat hasil per physical asset sebagai `uploaded`, `existing_verified`, atau `failed`. Partial success boleh tetap berada di akun baru; jangan mencoba rollback dengan deletion. Retry harus memverifikasi atau melanjutkan target deterministik yang sama.
+7. Setelah upload, verifikasi seluruh 31 target melalui Cloudinary/Admin API dan HTTPS delivery metadata: cloud name target, exact public ID, resource type, secure URL, format, byte size, serta width/height untuk image bila tersedia. Verifikasi empat audio dan empat hero secara eksplisit.
+8. Pastikan empat hero target dapat dipakai kelak untuk `Invitation.heroAssetId`, tetapi jangan membuat record `MediaAsset`, seed, atau menulis database pada tahap ini.
+9. Simpan report aman dan deterministik sejauh data hasil API memungkinkan di `.media-migration/cloudinary-upload-report.json`. Report boleh memuat cloud name, public ID, secure URL, metadata media, status, dan error generik; dilarang memuat API key, secret, signature, authorization header, request dump, stack trace, atau URL yang mengandung credential.
+10. Tambahkan verifier Stage 5B yang membaca report dan memeriksa expected-vs-actual counts, keunikan public ID, target cloud, resource type, seluruh hero/audio, kegagalan nol, dan credential leak nol. Jangan menganggap upload sukses hanya dari respons awal tanpa verifikasi target.
+11. Tambahkan unit test hermetis untuk selection 31 physical assets, Cloudinary option mapping, idempotent existing-resource behavior, conflict refusal, partial-failure reporting, retry behavior, report sanitization, dan verifier. Unit test tidak boleh membuka jaringan. Pisahkan live integration/upload path dari test default.
+
+Aturan berhenti aman:
+- Bila satu required asset gagal upload atau gagal verifikasi, status Stage 5B adalah gagal/partial dan proses harus berhenti sebelum Stage 6. Laporkan seluruh target yang sudah berhasil dan target yang gagal.
+- Jangan menghapus, rename, overwrite konflik, atau memodifikasi aset akun Cloudinary lama.
+- Jangan menghapus atau memindahkan file lokal, termasuk tiga MP3.
+- Jangan mengubah source URL aplikasi, route publik, Prisma schema/migration, seed, PostgreSQL, Firestore, Aiven, atau Vercel.
+- Jangan menjalankan Stage 6.
+- Jangan mengubah `.env.local` atau mencetak credential.
+- Jangan commit. Berhenti setelah upload, verifikasi, dan handoff untuk review.
+
+Verifikasi minimum setelah eksekusi:
+- `pnpm test`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+- `pnpm media:verify-audio`
+- `pnpm media:dry-run` dan `pnpm media:verify`
+- command upload eksplisit Stage 5B
+- verifier report/live target Stage 5B
+- `git diff --check`
+- staged/worktree credential scan tanpa mencetak nilai rahasia
+
+Handoff wajib menyertakan:
+- identitas target hanya berupa cloud name aman dan bukti bahwa bukan `doig3gwek`;
+- report path dan hash report;
+- count expected/actual global serta per slug/category/resource type;
+- daftar status `uploaded`, `existing_verified`, dan `failed`;
+- verifikasi empat hero dan empat audio;
+- bila partial/gagal, public ID tepat yang gagal dan safe retry instruction;
+- hasil test/typecheck/lint/build;
+- konfirmasi 0 database writes, 0 deployment, 0 route cutover, 0 deletion, dan akun lama/file lokal tetap utuh;
+- daftar file source yang berubah dan status `not committed`.
 ```
 
 ## Stage 6 — Idempotent Local Seed
