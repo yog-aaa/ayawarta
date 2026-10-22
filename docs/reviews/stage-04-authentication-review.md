@@ -64,3 +64,25 @@ Passing commands do not override the blocking behavioral and coverage findings a
 ## Decision
 
 Stage 4 is not accepted and must not be committed. Apply only the bounded corrections above, keep the database unmodified, rerun the complete verification suite, and return for review. Stage 5 remains blocked.
+
+## Correction Re-Review
+
+The submitted correction resolves AUTH-01 through AUTH-06 in substance:
+
+- failure increments use Prisma atomic field operations and conditional locking;
+- parallel and expired-lock transitions have dedicated concurrency tests;
+- the login route remains reachable for stale sessions and revalidates against PostgreSQL before redirecting;
+- route, JWT/session, login-handler, logout, and fixed-redirect decisions are tested;
+- `src/proxy.ts` replaces the deprecated middleware convention;
+- bootstrap failures expose only a fixed generic message;
+- login and bootstrap reject passwords beyond bcrypt's 72-byte UTF-8 boundary.
+
+Independent re-review confirmed 95/95 hermetic tests and clean TypeScript validation. Targeted Stage 4 lint completed without reported diagnostics; a subsequent full lint invocation stalled in the reviewer shell without emitting an error and was stopped after multiple wait intervals. The programmer's clean full-lint evidence remains credible and must be rerun after the final correction.
+
+### AUTH-07 — Immediate process exit bypasses Prisma disconnect
+
+`scripts/bootstrap-admin.ts` calls `process.exit(exitCode)` inside the `try` block. Node's immediate exit does not unwind the stack, so the `finally` block is not guaranteed to run and the Prisma client is not cleanly disconnected on the failure path. This contradicts the bootstrap disconnect contract and the handoff claim.
+
+Set `process.exitCode` instead of calling `process.exit`, allow control to leave the `try`, and await `$disconnect()` in `finally`. The top-level catch must follow the same non-immediate-exit pattern. Add a small hermetic orchestration test or extract a testable `main` function proving disconnect occurs for both success and failure without importing the real database client in the unit test.
+
+AUTH-07 is the only remaining blocking finding. Stage 4 remains `CHANGES REQUIRED` until this bounded correction is reviewed. Stage 5 remains blocked.
