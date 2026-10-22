@@ -2,7 +2,7 @@
 
 ## Status
 
-`CHANGES REQUIRED`
+`ACCEPTED — AWAITING IMPLEMENTATION COMMIT`
 
 ## Review Method
 
@@ -86,3 +86,26 @@ Independent re-review confirmed 95/95 hermetic tests and clean TypeScript valida
 Set `process.exitCode` instead of calling `process.exit`, allow control to leave the `try`, and await `$disconnect()` in `finally`. The top-level catch must follow the same non-immediate-exit pattern. Add a small hermetic orchestration test or extract a testable `main` function proving disconnect occurs for both success and failure without importing the real database client in the unit test.
 
 AUTH-07 is the only remaining blocking finding. Stage 4 remains `CHANGES REQUIRED` until this bounded correction is reviewed. Stage 5 remains blocked.
+
+## AUTH-07 Final Review
+
+AUTH-07 is resolved:
+
+- the bootstrap script contains no direct `process.exit()` call;
+- non-zero results set `process.exitCode` without terminating stack unwinding;
+- orchestration always awaits the injected disconnect function in `finally`;
+- unexpected runner failures emit only the approved generic message;
+- four hermetic orchestration tests cover success, returned failure, thrown failure, and absence of direct exit calls.
+
+Final independent verification confirmed:
+
+- 99/99 hermetic tests;
+- clean TypeScript validation;
+- 5/5 read-only PostgreSQL integration tests;
+- successful Next.js 16 production build with the supported proxy convention and no deprecated-middleware warning;
+- four Prisma migrations with the local `ayawarta` schema up to date;
+- no direct `process.exit()` call in application or bootstrap source.
+
+## Final Decision
+
+Stage 4 is accepted for implementation commit. The programmer may commit exactly the reviewed authentication files and must not run the bootstrap, create an administrator, modify PostgreSQL data, or begin Stage 5. After commit, report the full hash, exact committed paths, clean-worktree status, and final pnpm verification summary for closure review.
