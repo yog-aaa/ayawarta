@@ -278,6 +278,62 @@ Verifikasi minimum: `pnpm test`, test khusus dry-run/manifest, `pnpm typecheck`,
 Handoff wajib menyertakan manifest summary lengkap, perbedaan physical asset count vs logical usage count, empat hero mappings, unresolved music list, test results, generated report path, daftar file yang berubah, bukti tidak ada external effect, dan daftar external effects yang akan terjadi bila Stage 5B kelak disetujui.
 ```
 
+## Stage 5A.1 — Resolve Local Audio Inputs
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 5A.1 — Resolve Local Audio Inputs. Stage 5A telah diterima dan ditutup pada commit 3a2f729. Jangan melakukan upload Cloudinary dan jangan memulai Stage 5B.
+
+Baca AGENTS.md, docs/media-migration.md, manifest Stage 5A, dan review Stage 5A yang telah ditutup.
+
+Tiga file audio resmi telah disediakan secara lokal dan sengaja tidak dilacak Git:
+
+- .media-migration/input/audio/rika-fauzi.mp3
+  - bytes: 7369389
+  - SHA-256: 48D3A6E9E0ED03416073720FE28C39ACDF6FBE4256BB41E0A83E6142CCBF323B
+- .media-migration/input/audio/shidqi-mita.mp3
+  - bytes: 2263386
+  - SHA-256: 1AEBA6C98E8F2079081216DD3554A87E295F4562460CED2F7C7F1572120F711F
+- .media-migration/input/audio/default-preview.mp3
+  - bytes: 2263386
+  - SHA-256: 1AEBA6C98E8F2079081216DD3554A87E295F4562460CED2F7C7F1572120F711F
+
+Kesamaan hash `shidqi-mita` dan `default-preview` disengaja dan telah dikonfirmasi pemilik. Walaupun kontennya identik, pertahankan dua target public ID berbeda agar setiap invitation tetap memiliki media di production folder slug masing-masing.
+
+Tugas:
+1. Tambahkan typed audio-resolution contract yang memetakan tiga slug tersebut ke input lokal, expected byte size, expected SHA-256, dan target public ID `ayawarta/production/invitations/{slug}/audio/background-music`.
+2. Jangan memasukkan byte MP3 ke repository. Hanya descriptor/hash yang boleh dikomit; file tetap berada di `.media-migration/input/audio` yang di-ignore.
+3. Pisahkan validator input migration lokal dari validator public image source bila diperlukan. Pastikan path input tetap terkungkung dalam `.media-migration/input/audio`, menolak traversal/symlink escape, dan hanya menerima nama file yang diizinkan.
+4. Validasi file ada, readable, nonzero, extension `.mp3`, byte size sesuai, SHA-256 sesuai, dan memiliki signature MP3 yang masuk akal. Jangan mentranscode atau memodifikasi file.
+5. Ubah manifest generation agar tiga unresolved YouTube music blocker digantikan tiga physical audio asset dan tiga logical audio usage dari input lokal terverifikasi.
+6. Pertahankan audio `dudi-aini` dari Cloudinary lama. Semua empat audio menggunakan domain category `audio` dan Cloudinary SDK resource type `video`.
+7. Expected canonical totals setelah amendment:
+   - 31 physical assets
+   - 37 logical usages
+   - 15 local assets
+   - 16 remote assets
+   - 27 images
+   - 4 audio assets
+   - 0 video assets
+   - 0 unresolved music blockers
+   - 4 explicit heroes
+8. Update verifier agar memvalidasi descriptor, hash/size audio lokal, totals baru, dan zero blockers. Report canonical harus tetap deterministik byte-for-byte.
+9. Unit test harus hermetis: gunakan temporary fixture audio melalui dependency injection; jangan membuat `pnpm test` bergantung pada file ignored milik operator. Tambahkan integration/local-input check terpisah untuk tiga file nyata.
+10. Dry-run/report boleh membaca file lokal dan menghitung hash, tetapi tidak boleh membuka network, mengunggah, mengubah database, menghapus file, atau mengubah route/seed/UI.
+
+Verifikasi minimum:
+- pnpm test
+- pnpm typecheck
+- pnpm lint
+- pnpm build
+- local audio input verification untuk ketiga file
+- pnpm media:dry-run dua kali dengan hash report identik
+- pnpm media:verify
+- live-execution guard
+- git diff --check
+
+Jangan commit. Handoff wajib memuat mapping ketiga audio, ukuran dan SHA-256 aktual, bukti bahwa duplicate hash disengaja tetapi public ID tetap terpisah, totals lama vs baru, hasil verifikasi, zero external effects, daftar file berubah, dan status not committed.
+```
+
 ## Stage 5B — Cloudinary Upload and Verification
 
 ```text
