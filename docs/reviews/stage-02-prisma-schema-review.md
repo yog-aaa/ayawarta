@@ -2,7 +2,7 @@
 
 ## Review Status
 
-`CHANGES REQUIRED`
+`ACCEPTED`
 
 ## Scope Reviewed
 
@@ -60,4 +60,40 @@ Stage 2 is not accepted yet. The migration is safe and the main relational desig
 ## Next Authorized Stage
 
 None. Stage 3 remains unauthorized until the corrected Stage 2 diff and additive local migration are reviewed and accepted.
+
+## Corrected Submission Review
+
+The corrected Stage 2 worktree was reviewed on top of `ec74851`.
+
+All blocking findings were resolved:
+
+- `GiftAccount` now enforces `@@unique([invitationId, position])`.
+- The already-applied initial migration remains intact.
+- A forward-only migration, `20261022013000_enforce_gift_account_position_unique`, replaces the earlier non-unique gift-order index with a unique index.
+- The live database suite no longer assumes that application tables are empty.
+- Default `npm test` excludes database integration tests and runs without PostgreSQL access.
+- Live database verification is isolated behind `npm run test:db` using a dedicated Prisma client and clean disconnect.
+
+Independent verification confirmed:
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Default tests | PASS | Reviewer ran 1 test file and 5 tests successfully without database access. |
+| TypeScript | PASS | Reviewer independently confirmed `npm run typecheck` exits successfully. |
+| Gift ordering | PASS | Authored schema contains a compound unique constraint for invitation and position. |
+| Corrective migration | PASS | SQL drops only the superseded gift-order index and creates its unique replacement. |
+| Initial migration preservation | PASS | Initial SQL still contains the original non-unique index followed by the separate forward migration; it was not rewritten in place. |
+| Live DB integration | Programmer PASS; reviewer environment-limited | Programmer reports 3/3 tests against local `ayawarta`. Reviewer sandbox cannot reach the user's Laragon service. |
+| Migration status | Programmer PASS; reviewer environment-limited | Programmer reports both migrations applied and schema up to date. |
+| External effects | PASS | Only the approved local corrective migration was applied; no seed or external service was touched. |
+
+The index replacement is safe for this stage because the database is still unseeded. Both migrations must remain committed in order and must be applied before production invitation data is inserted.
+
+## Final Decision
+
+Stage 2 is accepted. The relational contract, foreign-key behavior, deterministic child ordering, migration history, server-only Prisma runtime, and unit/integration test split are suitable foundations for the domain repository layer.
+
+## Final Next Authorized Stage
+
+Finalize and commit Stage 2 only. After the commit is verified, Stage 3 — Invitation Domain, Repository, and Mapper — is authorized.
 
