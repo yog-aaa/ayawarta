@@ -2,7 +2,7 @@
 
 ## Status
 
-`CHANGES REQUIRED`
+`ACCEPTED — READY FOR IMPLEMENTATION COMMIT`
 
 ## Review Scope
 
@@ -95,3 +95,28 @@ Make the canonical report written by the default CLI byte-for-byte deterministic
 - Two default CLI dry-runs produced different report hashes, confirming `MEDIA-03A`.
 
 Stage 5B remains blocked and the implementation must remain uncommitted.
+
+## Correction Review 2
+
+The Stage 5A implementation is accepted for commit.
+
+### Closed
+
+- `MEDIA-02A`: the report is parsed through a runtime Zod schema before dereference; malformed roots and array elements fail cleanly. The verifier now checks parsed public-ID identity, canonical usage IDs, reference ownership, exact reverse references, reuse flags and notes, source-derived format and filename, recomputed counters and per-slug summaries, and Stage 5B proposed-effect counters. Mutation coverage exercises the accepted negative cases.
+- `MEDIA-03A`: runtime time was removed from the canonical report. Two independent default CLI executions against unchanged input produced byte-identical output with the same SHA-256 hash: `7841A5F2D6F9599A3A626404AD3E6B5B7FB1DC76205630EAA561D1AF191580D8`.
+
+### Final Independent Verification
+
+- `pnpm test`: PASS — 187/187.
+- `pnpm typecheck`: PASS.
+- `pnpm lint`: PASS — zero errors and two accepted baseline warnings.
+- `pnpm build`: PASS.
+- Two default `pnpm media:dry-run` runs: PASS — identical hash shown above.
+- `pnpm media:verify`: PASS — 28 physical assets, 34 logical usages, 12 local files, 16 old-Cloudinary URLs, four heroes, zero collisions, and zero network calls.
+- External effects: none.
+
+### Commit Authorization
+
+Commit only the approved Stage 5A implementation files and `.gitignore`. Do not include `.media-migration` output, environment files, credentials, unrelated files, or generated build artifacts. Re-run the fast verification matrix after staging and report the exact committed file list and commit hash.
+
+Acceptance of Stage 5A does not authorize Stage 5B. Before any live upload, the owner must resolve the three YouTube music sources and the Stage 5B preflight must load and confirm the actual new Cloudinary cloud name instead of the dry-run placeholder.
