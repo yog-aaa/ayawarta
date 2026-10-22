@@ -249,21 +249,33 @@ Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 5A — 
 Baca semua dokumen wajib di AGENTS.md, khususnya docs/media-migration.md dan implementation plan Phase 5.
 
 Tugas:
-1. Buat typed manifest untuk seluruh media dinamis lokal dan semua URL Cloudinary akun lama.
-2. Cakup rika-fauzi, shidqi-mita, dudi-aini, dan default-preview sebagai data production, termasuk tepat satu hero eksplisit per slug.
-3. Target wajib mengikuti ayawarta/production/invitations/{slug}/{category}/...
-4. Buat generator public ID deterministik, validasi input/path traversal, dan unit test.
-5. Buat migration script dengan mode dry-run dan safe report contract.
-6. Buat verification script contract, tetapi jangan melakukan upload.
-7. Jalankan dry-run dan laporkan count per slug/category serta target public IDs.
+1. Audit sumber data aktual di `src/lib/invitations.ts`, `src/lib/dummy-data/wedding/dummy-wedding.ts`, `public/images/SAMPLE`, dan `public/images/dummy-couples`. Jangan mengandalkan daftar aset buatan tangan yang tidak dapat ditelusuri kembali ke source tersebut.
+2. Buat typed upload manifest untuk seluruh media dinamis lokal dan URL delivery Cloudinary akun lama. Pisahkan physical upload assets dari logical invitation usages agar satu file/resource yang sama dapat digunakan oleh beberapa relasi tanpa di-upload ganda.
+3. Cakup `rika-fauzi`, `shidqi-mita`, `dudi-aini`, dan `default-preview` sebagai data production, termasuk tepat satu logical hero usage per slug.
+4. Target public ID wajib deterministik dan mengikuti `ayawarta/production/invitations/{slug}/couple/{groom|bride|hero}`, `.../gallery/gallery-NN`, `.../audio/...`, atau `.../video/...`.
+5. Buat generator dan validator public ID yang menolak slug/category/role/position invalid, path traversal, `..`, backslash, absolute path, empty segment, query/fragment, serta leading/trailing slash. Tolak collision dan duplicate target public ID.
+6. Normalisasi local source menjadi path POSIX repository-relative, pastikan hasil resolve tetap berada di approved source roots, file ada dan readable, lalu catat byte size. Jangan mengikuti path keluar repository.
+7. Untuk remote source, hanya izinkan HTTPS. URL Cloudinary lama harus dikenali melalui allowlist delivery host yang eksplisit. Dry-run tidak boleh melakukan `HEAD`, fetch, download, atau request jaringan apa pun.
+8. Perlakukan sumber yang sama secara eksplisit: `FOTO - Couple.jpg` adalah hero Rika sekaligus salah satu item galeri, sedangkan `photo-sample.jpg` dipakai enam posisi galeri `default-preview`. Report wajib membedakan jumlah physical assets dan logical usages serta menjelaskan strategi reuse. Jangan membuat upload duplikat hanya untuk memenuhi beberapa usage.
+9. Inventarisasi tiga `musicUrl` YouTube milik `rika-fauzi`, `shidqi-mita`, dan `default-preview`, tetapi jangan mengunduh, mengubah, atau memasukkannya sebagai executable Cloudinary upload source. Tandai sebagai `unresolvedExternalMusic`/blocker Stage 5B yang memerlukan file audio resmi atau keputusan eksplisit. Audio Cloudinary lama milik `dudi-aini` tetap masuk manifest; pada SDK Cloudinary nanti memakai `resource_type: "video"`, tetapi domain/report tetap membedakannya sebagai audio.
+10. Jangan masukkan `galleryVideoUrl` ke manifest atau daftar blocker media; itu external content pointer PostgreSQL yang memang dipertahankan terpisah.
+11. Setiap image usage wajib memiliki alt text bermakna. Setiap gallery usage wajib memiliki position unik dan urut per slug. Manifest/report harus dapat direview tanpa membaca credential.
+12. Buat migration planning script dengan dry-run sebagai perilaku default dan safe report contract di directory yang di-ignore Git. Pada Stage 5A, jalur execute/upload harus tidak tersedia atau berhenti dengan guard yang jelas.
+13. Buat verification script contract yang hanya memvalidasi report tersimpan secara offline. Jangan membuat atau memanggil Cloudinary client pada Stage 5A.
+14. Dry-run harus deterministik dan menampilkan summary physical assets, logical usages, unresolved sources, count per slug/category, source type, resource type, byte size lokal, target public ID, collision/missing-file status, serta daftar external effects yang baru akan terjadi di Stage 5B.
+15. Tambahkan unit test hermetis untuk generator/validator, source containment, manifest invariants, deduplikasi/reuse, tepat satu hero per slug, gallery ordering, alt text, remote-host policy, exclusion `galleryVideoUrl`, deterministic output, secret-free report, dan bukti dry-run tidak menyentuh jaringan/Cloudinary/database.
 
 Batasan keras:
-- Jangan upload, mengunduh ulang remote asset, mengubah database, mengganti URL aplikasi, atau menghapus file.
-- Jangan masukkan external `galleryVideoUrl` ke manifest Cloudinary; field tersebut adalah content pointer PostgreSQL.
+- Jangan upload, mengunduh remote asset, memanggil Cloudinary API, mengubah database, mengganti URL aplikasi, membuat seed, atau menghapus/memindahkan file.
+- Jangan mengubah schema/migration Prisma, route publik, UI, Auth.js, Firestore, Aiven, atau Vercel.
+- Jangan menyalin/mengekstrak konten YouTube atau menganggap URL YouTube sebagai file audio yang siap di-upload.
 - Jangan mencetak credential.
+- Jangan mengubah `.env.local` atau lockfile.
 - Jangan commit. Berhenti setelah handoff untuk review manifest.
 
-Handoff wajib menyertakan manifest summary lengkap, test results, dan daftar external effects yang akan terjadi jika Stage 5B disetujui.
+Verifikasi minimum: `pnpm test`, test khusus dry-run/manifest, `pnpm typecheck`, `pnpm lint`, `pnpm build`, `git diff --check`, dan scan bahwa tidak ada credential/report generated yang masuk diff. Jangan jalankan `test:db` bila implementasi Stage 5A memang hermetis dan tidak membutuhkan database; bila tetap dijalankan, hanya read-only.
+
+Handoff wajib menyertakan manifest summary lengkap, perbedaan physical asset count vs logical usage count, empat hero mappings, unresolved music list, test results, generated report path, daftar file yang berubah, bukti tidak ada external effect, dan daftar external effects yang akan terjadi bila Stage 5B kelak disetujui.
 ```
 
 ## Stage 5B — Cloudinary Upload and Verification
