@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# media migration reports
+/.media-migration/
+
 # next.js
 /.next/
 /out/
