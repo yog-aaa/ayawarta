@@ -2,7 +2,7 @@
 
 ## Status
 
-`ACCEPTED — AWAITING IMPLEMENTATION COMMIT`
+`ACCEPTED — CLOSED`
 
 ## Owner Decision
 
@@ -73,4 +73,31 @@ Reviewer verification passed:
 
 pnpm reports ignored dependency build scripts. This is accepted as a non-blocking observation for the current dependency graph because a frozen install followed by Prisma generation, native-backed Next/Tailwind compilation, all tests, and the production build succeeds. Do not add an allowlist unless a future reviewed failure demonstrates it is required.
 
-The programmer may commit exactly the reviewed package-manager files. Stage 3 remains blocked until that commit is reported and the worktree is clean.
+## Post-Commit Finalization
+
+Implementation commit:
+
+- short hash: `75dc0cc`;
+- full hash: `75dc0ccc379f228231f962445445e6c393b0801c`;
+- message: `chore: adopt pnpm package manager`.
+
+The committed scope is exactly the three reviewed package-manager paths:
+
+- `package-lock.json` removed;
+- `package.json` updated only with `packageManager: pnpm@10.34.7`;
+- `pnpm-lock.yaml` regenerated as the sole dependency lockfile.
+
+Independent post-commit verification confirmed:
+
+- `75dc0cc` is the current `develop` HEAD and the worktree is clean;
+- pnpm resolves to version 10.34.7;
+- `pnpm install --frozen-lockfile` succeeds with no lockfile change;
+- 5/5 hermetic unit tests pass;
+- TypeScript validation passes;
+- 5/5 read-only local-database integration tests pass;
+- all four Prisma migrations are present and the local `ayawarta` schema is up to date;
+- no additional dependency lockfile is tracked or present.
+
+The ignored dependency build-script notice remains a documented, non-blocking observation. No allowlist or interactive approval is required while the verified toolchain continues to pass.
+
+Stage 1B is closed. Stage 3 — Invitation Domain and Server Repository is authorized, using pnpm exclusively.
