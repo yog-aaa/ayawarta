@@ -58,3 +58,40 @@ Reject URL userinfo, unexpected ports, search parameters, and fragments for exec
 Return the implementation uncommitted with a mapping from `MEDIA-01` through `MEDIA-05` to the correction and tests. Repeat all Stage 5A checks. Explicitly include negative-test evidence for traversal before normalization, real-path containment, tampered report references, tampered summaries, full-report determinism, output-path escape, and decorated remote URLs.
 
 Stage 5B remains blocked. The three unresolved YouTube music sources also remain a separate product/data decision after Stage 5A implementation quality is accepted.
+
+## Correction Review 1
+
+Status remains `CHANGES REQUIRED`.
+
+### Closed
+
+- `MEDIA-01`: raw traversal and path-shape checks now run before normalization; candidate and approved roots use real paths and boundary-safe relative comparisons. The added negative tests cover traversal, sibling prefixes, null bytes, backslashes, drive/UNC paths, empty segments, and symlink escape.
+- `MEDIA-04`: normal CLI output is confined syntactically to `.media-migration`, test-only output injection remains isolated, and the broad `/output/` ignore was removed.
+- `MEDIA-05`: executable remote sources now reject URL userinfo, custom ports, query parameters, and fragments, and the offline verifier reuses that validator.
+
+### Still Blocking
+
+#### MEDIA-02A — Serialized report validation remains incomplete
+
+The correction added reference existence, unique usage IDs, slug ownership between usage and asset, reverse references, role/position checks, and summary recomputation. However, the verifier still does not compare the slug and category parsed from each target public ID with the `PhysicalAsset.slug` and `PhysicalAsset.category`; validate canonical `usageId` against its fields; recompute `isReused` and `reuseNotes`; validate `format` and `originalFileName` from the source; recompute `collisionsDetected` and `missingLocalFilesCount`; or validate `stage5BProposedEffects` against the manifest. Those fields can be altered while verification continues to pass.
+
+The function also uses a TypeScript assertion after `JSON.parse` and then dereferences the payload. A malformed JSON value such as `null`, a null array element, or a wrong primitive can throw instead of returning a controlled failed verification result. Add runtime schema validation (Zod is already installed) or equivalent total shape guards before any dereference. Add mutation tests for every field above and malformed-root/element inputs.
+
+#### MEDIA-03A — Default CLI report is still nondeterministic
+
+Clock injection makes a unit test deterministic, but the normal `pnpm media:dry-run` path supplies no timestamp, so it still writes the current time. Two consecutive reviewer runs produced different SHA-256 hashes for otherwise unchanged input:
+
+- `1B5739122754365709F3D7F62F23F699E8023ACFC2F333D843A40A4A13453A2B`
+- `A01396B3EF0F83BEF4D3DB1C967D05BF0877B852D16E3BCB4CE26DC8259D1A99`
+
+Make the canonical report written by the default CLI byte-for-byte deterministic for unchanged repository data and environment. Remove runtime time from the canonical JSON or place it in explicitly non-canonical output that does not alter the report used for review/verification. The acceptance test must invoke the default CLI twice and compare the actual generated file bytes, not only call `buildDryRunReport` with a fixed injected timestamp.
+
+### Correction Review Verification
+
+- `pnpm test`: PASS — 167/167.
+- `pnpm typecheck`: PASS.
+- `pnpm lint`: PASS — zero errors and two accepted baseline warnings.
+- Default dry-run inventory remained 28 physical assets and 34 logical usages.
+- Two default CLI dry-runs produced different report hashes, confirming `MEDIA-03A`.
+
+Stage 5B remains blocked and the implementation must remain uncommitted.
