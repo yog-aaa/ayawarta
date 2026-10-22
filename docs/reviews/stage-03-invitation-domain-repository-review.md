@@ -2,7 +2,7 @@
 
 ## Status
 
-`ACCEPTED — AWAITING IMPLEMENTATION COMMIT`
+`ACCEPTED — CLOSED`
 
 ## Reviewed Scope
 
@@ -51,3 +51,25 @@ The first reviewer build attempt encountered a transient `next/font` Google Font
 ## Decision
 
 Stage 3 is accepted for implementation commit. The programmer may commit exactly the reviewed Stage 3 files and must not begin Stage 4. After the commit, report its full hash, exact committed paths, clean-worktree status, and final pnpm verification summary for closure review.
+
+## Post-Commit Finalization
+
+Implementation commit:
+
+- short hash: `1d0593c`;
+- full hash: `1d0593ce30a10ba8f40944c3cd1906d6e04a377a`;
+- message: `feat: add invitation domain repository`.
+
+The commit contains exactly the 16 reviewed Stage 3 paths: six invitation feature modules/tests, two legacy data-contract modules, seven Classic Rose component type-import updates, and the invite-page type-import update. It contains no schema, migration, environment, dependency, lockfile, content, JSX, or CSS change.
+
+Independent post-commit verification confirmed:
+
+- clean `develop` worktree with `1d0593c` at HEAD;
+- 28/28 hermetic unit tests;
+- 5/5 read-only PostgreSQL integration tests;
+- clean TypeScript validation;
+- ESLint with zero errors and the same two approved warnings;
+- successful production build and four generated pages;
+- four Prisma migrations with the local `ayawarta` schema up to date.
+
+Stage 3 is closed. Stage 4 — Admin Authentication is the next authorized stage. Later stages remain blocked pending separate review.
