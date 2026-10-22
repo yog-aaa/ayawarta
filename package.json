@@ -23,6 +23,7 @@
     "media:dry-run": "tsx scripts/migrate-invitation-media.ts --dry-run",
     "media:migrate": "tsx scripts/migrate-invitation-media.ts",
     "media:verify": "tsx scripts/verify-invitation-media.ts",
+    "media:verify-audio": "tsx scripts/verify-local-audio.ts",
     "admin:bootstrap": "tsx scripts/bootstrap-admin.ts"
   },
   "dependencies": {

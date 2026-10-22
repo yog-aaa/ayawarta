@@ -9,10 +9,24 @@ import {
   buildDryRunReport,
   generateMediaManifest,
 } from "./data/invitation-media-manifest";
+import {
+  createFixtureAudioResolver,
+  createFixtureAudioValidator,
+} from "@/features/media/testing/fixture-audio";
 
 describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
   let tempDir: string;
   const repoRoot = process.cwd();
+  const fixtureAudioResolver = createFixtureAudioResolver();
+  const fixtureAudioValidator = createFixtureAudioValidator();
+
+  function verifyReport(reportPath: string) {
+    return verifyOfflineDryRunReport({
+      reportPath,
+      repoRoot,
+      audioValidator: fixtureAudioValidator,
+    });
+  }
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ayawarta-migration-test-"));
@@ -131,6 +145,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
           logger: mockLogger,
           repoRoot,
           outputDir: tempDir,
+          audioResolver: fixtureAudioResolver,
         }
       );
 
@@ -141,22 +156,22 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
 
       const reportJson = JSON.parse(fs.readFileSync(reportPath, "utf-8"));
       expect(reportJson.mode).toBe("dry-run");
-      expect(reportJson.manifest.summary.totalPhysicalAssets).toBe(28);
-      expect(reportJson.manifest.summary.totalLogicalUsages).toBe(34);
+      expect(reportJson.manifest.summary.totalPhysicalAssets).toBe(31);
+      expect(reportJson.manifest.summary.totalLogicalUsages).toBe(37);
       expect(reportJson.manifest.summary.totalSlugs).toBe(4);
-      expect(reportJson.manifest.summary.unresolvedExternalMusicCount).toBe(3);
+      expect(reportJson.manifest.summary.totalLocalAssets).toBe(15);
+      expect(reportJson.manifest.summary.totalRemoteAssets).toBe(16);
+      expect(reportJson.manifest.summary.totalAudio).toBe(4);
+      expect(reportJson.manifest.summary.unresolvedExternalMusicCount).toBe(0);
 
-      const verifyResult = verifyOfflineDryRunReport({
-        reportPath,
-        repoRoot,
-      });
+      const verifyResult = verifyReport(reportPath);
 
       expect(verifyResult.passed).toBe(true);
       expect(verifyResult.errors).toEqual([]);
-      expect(verifyResult.verifiedAssetsCount).toBe(28);
-      expect(verifyResult.verifiedUsagesCount).toBe(34);
+      expect(verifyResult.verifiedAssetsCount).toBe(31);
+      expect(verifyResult.verifiedUsagesCount).toBe(37);
       expect(verifyResult.verifiedHeroesCount).toBe(4);
-      expect(verifyResult.verifiedLocalFilesCount).toBe(12);
+      expect(verifyResult.verifiedLocalFilesCount).toBe(15);
       expect(verifyResult.verifiedRemoteUrlsCount).toBe(16);
     });
 
@@ -169,11 +184,13 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         logger: mockLogger,
         repoRoot,
         outputDir: dir1,
+        audioResolver: fixtureAudioResolver,
       });
       const code2 = await runMigrationCli(["--dry-run"], {
         logger: mockLogger,
         repoRoot,
         outputDir: dir2,
+        audioResolver: fixtureAudioResolver,
       });
 
       expect(code1).toBe(0);
@@ -193,10 +210,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
     });
 
     it("fails verification if report does not exist", () => {
-      const result = verifyOfflineDryRunReport({
-        reportPath: path.join(tempDir, "non-existent-report.json"),
-        repoRoot,
-      });
+      const result = verifyReport(path.join(tempDir, "non-existent-report.json"));
 
       expect(result.passed).toBe(false);
       expect(result.errors[0]).toMatch(/Dry-run report not found/);
@@ -215,10 +229,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         })
       );
 
-      const result = verifyOfflineDryRunReport({
-        reportPath,
-        repoRoot,
-      });
+      const result = verifyReport(reportPath);
 
       expect(result.passed).toBe(false);
       expect(result.errors.some((e) => e.includes("CLOUDINARY_API_KEY"))).toBe(
@@ -229,7 +240,10 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
 
   describe("tampered report mutation tests (MEDIA-02 & MEDIA-02A)", () => {
     function createBaseReport() {
-      const manifest = generateMediaManifest({ repoRoot });
+      const manifest = generateMediaManifest({
+        repoRoot,
+        audioResolver: fixtureAudioResolver,
+      });
       return buildDryRunReport(manifest, "test-cloud");
     }
 
@@ -238,7 +252,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "null-root.json");
         fs.writeFileSync(reportPath, "null");
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(result.errors.some((e) => e.includes("schema validation failed"))).toBe(true);
       });
@@ -247,7 +261,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "primitive-root.json");
         fs.writeFileSync(reportPath, "12345");
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(result.errors.some((e) => e.includes("schema validation failed"))).toBe(true);
       });
@@ -256,7 +270,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "incomplete-root.json");
         fs.writeFileSync(reportPath, JSON.stringify({ mode: "dry-run" }));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(result.errors.some((e) => e.includes("schema validation failed"))).toBe(true);
       });
@@ -268,7 +282,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "null-asset-element.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(result.errors.some((e) => e.includes("schema validation failed"))).toBe(true);
       });
@@ -280,7 +294,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "null-usage-element.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(result.errors.some((e) => e.includes("schema validation failed"))).toBe(true);
       });
@@ -295,7 +309,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "mutated-1.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("references non-existent physical asset"))
@@ -310,7 +324,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "mutated-2.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(result.errors.some((e) => e.includes("Slug mismatch"))).toBe(true);
       });
@@ -322,7 +336,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "public-id-slug-mismatch.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("Public ID parsed slug"))
@@ -336,7 +350,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "public-id-category-mismatch.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("Public ID parsed category"))
@@ -350,7 +364,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "non-canonical-usage-id.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("Canonical usageId mismatch"))
@@ -365,7 +379,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "mutated-3.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(result.errors.some((e) => e.includes("Duplicate usageId"))).toBe(
           true
@@ -382,7 +396,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "mutated-4.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("Reverse reference mismatch"))
@@ -402,7 +416,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "tampered-is-reused.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("invalid isReused flag"))
@@ -421,7 +435,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "tampered-reuse-notes.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("invalid reuseNotes"))
@@ -436,7 +450,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "unexpected-reuse-notes.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("must not have reuseNotes"))
@@ -452,7 +466,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "tampered-format.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(result.errors.some((e) => e.includes("Format mismatch"))).toBe(
           true
@@ -466,7 +480,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "tampered-original-file-name.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("originalFileName mismatch"))
@@ -482,7 +496,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "forged-collisions.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("Summary collisionsDetected mismatch"))
@@ -496,7 +510,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "forged-missing-local.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("Summary missingLocalFilesCount mismatch"))
@@ -510,7 +524,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "mutated-5.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(result.errors.some((e) => e.includes("Summary forgery"))).toBe(true);
       });
@@ -522,7 +536,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "mutated-6.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("Slug breakdown forgery"))
@@ -538,7 +552,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "tampered-effects-total.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("Proposed effects totalUploads mismatch"))
@@ -552,7 +566,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "tampered-effects-db.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("Proposed effects databaseMutations must be 0"))
@@ -566,7 +580,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "tampered-effects-deletions.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("Proposed effects fileDeletions must be 0"))
@@ -580,7 +594,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "tampered-effects-details.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("Proposed effects details missing"))
@@ -601,7 +615,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "mutated-7.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("must have exactly 1 hero usage"))
@@ -620,7 +634,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "mutated-8.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("Gallery position mismatch"))
@@ -640,7 +654,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         const reportPath = path.join(tempDir, "mutated-9.json");
         fs.writeFileSync(reportPath, JSON.stringify(report));
 
-        const result = verifyOfflineDryRunReport({ reportPath, repoRoot });
+        const result = verifyReport(reportPath);
         expect(result.passed).toBe(false);
         expect(
           result.errors.some((e) => e.includes("Remote source validation failed"))

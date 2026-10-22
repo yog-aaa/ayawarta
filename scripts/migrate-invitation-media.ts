@@ -5,12 +5,14 @@ import {
   buildDryRunReport,
   generateMediaManifest,
 } from "./data/invitation-media-manifest";
+import type { AudioResolver } from "@/features/media/audio-resolution";
 
 export interface CliOptions {
   dryRun: boolean;
   outputDir: string;
   repoRoot: string;
   cloudName?: string;
+  audioResolver?: AudioResolver;
   logger: Pick<Console, "log" | "warn" | "error">;
 }
 
@@ -108,7 +110,10 @@ Do not proceed with live uploads until Stage 5A has been reviewed and accepted b
   logger.log("=======================================================\n");
 
   logger.log("[1/4] Generating typed manifest from repository data...");
-  const manifest = generateMediaManifest({ repoRoot });
+  const manifest = generateMediaManifest({
+    repoRoot,
+    audioResolver: overrides?.audioResolver,
+  });
 
   logger.log("[2/4] Validating manifest invariants...");
   const { summary } = manifest;

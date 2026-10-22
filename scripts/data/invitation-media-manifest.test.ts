@@ -8,9 +8,11 @@ import {
   validateRemoteCloudinaryUrl,
 } from "./invitation-media-manifest";
 import { validateInvitationPublicId } from "@/features/media/public-id";
+import { createFixtureAudioResolver } from "@/features/media/testing/fixture-audio";
 
 describe("invitation-media-manifest", () => {
   const repoRoot = process.cwd();
+  const fixtureAudioResolver = createFixtureAudioResolver();
 
   describe("remote URL validation (MEDIA-05)", () => {
     it("accepts valid HTTPS old Cloudinary URLs", () => {
@@ -180,7 +182,10 @@ describe("invitation-media-manifest", () => {
   });
 
   describe("generateMediaManifest invariants", () => {
-    const manifest = generateMediaManifest({ repoRoot });
+    const manifest = generateMediaManifest({
+      repoRoot,
+      audioResolver: fixtureAudioResolver,
+    });
 
     it("contains exactly the 4 approved production slugs", () => {
       expect(manifest.slugs).toEqual([
@@ -192,22 +197,22 @@ describe("invitation-media-manifest", () => {
       expect(manifest.summary.totalSlugs).toBe(4);
     });
 
-    it("contains exactly 28 physical upload assets and 34 logical usages", () => {
-      expect(manifest.physicalAssets.length).toBe(28);
-      expect(manifest.logicalUsages.length).toBe(34);
-      expect(manifest.summary.totalPhysicalAssets).toBe(28);
-      expect(manifest.summary.totalLogicalUsages).toBe(34);
+    it("contains exactly 31 physical upload assets and 37 logical usages", () => {
+      expect(manifest.physicalAssets.length).toBe(31);
+      expect(manifest.logicalUsages.length).toBe(37);
+      expect(manifest.summary.totalPhysicalAssets).toBe(31);
+      expect(manifest.summary.totalLogicalUsages).toBe(37);
     });
 
-    it("has 12 local physical assets and 16 remote physical assets", () => {
-      expect(manifest.summary.totalLocalAssets).toBe(12);
+    it("has 15 local physical assets and 16 remote physical assets", () => {
+      expect(manifest.summary.totalLocalAssets).toBe(15);
       expect(manifest.summary.totalRemoteAssets).toBe(16);
 
       // Verify all local assets have non-null byteSize
       const localAssets = manifest.physicalAssets.filter(
         (a) => a.sourceType === "local"
       );
-      expect(localAssets.length).toBe(12);
+      expect(localAssets.length).toBe(15);
       for (const asset of localAssets) {
         expect(asset.byteSize).toBeTypeOf("number");
         expect(asset.byteSize).toBeGreaterThan(0);
@@ -223,20 +228,41 @@ describe("invitation-media-manifest", () => {
       }
     });
 
-    it("has 27 images and 1 audio resource (0 videos)", () => {
+    it("has 27 images and 4 audio resources (0 videos)", () => {
       expect(manifest.summary.totalImages).toBe(27);
-      expect(manifest.summary.totalAudio).toBe(1);
+      expect(manifest.summary.totalAudio).toBe(4);
       expect(manifest.summary.totalVideo).toBe(0);
 
-      const audioAsset = manifest.physicalAssets.find(
+      const audioAssets = manifest.physicalAssets.filter(
         (a) => a.category === "audio"
       );
-      expect(audioAsset).toBeDefined();
-      expect(audioAsset?.slug).toBe("dudi-aini");
-      expect(audioAsset?.cloudinaryResourceType).toBe("video");
-      expect(audioAsset?.targetPublicId).toBe(
-        "ayawarta/production/invitations/dudi-aini/audio/background-music"
+      expect(audioAssets.length).toBe(4);
+
+      // All 4 audio resources use Cloudinary resource type 'video'
+      for (const audio of audioAssets) {
+        expect(audio.cloudinaryResourceType).toBe("video");
+        expect(audio.targetPublicId).toBe(
+          `ayawarta/production/invitations/${audio.slug}/audio/background-music`
+        );
+      }
+
+      // 3 local audio, 1 remote audio
+      const localAudio = audioAssets.filter((a) => a.sourceType === "local");
+      const remoteAudio = audioAssets.filter((a) => a.sourceType === "remote");
+      expect(localAudio.length).toBe(3);
+      expect(remoteAudio.length).toBe(1);
+      expect(remoteAudio[0].slug).toBe("dudi-aini");
+
+      // Verify shidqi-mita and default-preview have distinct target public IDs
+      const shidqiAudio = audioAssets.find((a) => a.slug === "shidqi-mita");
+      const previewAudio = audioAssets.find((a) => a.slug === "default-preview");
+      expect(shidqiAudio?.targetPublicId).toBe(
+        "ayawarta/production/invitations/shidqi-mita/audio/background-music"
       );
+      expect(previewAudio?.targetPublicId).toBe(
+        "ayawarta/production/invitations/default-preview/audio/background-music"
+      );
+      expect(shidqiAudio?.targetPublicId).not.toBe(previewAudio?.targetPublicId);
     });
 
     it("has exactly 1 hero usage per slug (4 heroes total)", () => {
@@ -255,9 +281,31 @@ describe("invitation-media-manifest", () => {
     });
 
     it("tracks asset reuse cleanly without duplicate uploads", () => {
-      // rika-fauzi: 8 physical assets vs 9 logical usages
-      expect(manifest.summary.slugBreakdown["rika-fauzi"].physicalAssets).toBe(8);
-      expect(manifest.summary.slugBreakdown["rika-fauzi"].logicalUsages).toBe(9);
+      // rika-fauzi: 9 physical assets vs 10 logical usages (8 images + 1 audio vs 9 image usages + 1 audio usage)
+      expect(manifest.summary.slugBreakdown["rika-fauzi"].physicalAssets).toBe(9);
+      expect(manifest.summary.slugBreakdown["rika-fauzi"].logicalUsages).toBe(10);
+      expect(manifest.summary.slugBreakdown["rika-fauzi"].unresolvedMusic).toBe(0);
+
+      // shidqi-mita: 10 physical assets vs 10 logical usages
+      expect(manifest.summary.slugBreakdown["shidqi-mita"].physicalAssets).toBe(10);
+      expect(manifest.summary.slugBreakdown["shidqi-mita"].logicalUsages).toBe(10);
+      expect(manifest.summary.slugBreakdown["shidqi-mita"].unresolvedMusic).toBe(0);
+
+      // dudi-aini: 7 physical assets vs 7 logical usages
+      expect(manifest.summary.slugBreakdown["dudi-aini"].physicalAssets).toBe(7);
+      expect(manifest.summary.slugBreakdown["dudi-aini"].logicalUsages).toBe(7);
+      expect(manifest.summary.slugBreakdown["dudi-aini"].unresolvedMusic).toBe(0);
+
+      // default-preview: 5 physical assets vs 10 logical usages
+      expect(
+        manifest.summary.slugBreakdown["default-preview"].physicalAssets
+      ).toBe(5);
+      expect(
+        manifest.summary.slugBreakdown["default-preview"].logicalUsages
+      ).toBe(10);
+      expect(
+        manifest.summary.slugBreakdown["default-preview"].unresolvedMusic
+      ).toBe(0);
 
       // rika-fauzi hero is reused in gallery position 6
       const rikaHeroAsset = manifest.physicalAssets.find(
@@ -275,14 +323,6 @@ describe("invitation-media-manifest", () => {
       expect(rikaGallery6Usage?.targetPublicId).toBe(
         "ayawarta/production/invitations/rika-fauzi/couple/hero"
       );
-
-      // default-preview: 4 physical assets vs 9 logical usages
-      expect(
-        manifest.summary.slugBreakdown["default-preview"].physicalAssets
-      ).toBe(4);
-      expect(
-        manifest.summary.slugBreakdown["default-preview"].logicalUsages
-      ).toBe(9);
 
       // default-preview photo-sample is reused in gallery 01..06
       const previewGallery1Asset = manifest.physicalAssets.find(
@@ -340,25 +380,12 @@ describe("invitation-media-manifest", () => {
         expect(seenIds.has(asset.targetPublicId)).toBe(false);
         seenIds.add(asset.targetPublicId);
       }
-      expect(seenIds.size).toBe(28);
+      expect(seenIds.size).toBe(31);
     });
 
-    it("identifies exactly 3 unresolved YouTube music blockers", () => {
-      expect(manifest.unresolvedMusicBlockers.length).toBe(3);
-      expect(manifest.summary.unresolvedExternalMusicCount).toBe(3);
-
-      const blockedSlugs = manifest.unresolvedMusicBlockers.map((b) => b.slug);
-      expect(blockedSlugs).toEqual([
-        "rika-fauzi",
-        "shidqi-mita",
-        "default-preview",
-      ]);
-
-      for (const blocker of manifest.unresolvedMusicBlockers) {
-        expect(blocker.musicUrl).toMatch(/youtu/);
-        expect(blocker.reason.length).toBeGreaterThan(5);
-        expect(blocker.actionRequired.length).toBeGreaterThan(5);
-      }
+    it("has zero unresolved music blockers after Stage 5A.1 resolution", () => {
+      expect(manifest.unresolvedMusicBlockers.length).toBe(0);
+      expect(manifest.summary.unresolvedExternalMusicCount).toBe(0);
     });
 
     it("completely excludes galleryVideoUrl from manifest and blockers", () => {
@@ -387,16 +414,28 @@ describe("invitation-media-manifest", () => {
     });
 
     it("is pure and deterministic across repeated runs", () => {
-      const manifest1 = generateMediaManifest({ repoRoot });
-      const manifest2 = generateMediaManifest({ repoRoot });
+      const manifest1 = generateMediaManifest({
+        repoRoot,
+        audioResolver: fixtureAudioResolver,
+      });
+      const manifest2 = generateMediaManifest({
+        repoRoot,
+        audioResolver: fixtureAudioResolver,
+      });
       expect(manifest1).toEqual(manifest2);
     });
   });
 
   describe("buildDryRunReport (MEDIA-03A)", () => {
     it("produces byte-for-byte identical reports across runs", () => {
-      const manifest1 = generateMediaManifest({ repoRoot });
-      const manifest2 = generateMediaManifest({ repoRoot });
+      const manifest1 = generateMediaManifest({
+        repoRoot,
+        audioResolver: fixtureAudioResolver,
+      });
+      const manifest2 = generateMediaManifest({
+        repoRoot,
+        audioResolver: fixtureAudioResolver,
+      });
 
       const report1 = buildDryRunReport(manifest1, "my-cloudinary-cloud");
       const report2 = buildDryRunReport(manifest2, "my-cloudinary-cloud");
@@ -407,7 +446,10 @@ describe("invitation-media-manifest", () => {
     });
 
     it("builds a safe report without credential values", () => {
-      const manifest = generateMediaManifest({ repoRoot });
+      const manifest = generateMediaManifest({
+        repoRoot,
+        audioResolver: fixtureAudioResolver,
+      });
       const report = buildDryRunReport(manifest, "my-cloudinary-cloud");
 
       expect(report.mode).toBe("dry-run");
@@ -416,7 +458,9 @@ describe("invitation-media-manifest", () => {
       );
       expect(report.stage5BProposedEffects.databaseMutations).toBe(0);
       expect(report.stage5BProposedEffects.fileDeletions).toBe(0);
-      expect(report.stage5BProposedEffects.totalUploads).toBe(28);
+      expect(report.stage5BProposedEffects.totalUploads).toBe(31);
+      expect(report.stage5BProposedEffects.localUploadsCount).toBe(15);
+      expect(report.stage5BProposedEffects.remoteUploadsCount).toBe(16);
 
       const reportJson = JSON.stringify(report);
       // Ensure no sensitive substrings
@@ -424,6 +468,27 @@ describe("invitation-media-manifest", () => {
       expect(reportJson).not.toMatch(/AUTH_SECRET/i);
       expect(reportJson).not.toMatch(/ADMIN_PASSWORD/i);
       expect(reportJson).not.toMatch(/DATABASE_URL/i);
+    });
+
+    it("supports hermetic manifest generation with mock AudioResolver", () => {
+      const mockResolver = {
+        resolveAudio: (slug: "rika-fauzi" | "shidqi-mita" | "default-preview") => ({
+          sourceLocation: `.media-migration/input/audio/${slug}.mp3`,
+          byteSize: 123456,
+          sha256: "MOCK_SHA256",
+          targetPublicId: `ayawarta/production/invitations/${slug}/audio/background-music`,
+        }),
+      };
+
+      const manifestWithMock = generateMediaManifest({
+        repoRoot,
+        audioResolver: mockResolver,
+      });
+
+      expect(manifestWithMock.summary.totalAudio).toBe(4);
+      expect(manifestWithMock.summary.unresolvedExternalMusicCount).toBe(0);
+      expect(manifestWithMock.physicalAssets.length).toBe(31);
+      expect(manifestWithMock.logicalUsages.length).toBe(37);
     });
   });
 });

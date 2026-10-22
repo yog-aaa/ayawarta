@@ -11,6 +11,12 @@ import {
   buildGalleryPublicId,
   validateInvitationPublicId,
 } from "@/features/media/public-id";
+import {
+  type AudioResolver,
+  DefaultLocalAudioResolver,
+  isLocalAudioSlug,
+  validateLocalAudioSource,
+} from "@/features/media/audio-resolution";
 import type {
   DryRunReport,
   InvitationSlug,
@@ -25,6 +31,7 @@ import type {
 
 export interface ManifestOptions {
   repoRoot?: string;
+  audioResolver?: AudioResolver;
 }
 
 export const OLD_CLOUDINARY_HOST = "res.cloudinary.com";
@@ -277,6 +284,7 @@ export function validateLocalSource(
  */
 export function generateMediaManifest(options?: ManifestOptions): MediaManifest {
   const repoRoot = options?.repoRoot ? path.resolve(options.repoRoot) : process.cwd();
+  const audioResolver = options?.audioResolver ?? new DefaultLocalAudioResolver();
 
   const physicalAssets: PhysicalAsset[] = [];
   const logicalUsages: LogicalUsage[] = [];
@@ -299,6 +307,7 @@ export function generateMediaManifest(options?: ManifestOptions): MediaManifest 
     altText?: string;
     targetPublicIdProposal: string;
     cloudinaryResourceType: "image" | "video";
+    knownByteSize?: number;
   }) {
     const {
       slug,
@@ -309,6 +318,7 @@ export function generateMediaManifest(options?: ManifestOptions): MediaManifest 
       altText,
       targetPublicIdProposal,
       cloudinaryResourceType,
+      knownByteSize,
     } = params;
 
     // Validate public ID proposal
@@ -336,6 +346,24 @@ export function generateMediaManifest(options?: ManifestOptions): MediaManifest 
       sourceLocation = rawSource;
       format = getFileExtension(rawSource);
       originalFileName = getFileName(rawSource);
+    } else if (category === "audio") {
+      if (knownByteSize !== undefined) {
+        sourceLocation = rawSource;
+        byteSize = knownByteSize;
+        format = getFileExtension(rawSource);
+        originalFileName = getFileName(rawSource);
+      } else {
+        const audioValidation = validateLocalAudioSource(rawSource, { repoRoot });
+        if (!audioValidation.valid) {
+          throw new Error(
+            `Invalid local audio source for slug '${slug}': ${audioValidation.reason}`
+          );
+        }
+        sourceLocation = audioValidation.posixRelativePath!;
+        byteSize = audioValidation.byteSize!;
+        format = getFileExtension(sourceLocation);
+        originalFileName = getFileName(sourceLocation);
+      }
     } else {
       const localValidation = validateLocalSource(rawSource, repoRoot);
       if (!localValidation.valid) {
@@ -485,7 +513,17 @@ export function generateMediaManifest(options?: ManifestOptions): MediaManifest 
     }
 
     // 5. Music
-    if (data.musicUrl) {
+    if (isLocalAudioSlug(slug)) {
+      const resolved = audioResolver.resolveAudio(slug, repoRoot);
+      registerAssetUsage({
+        slug,
+        category: "audio",
+        rawSource: resolved.sourceLocation,
+        targetPublicIdProposal: resolved.targetPublicId,
+        cloudinaryResourceType: "video",
+        knownByteSize: resolved.byteSize,
+      });
+    } else if (data.musicUrl) {
       if (
         data.musicUrl.includes("youtube.com") ||
         data.musicUrl.includes("youtu.be")
@@ -569,11 +607,13 @@ export function buildDryRunReport(
     databaseMutations: 0,
     fileDeletions: 0,
     details: [
-      `Upload ${manifest.summary.totalLocalAssets} local files from public/images/ to Cloudinary account '${targetCloudName}'.`,
+      `Upload ${manifest.summary.totalLocalAssets} local files (12 from public/images/ and 3 from .media-migration/input/audio/) to Cloudinary account '${targetCloudName}'.`,
       `Re-upload ${manifest.summary.totalRemoteAssets} remote assets from old Cloudinary (${OLD_CLOUDINARY_HOST}${OLD_CLOUDINARY_ACCOUNT_PATH_PREFIX}) to Cloudinary account '${targetCloudName}'.`,
       `Zero database mutations in Stage 5B (invitation seed is deferred to Stage 6).`,
       `Zero file deletions in Stage 5B (local source files preserved until Stage 10 cleanup).`,
-      `Keep ${manifest.summary.unresolvedExternalMusicCount} unresolved YouTube music URLs untouched until replacement audio files are provided.`,
+      manifest.summary.unresolvedExternalMusicCount > 0
+        ? `Keep ${manifest.summary.unresolvedExternalMusicCount} unresolved YouTube music URLs untouched until replacement audio files are provided.`
+        : `All 4 invitation music assets resolved (3 local MP3s and 1 remote Cloudinary audio); 0 unresolved music blockers remain.`,
     ],
   };
 

@@ -12,10 +12,15 @@ import {
   validateLocalSource,
   validateRemoteCloudinaryUrl,
 } from "./data/invitation-media-manifest";
+import {
+  LOCAL_AUDIO_DESCRIPTORS,
+  validateLocalAudioSource,
+} from "@/features/media/audio-resolution";
 
 export interface VerificationOptions {
   reportPath?: string;
   repoRoot?: string;
+  audioValidator?: typeof validateLocalAudioSource;
   logger?: Pick<Console, "log" | "warn" | "error">;
 }
 
@@ -47,6 +52,7 @@ export function verifyOfflineDryRunReport(
   const reportPath =
     options?.reportPath ??
     path.resolve(repoRoot, ".media-migration", "manifest-dry-run-report.json");
+  const audioValidator = options?.audioValidator ?? validateLocalAudioSource;
 
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -225,18 +231,57 @@ export function verifyOfflineDryRunReport(
 
     // Source validation using hardened validators
     if (asset.sourceType === "local") {
-      const localVal = validateLocalSource(asset.sourceLocation, repoRoot);
-      if (!localVal.valid) {
-        errors.push(
-          `Local source validation failed for '${asset.sourceLocation}' in asset '${asset.targetPublicId}': ${localVal.reason}`
-        );
-      } else {
-        if (asset.byteSize !== localVal.byteSize) {
+      if (asset.category === "audio") {
+        const descriptor = LOCAL_AUDIO_DESCRIPTORS.find((d) => d.slug === asset.slug);
+        if (!descriptor) {
           errors.push(
-            `Byte size mismatch for '${asset.sourceLocation}': report says ${asset.byteSize}, actual is ${localVal.byteSize}`
+            `No local audio descriptor found for slug '${asset.slug}' in asset '${asset.targetPublicId}'`
           );
+        } else {
+          if (asset.sourceLocation !== descriptor.relativeSourcePath) {
+            errors.push(
+              `Audio asset sourceLocation '${asset.sourceLocation}' does not match descriptor '${descriptor.relativeSourcePath}'`
+            );
+          }
+          if (asset.targetPublicId !== descriptor.targetPublicId) {
+            errors.push(
+              `Audio asset targetPublicId '${asset.targetPublicId}' does not match descriptor '${descriptor.targetPublicId}'`
+            );
+          }
         }
-        verifiedLocal++;
+
+        const audioVal = audioValidator(asset.sourceLocation, {
+          repoRoot,
+          descriptor,
+          verifyContent: true,
+        });
+
+        if (!audioVal.valid) {
+          errors.push(
+            `Local audio validation failed for '${asset.sourceLocation}' in asset '${asset.targetPublicId}': ${audioVal.reason}`
+          );
+        } else {
+          if (asset.byteSize !== audioVal.byteSize) {
+            errors.push(
+              `Byte size mismatch for '${asset.sourceLocation}': report says ${asset.byteSize}, actual is ${audioVal.byteSize}`
+            );
+          }
+          verifiedLocal++;
+        }
+      } else {
+        const localVal = validateLocalSource(asset.sourceLocation, repoRoot);
+        if (!localVal.valid) {
+          errors.push(
+            `Local source validation failed for '${asset.sourceLocation}' in asset '${asset.targetPublicId}': ${localVal.reason}`
+          );
+        } else {
+          if (asset.byteSize !== localVal.byteSize) {
+            errors.push(
+              `Byte size mismatch for '${asset.sourceLocation}': report says ${asset.byteSize}, actual is ${localVal.byteSize}`
+            );
+          }
+          verifiedLocal++;
+        }
       }
     } else if (asset.sourceType === "remote") {
       const remoteVal = validateRemoteCloudinaryUrl(asset.sourceLocation);
@@ -402,33 +447,62 @@ export function verifyOfflineDryRunReport(
     });
   }
 
-  // Invariant 6: Unresolved Music Blockers
-  if (unresolvedMusicBlockers.length !== 3) {
+  // Invariant 6: Zero Unresolved Music Blockers (Stage 5A.1 Resolved)
+  if (unresolvedMusicBlockers.length !== 0) {
     errors.push(
-      `Expected exactly 3 unresolved music blockers, found ${unresolvedMusicBlockers.length}`
-    );
-  }
-  const blockerSlugs = unresolvedMusicBlockers.map((b) => b.slug).sort();
-  const expectedBlockerSlugs = ["default-preview", "rika-fauzi", "shidqi-mita"];
-  if (
-    blockerSlugs.length !== 3 ||
-    !blockerSlugs.every((s, i) => s === expectedBlockerSlugs[i])
-  ) {
-    errors.push(
-      `Unresolved music blocker slugs mismatch: expected [${expectedBlockerSlugs.join(", ")}], got [${blockerSlugs.join(", ")}]`
+      `Expected 0 unresolved music blockers after Stage 5A.1 audio resolution, found ${unresolvedMusicBlockers.length}`
     );
   }
 
-  for (const blocker of unresolvedMusicBlockers) {
-    if (
-      !blocker.musicUrl ||
-      (!blocker.musicUrl.includes("youtube.com") &&
-        !blocker.musicUrl.includes("youtu.be"))
-    ) {
+  // Verify all 4 approved slugs have resolved audio assets
+  for (const slug of expectedSlugs) {
+    const audioAssets = physicalAssets.filter(
+      (a) => a.slug === slug && a.category === "audio"
+    );
+    if (audioAssets.length !== 1) {
       errors.push(
-        `Blocker for slug '${blocker.slug}' has invalid YouTube musicUrl: '${blocker.musicUrl}'`
+        `Expected exactly 1 audio asset for slug '${slug}', found ${audioAssets.length}`
+      );
+    } else {
+      const audio = audioAssets[0];
+      const expectedAudioPublicId = `ayawarta/production/invitations/${slug}/audio/background-music`;
+      if (audio.targetPublicId !== expectedAudioPublicId) {
+        errors.push(
+          `Audio asset targetPublicId for '${slug}' must be '${expectedAudioPublicId}', got '${audio.targetPublicId}'`
+        );
+      }
+      if (audio.cloudinaryResourceType !== "video") {
+        errors.push(
+          `Audio asset for '${slug}' must have cloudinaryResourceType 'video'`
+        );
+      }
+    }
+
+    const audioUsages = logicalUsages.filter(
+      (u) => u.slug === slug && u.category === "audio"
+    );
+    if (audioUsages.length !== 1) {
+      errors.push(
+        `Expected exactly 1 audio usage for slug '${slug}', found ${audioUsages.length}`
       );
     }
+  }
+
+  // Verify shidqi-mita and default-preview keep distinct public IDs despite shared file content
+  const shidqiAudio = physicalAssets.find(
+    (a) => a.slug === "shidqi-mita" && a.category === "audio"
+  );
+  const defaultAudio = physicalAssets.find(
+    (a) => a.slug === "default-preview" && a.category === "audio"
+  );
+  if (
+    shidqiAudio &&
+    defaultAudio &&
+    shidqiAudio.targetPublicId === defaultAudio.targetPublicId
+  ) {
+    errors.push(
+      "Intentional duplicate audio hash between shidqi-mita and default-preview must retain distinct public IDs!"
+    );
   }
 
   // Invariant 7: Exclude galleryVideoUrl
@@ -478,9 +552,16 @@ export function verifyOfflineDryRunReport(
   let recomputedMissingLocal = 0;
   for (const asset of physicalAssets) {
     if (asset.sourceType === "local") {
-      const abs = path.resolve(repoRoot, asset.sourceLocation);
-      if (!fs.existsSync(abs)) {
-        recomputedMissingLocal++;
+      if (asset.category === "audio" && options?.audioValidator) {
+        const audioVal = options.audioValidator(asset.sourceLocation, { repoRoot });
+        if (!audioVal.valid) {
+          recomputedMissingLocal++;
+        }
+      } else {
+        const abs = path.resolve(repoRoot, asset.sourceLocation);
+        if (!fs.existsSync(abs)) {
+          recomputedMissingLocal++;
+        }
       }
     }
   }
@@ -614,15 +695,15 @@ export function verifyOfflineDryRunReport(
     errors.push("Proposed effects details missing file deletion disclaimer");
   }
 
-  // Invariant 10: Expected baseline inventory numbers
-  if (physicalAssets.length !== 28) {
-    errors.push(`Expected exactly 28 physical upload assets, got ${physicalAssets.length}`);
+  // Invariant 10: Expected baseline inventory numbers (Amended in Stage 5A.1)
+  if (physicalAssets.length !== 31) {
+    errors.push(`Expected exactly 31 physical upload assets, got ${physicalAssets.length}`);
   }
-  if (logicalUsages.length !== 34) {
-    errors.push(`Expected exactly 34 logical usages, got ${logicalUsages.length}`);
+  if (logicalUsages.length !== 37) {
+    errors.push(`Expected exactly 37 logical usages, got ${logicalUsages.length}`);
   }
-  if (recomputedTotalLocal !== 12) {
-    errors.push(`Expected exactly 12 local files, got ${recomputedTotalLocal}`);
+  if (recomputedTotalLocal !== 15) {
+    errors.push(`Expected exactly 15 local files, got ${recomputedTotalLocal}`);
   }
   if (recomputedTotalRemote !== 16) {
     errors.push(`Expected exactly 16 remote Cloudinary assets, got ${recomputedTotalRemote}`);
@@ -630,8 +711,8 @@ export function verifyOfflineDryRunReport(
   if (recomputedTotalImages !== 27) {
     errors.push(`Expected exactly 27 images, got ${recomputedTotalImages}`);
   }
-  if (recomputedTotalAudio !== 1) {
-    errors.push(`Expected exactly 1 audio asset, got ${recomputedTotalAudio}`);
+  if (recomputedTotalAudio !== 4) {
+    errors.push(`Expected exactly 4 audio assets, got ${recomputedTotalAudio}`);
   }
 
   return {
@@ -679,11 +760,14 @@ export async function runVerificationCli(
   }
 
   logger.log("[PASS] Offline manifest & dry-run contract verification passed!");
-  logger.log(`  • Verified physical upload assets: ${result.verifiedAssetsCount} / 28`);
-  logger.log(`  • Verified logical invitation usages: ${result.verifiedUsagesCount} / 34`);
-  logger.log(`  • Verified local files on disk: ${result.verifiedLocalFilesCount} / 12`);
+  logger.log(`  • Verified physical upload assets: ${result.verifiedAssetsCount} / 31`);
+  logger.log(`  • Verified logical invitation usages: ${result.verifiedUsagesCount} / 37`);
+  logger.log(`  • Verified local files on disk: ${result.verifiedLocalFilesCount} / 15`);
   logger.log(`  • Verified remote Cloudinary URLs: ${result.verifiedRemoteUrlsCount} / 16`);
   logger.log(`  • Verified hero media mappings: ${result.verifiedHeroesCount} / 4`);
+  logger.log(`  • Verified local audio inputs: 3 / 3 (rika-fauzi, shidqi-mita, default-preview)`);
+  logger.log(`  • Verified remote audio inputs: 1 / 1 (dudi-aini)`);
+  logger.log(`  • Verified unresolved music blockers: 0`);
   logger.log(`  • Verified public ID collisions: 0`);
   logger.log(`  • Verified credential leaks: 0`);
   logger.log(`  • Network calls: 0 (Fully offline verification)\n`);
