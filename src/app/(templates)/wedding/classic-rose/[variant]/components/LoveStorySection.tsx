@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
-import { InvitationData } from "@/lib/dummy-data/wedding/dummy-wedding";
+import type { InvitationData } from "@/features/invitations/types";
 
 const TitleDivider: React.FC<{ src: string }> = ({ src }) => (
 	<div className='relative w-20 h-4'>

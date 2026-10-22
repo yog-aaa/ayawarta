@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
 import CornerFlower from "./CornerFlower";
-import { InvitationData } from "@/lib/dummy-data/wedding/dummy-wedding";
+import type { InvitationData } from "@/features/invitations/types";
 
 // --- SVG Icons ---
 const TimeIcon = ({ className }: { className?: string }) => (

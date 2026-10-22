@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
 import CornerFlower from "./CornerFlower";
-import { InvitationData } from "@/lib/dummy-data/wedding/dummy-wedding";
+import type { InvitationData } from "@/features/invitations/types";
 
 const CopyIcon = ({ className }: { className?: string }) => (
 	<svg

@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { ClassicRoseThemeConfig } from "@/lib/theme-config/classic-rose";
-import { InvitationData } from "@/lib/dummy-data/wedding/dummy-wedding";
+import type { InvitationData } from "@/features/invitations/types";
 
 import OpeningSection from "./OpeningSection";
 import HeroSection from "./HeroSection";

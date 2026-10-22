@@ -1,5 +1,7 @@
 // src/lib/dummy-data/wedding/dummy-wedding.ts
 
+import type { InvitationData } from "@/features/invitations/types";
+
 // Data dummy terpusat untuk undangan. Nantinya, ini bisa diganti
 // dengan data yang diambil dari database atau API.
 export const invitationData = {
@@ -92,15 +94,7 @@ export const invitationData = {
         gifts: true,
         wishes: true,
     }
-};
+} satisfies InvitationData;
 
-// --- MODIFIKASI TIPE DATA ---
-// Kita buat beberapa properti menjadi opsional (?) karena bisa jadi tidak ada jika section-nya di-disable.
-// 'couple' dan 'events' kita anggap wajib ada.
-type BaseInvitationData = typeof invitationData;
-export interface InvitationData extends Omit<BaseInvitationData, 'gallery' | 'loveStory' | 'gifts' | 'musicUrl'> {
-    gallery?: BaseInvitationData['gallery'];
-    loveStory?: BaseInvitationData['loveStory'];
-    gifts?: BaseInvitationData['gifts'];
-    musicUrl?: BaseInvitationData['musicUrl'];
-}
+// Re-export explicit domain type
+export type { InvitationData };

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { Check, Copy, Link as LinkIcon, LoaderCircle, MessageSquare, Users } from "lucide-react";
 
-import type { InvitationData } from "@/lib/dummy-data/wedding/dummy-wedding";
+import type { InvitationData } from "@/features/invitations/types";
 import { getInvitationBySlug } from "@/lib/invitations";
 
 const buildInvitationMessage = (

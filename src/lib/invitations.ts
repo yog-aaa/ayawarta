@@ -1,15 +1,11 @@
-import { InvitationData as InvitationDataType } from "@/lib/dummy-data/wedding/dummy-wedding";
+import type {
+  Invitation,
+  InvitationData,
+  InvitationMeta,
+} from "@/features/invitations/types";
 import { invitationData as defaultInvitationData } from "@/lib/dummy-data/wedding/dummy-wedding";
 
-export type InvitationMeta = {
-  theme: "classic-rose";
-  variant: "red" | "green" | "blue" | "orange" | "black" | "white";
-};
-
-export type Invitation = {
-  meta: InvitationMeta;
-  data: InvitationDataType;
-};
+export type { Invitation, InvitationData, InvitationMeta };
 
 const sampleInvitations: Record<string, Invitation> = {
     "rika-fauzi": {
