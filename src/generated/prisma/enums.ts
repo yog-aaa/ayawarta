@@ -9,7 +9,26 @@
 * 🟢 You can import this file directly.
 */
 
+export const PartnerRole = {
+  GROOM: 'GROOM',
+  BRIDE: 'BRIDE'
+} as const
+
+export type PartnerRole = (typeof PartnerRole)[keyof typeof PartnerRole]
 
 
-// This file is empty because there are no enums in the schema.
-export {}
+export const UserRole = {
+  ADMIN: 'ADMIN',
+  SUPER_ADMIN: 'SUPER_ADMIN'
+} as const
+
+export type UserRole = (typeof UserRole)[keyof typeof UserRole]
+
+
+export const ResourceType = {
+  IMAGE: 'IMAGE',
+  VIDEO: 'VIDEO',
+  AUDIO: 'AUDIO'
+} as const
+
+export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType]

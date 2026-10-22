@@ -6,3 +6,153 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum PartnerRole {
+  GROOM
+  BRIDE
+}
+
+enum UserRole {
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ResourceType {
+  IMAGE
+  VIDEO
+  AUDIO
+}
+
+model User {
+  id               String       @id @default(cuid())
+  email            String       @unique
+  name             String
+  passwordHash     String
+  role             UserRole     @default(ADMIN)
+  isActive         Boolean      @default(true)
+  failedLoginCount Int          @default(0)
+  lockedUntil      DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  invitations      Invitation[]
+}
+
+model MediaAsset {
+  id               String        @id @default(cuid())
+  publicId         String        @unique
+  secureUrl        String
+  folder           String
+  resourceType     ResourceType
+  format           String?
+  bytes            Int
+  width            Int?
+  height           Int?
+  originalName     String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  partners         Partner[]
+  galleryItems     GalleryItem[]
+  musicInvitations Invitation[]
+}
+
+model Invitation {
+  id           String              @id @default(cuid())
+  slug         String              @unique
+  theme        String              @default("classic-rose")
+  variant      String
+  weddingDate  DateTime
+  musicAssetId String?
+  ownerId      String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  owner        User?               @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  musicAsset   MediaAsset?         @relation(fields: [musicAssetId], references: [id], onDelete: Restrict)
+  sections     InvitationSections?
+  partners     Partner[]
+  events       Event[]
+  galleryItems GalleryItem[]
+  loveStories  LoveStory[]
+  giftAccounts GiftAccount[]
+
+  @@index([ownerId])
+  @@index([musicAssetId])
+}
+
+model InvitationSections {
+  id           String     @id @default(cuid())
+  invitationId String     @unique
+  couple       Boolean    @default(true)
+  events       Boolean    @default(true)
+  gallery      Boolean    @default(true)
+  loveStory    Boolean    @default(true)
+  gifts        Boolean    @default(true)
+  wishes       Boolean    @default(true)
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+}
+
+model Partner {
+  id           String      @id @default(cuid())
+  invitationId String
+  role         PartnerRole
+  name         String
+  parents      String
+  instagram    String?
+  photoAssetId String
+  invitation   Invitation  @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  photoAsset   MediaAsset  @relation(fields: [photoAssetId], references: [id], onDelete: Restrict)
+
+  @@unique([invitationId, role])
+  @@index([photoAssetId])
+}
+
+model Event {
+  id           String     @id @default(cuid())
+  invitationId String
+  name         String
+  displayDate  String
+  displayTime  String
+  location     String     @default("")
+  address      String
+  mapUrl       String
+  position     Int
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@unique([invitationId, position])
+}
+
+model GalleryItem {
+  id           String     @id @default(cuid())
+  invitationId String
+  assetId      String
+  altText      String
+  position     Int
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  asset        MediaAsset @relation(fields: [assetId], references: [id], onDelete: Restrict)
+
+  @@unique([invitationId, position])
+  @@index([assetId])
+}
+
+model LoveStory {
+  id           String     @id @default(cuid())
+  invitationId String
+  title        String
+  content      String
+  position     Int
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@unique([invitationId, position])
+}
+
+model GiftAccount {
+  id            String     @id @default(cuid())
+  invitationId  String
+  platform      String
+  accountHolder String
+  accountNumber String
+  logoPath      String
+  position      Int
+  invitation    Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@unique([invitationId, position])
+}

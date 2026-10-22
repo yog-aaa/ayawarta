@@ -5,6 +5,12 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
+    exclude: [
+      "**/*.integration.test.ts",
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/.next/**",
+    ],
   },
   resolve: {
     alias: {

@@ -51,7 +51,15 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-
+  User: 'User',
+  MediaAsset: 'MediaAsset',
+  Invitation: 'Invitation',
+  InvitationSections: 'InvitationSections',
+  Partner: 'Partner',
+  Event: 'Event',
+  GalleryItem: 'GalleryItem',
+  LoveStory: 'LoveStory',
+  GiftAccount: 'GiftAccount'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -68,4 +76,154 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 } as const)
 
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
+
+export const UserScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  name: 'name',
+  passwordHash: 'passwordHash',
+  role: 'role',
+  isActive: 'isActive',
+  failedLoginCount: 'failedLoginCount',
+  lockedUntil: 'lockedUntil',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const MediaAssetScalarFieldEnum = {
+  id: 'id',
+  publicId: 'publicId',
+  secureUrl: 'secureUrl',
+  folder: 'folder',
+  resourceType: 'resourceType',
+  format: 'format',
+  bytes: 'bytes',
+  width: 'width',
+  height: 'height',
+  originalName: 'originalName',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MediaAssetScalarFieldEnum = (typeof MediaAssetScalarFieldEnum)[keyof typeof MediaAssetScalarFieldEnum]
+
+
+export const InvitationScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  theme: 'theme',
+  variant: 'variant',
+  weddingDate: 'weddingDate',
+  musicAssetId: 'musicAssetId',
+  ownerId: 'ownerId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InvitationScalarFieldEnum = (typeof InvitationScalarFieldEnum)[keyof typeof InvitationScalarFieldEnum]
+
+
+export const InvitationSectionsScalarFieldEnum = {
+  id: 'id',
+  invitationId: 'invitationId',
+  couple: 'couple',
+  events: 'events',
+  gallery: 'gallery',
+  loveStory: 'loveStory',
+  gifts: 'gifts',
+  wishes: 'wishes'
+} as const
+
+export type InvitationSectionsScalarFieldEnum = (typeof InvitationSectionsScalarFieldEnum)[keyof typeof InvitationSectionsScalarFieldEnum]
+
+
+export const PartnerScalarFieldEnum = {
+  id: 'id',
+  invitationId: 'invitationId',
+  role: 'role',
+  name: 'name',
+  parents: 'parents',
+  instagram: 'instagram',
+  photoAssetId: 'photoAssetId'
+} as const
+
+export type PartnerScalarFieldEnum = (typeof PartnerScalarFieldEnum)[keyof typeof PartnerScalarFieldEnum]
+
+
+export const EventScalarFieldEnum = {
+  id: 'id',
+  invitationId: 'invitationId',
+  name: 'name',
+  displayDate: 'displayDate',
+  displayTime: 'displayTime',
+  location: 'location',
+  address: 'address',
+  mapUrl: 'mapUrl',
+  position: 'position'
+} as const
+
+export type EventScalarFieldEnum = (typeof EventScalarFieldEnum)[keyof typeof EventScalarFieldEnum]
+
+
+export const GalleryItemScalarFieldEnum = {
+  id: 'id',
+  invitationId: 'invitationId',
+  assetId: 'assetId',
+  altText: 'altText',
+  position: 'position'
+} as const
+
+export type GalleryItemScalarFieldEnum = (typeof GalleryItemScalarFieldEnum)[keyof typeof GalleryItemScalarFieldEnum]
+
+
+export const LoveStoryScalarFieldEnum = {
+  id: 'id',
+  invitationId: 'invitationId',
+  title: 'title',
+  content: 'content',
+  position: 'position'
+} as const
+
+export type LoveStoryScalarFieldEnum = (typeof LoveStoryScalarFieldEnum)[keyof typeof LoveStoryScalarFieldEnum]
+
+
+export const GiftAccountScalarFieldEnum = {
+  id: 'id',
+  invitationId: 'invitationId',
+  platform: 'platform',
+  accountHolder: 'accountHolder',
+  accountNumber: 'accountNumber',
+  logoPath: 'logoPath',
+  position: 'position'
+} as const
+
+export type GiftAccountScalarFieldEnum = (typeof GiftAccountScalarFieldEnum)[keyof typeof GiftAccountScalarFieldEnum]
+
+
+export const SortOrder = {
+  asc: 'asc',
+  desc: 'desc'
+} as const
+
+export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+} as const
+
+export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 

@@ -17,4 +17,48 @@ import * as Prisma from './internal/prismaNamespaceBrowser'
 export { Prisma }
 export * as $Enums from './enums'
 export * from './enums';
-
+/**
+ * Model User
+ * 
+ */
+export type User = Prisma.UserModel
+/**
+ * Model MediaAsset
+ * 
+ */
+export type MediaAsset = Prisma.MediaAssetModel
+/**
+ * Model Invitation
+ * 
+ */
+export type Invitation = Prisma.InvitationModel
+/**
+ * Model InvitationSections
+ * 
+ */
+export type InvitationSections = Prisma.InvitationSectionsModel
+/**
+ * Model Partner
+ * 
+ */
+export type Partner = Prisma.PartnerModel
+/**
+ * Model Event
+ * 
+ */
+export type Event = Prisma.EventModel
+/**
+ * Model GalleryItem
+ * 
+ */
+export type GalleryItem = Prisma.GalleryItemModel
+/**
+ * Model LoveStory
+ * 
+ */
+export type LoveStory = Prisma.LoveStoryModel
+/**
+ * Model GiftAccount
+ * 
+ */
+export type GiftAccount = Prisma.GiftAccountModel
