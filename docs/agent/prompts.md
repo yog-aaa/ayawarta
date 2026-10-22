@@ -163,17 +163,21 @@ Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 3 — I
 Baca semua dokumen wajib di AGENTS.md, khususnya docs/architecture.md, docs/database-schema.md, dan implementation plan Phase 3.
 
 Tugas:
-1. Ekstrak contract InvitationData menjadi domain type yang stabil dan tidak bergantung pada dummy-data.
-2. Buat repository server-only untuk query invitation beserta relasi terurut.
-3. Buat mapper Prisma ke domain contract yang tetap kompatibel dengan template Classic Rose, termasuk mapping relasi hero wajib ke `couple.heroImage` dan `galleryVideoUrl` nullable ke `gallery.videoUrl`.
-4. Pertahankan semantik section opsional, gallery, gallery video, love story, gift, dan music; hero tidak boleh diinfer dari urutan gallery dan gallery video tidak boleh diinfer dari `MediaAsset`.
-5. Missing slug harus menghasilkan null di repository.
-6. Tambahkan unit test untuk mapping lengkap, hero yang berbeda dari gallery, gallery video bernilai URL maupun null, data opsional, ordering, audio, dan missing slug.
-7. Jalankan typecheck, tests, dan lint yang relevan.
+1. Ekstrak `InvitationData`, `InvitationMeta`, dan wrapper invitation menjadi explicit domain types yang stabil; jangan lagi menurunkan tipe dari `typeof invitationData`.
+2. Perbarui hanya type imports/annotations yang diperlukan agar dummy dan hard-coded production data memakai domain contract baru tanpa mengubah nilai konten atau JSX/CSS.
+3. Buat query args/payload Prisma yang typed dan reusable untuk memuat sections, partner berdasarkan role, event/gallery/love-story/gift terurut `position ASC`, hero asset wajib, serta music asset opsional.
+4. Buat repository server-only untuk lookup exact slug. Missing slug harus menghasilkan null dan tidak boleh fallback ke `default-preview`.
+5. Buat pure mapper Prisma ke domain contract Classic Rose. Map hero wajib ke `couple.heroImage`, partner Instagram null ke string kosong, `galleryVideoUrl` null ke string kosong hanya saat gallery dipetakan, dan music asset opsional ke `musicUrl`.
+6. Hero tidak boleh diinfer dari gallery; gallery video tidak boleh diinfer dari `MediaAsset`; partner tidak boleh bergantung pada urutan array tetapi harus dicari melalui enum role.
+7. Pertahankan `Date`, display strings, account number sebagai string, logo path lokal, section flags, dan seluruh semantik optional section.
+8. Jika persisted record tidak memenuhi invariant wajib (sections, GROOM, BRIDE, hero, atau gallery aktif tanpa image), mapper harus gagal secara eksplisit dan aman, bukan menghasilkan object parsial diam-diam.
+9. Tambahkan unit test hermetis untuk complete mapping, role order independence, ordered relations, hero berbeda dari gallery, gallery video URL/null, optional sections, optional music, invalid required relations, dan repository missing slug.
+10. Jalankan seluruh verification tanpa menulis database.
 
 Batasan:
 - Jangan switch route publik ke Prisma.
 - Jangan seed data, upload media, implement auth, mengubah UI, atau menghapus sumber data lama.
+- Jangan membuat unit test bergantung pada PostgreSQL; suite live tetap hanya melalui `npm run test:db`.
 - Jangan commit. Berhenti setelah handoff untuk review.
 
 Handoff wajib menjelaskan query/include strategy, urutan relasi, test coverage, dan konfirmasi route masih menggunakan sumber lama.

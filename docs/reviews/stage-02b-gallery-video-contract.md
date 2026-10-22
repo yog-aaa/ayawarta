@@ -2,7 +2,7 @@
 
 ## Status
 
-`ACCEPTED — AWAITING IMPLEMENTATION COMMIT`
+`ACCEPTED — CLOSED`
 
 ## Gap
 
@@ -56,3 +56,17 @@ Reviewer verification passed:
 - four migrations found with the local schema up to date.
 
 The programmer may commit exactly the reviewed Stage 2B implementation files. Stage 3 remains blocked until that commit is reported and the worktree is clean.
+
+## Post-Commit Finalization
+
+The reviewed implementation was committed as `ea5ebc85677c7fdea17fd3f6e928ceb90c6bebc3` (`feat: persist invitation gallery video url`). Post-commit verification confirmed:
+
+- exactly the seven reviewed implementation files are present in the commit;
+- the worktree is clean on `develop`;
+- Prisma schema validation passes;
+- unit tests pass 5/5;
+- live local-database integration tests pass 5/5;
+- TypeScript validation passes;
+- four migrations are present and the local schema is up to date.
+
+Stage 2B is closed. Stage 3 — Invitation Domain, Repository, and Mapper is authorized.
