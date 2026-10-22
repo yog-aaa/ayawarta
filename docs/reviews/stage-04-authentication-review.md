@@ -2,7 +2,7 @@
 
 ## Status
 
-`ACCEPTED — AWAITING IMPLEMENTATION COMMIT`
+`ACCEPTED — CLOSED`
 
 ## Review Method
 
@@ -109,3 +109,25 @@ Final independent verification confirmed:
 ## Final Decision
 
 Stage 4 is accepted for implementation commit. The programmer may commit exactly the reviewed authentication files and must not run the bootstrap, create an administrator, modify PostgreSQL data, or begin Stage 5. After commit, report the full hash, exact committed paths, clean-worktree status, and final pnpm verification summary for closure review.
+
+## Post-Commit Finalization
+
+Implementation commit:
+
+- short hash: `4e8d6e0`;
+- full hash: `4e8d6e054c1931cd1e51f5f6d7565c93f721d888`;
+- message: `feat: add secure admin authentication`.
+
+The commit contains exactly the 20 reviewed Stage 4 authentication, route, UI, bootstrap, and test files. No schema, migration, environment, dependency, lockfile, invitation route, or production-data file is included.
+
+Independent post-commit verification confirmed:
+
+- clean `develop` worktree with `4e8d6e0` at HEAD;
+- 99/99 hermetic tests;
+- 5/5 read-only PostgreSQL integration tests;
+- clean TypeScript validation;
+- successful Next.js 16 production build with the proxy convention and no deprecated-middleware warning;
+- four Prisma migrations with the local `ayawarta` schema up to date;
+- no administrator bootstrap or database write.
+
+Stage 4 is closed. Stage 5A — Cloudinary Manifest and Dry Run is the next authorized stage. Upload, database mutation, URL cutover, and file deletion remain blocked until their separately reviewed stages.
