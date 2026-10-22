@@ -2,7 +2,7 @@
 
 ## Review Status
 
-`CHANGES REQUIRED`
+`ACCEPTED`
 
 ## Scope Reviewed
 
@@ -64,4 +64,49 @@ Stage 1 is not accepted yet. The core scaffold is sound and the required checks 
 ## Next Authorized Stage
 
 None. Stage 2 remains unauthorized until the corrected Stage 1 diff is reviewed and accepted.
+
+## Corrected Submission Review
+
+The corrected uncommitted Stage 1 worktree was reviewed on top of `b84c054`.
+
+The programmer addressed every blocking finding:
+
+- `package.json` now declares ESM with `"type": "module"`.
+- `eslint-config-next` is aligned exactly with Next.js `16.0.10`.
+- `eslint.config.mjs` now consumes the native Next.js 16 flat configurations without `FlatCompat`.
+- The intentional Auth.js v5 prerelease is pinned exactly at `5.0.0-beta.32`, and its compatibility rationale and upgrade policy are documented.
+- Redundant direct `@eslint/eslintrc` and `@types/bcryptjs` dependencies were removed.
+- The duplicate legacy Prisma seed configuration was removed from `package.json`.
+- Optional environment keys were documented using safe placeholders.
+- The local dependency tree contains no extraneous direct packages.
+
+Independent verification confirmed:
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Dependency tree | PASS | `npm ls --depth=0` exits successfully with the intended direct versions and no extraneous-package report. |
+| Prisma validation | PASS | Prisma `7.10.1` loads the ESM config and validates the PostgreSQL scaffold. |
+| Prisma generation | PASS | Client regenerated successfully into `src/generated/prisma` in 44 ms. |
+| TypeScript | PASS | `npm run typecheck` exits successfully. |
+| Tests | PASS | 1 test file and 5 tests pass. |
+| ESLint | PASS with known warnings | `eslint .` exits successfully with two `react-hooks/set-state-in-effect` warnings in unchanged legacy application files. |
+| Diff hygiene | PASS | `git diff --check` passes; `pnpm-lock.yaml` remains untouched. |
+| Environment contract | PASS | `.env.local` has 15 key names, uses server-only `CLOUDINARY_API_KEY`, and remains ignored. |
+| Build | Programmer PASS; reviewer environment-limited | The programmer completed 4/4 static generation. Reviewer reproduction again reached compilation but could not fetch five Google Fonts because outbound access is restricted; this is the same known environment limitation and not a Stage 1 regression. |
+| External effects | PASS | No database, migration, seed, Cloudinary, or deployment operation occurred. |
+
+The two lint warnings are accepted baseline debt, not hidden failures:
+
+- `src/app/[slug]/invite/page.tsx` will receive its required Server/Client boundary correction during Stage 7.
+- `src/app/components/landing/themeSection.tsx` belongs to the scoped UI cleanup in Stage 8.
+
+The global warning-level override should be removed once both locations are corrected so future occurrences fail lint under the upstream Next.js 16 configuration.
+
+## Final Decision
+
+Stage 1 is accepted. The tooling and environment foundation is compatible with the selected Node.js, Next.js, React, Prisma, PostgreSQL, and test stack; secret names remain correctly separated between public and server-only usage; and no external data was changed.
+
+## Final Next Authorized Stage
+
+Finalize and commit Stage 1 only. After the commit is verified, Stage 2 — Prisma Schema and Database Foundation — is authorized.
 
