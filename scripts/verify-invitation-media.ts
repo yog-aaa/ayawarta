@@ -16,11 +16,15 @@ import {
   LOCAL_AUDIO_DESCRIPTORS,
   validateLocalAudioSource,
 } from "@/features/media/audio-resolution";
+import {
+  validateLocalDerivedImageSource,
+} from "@/features/media/image-resolution";
 
 export interface VerificationOptions {
   reportPath?: string;
   repoRoot?: string;
   audioValidator?: typeof validateLocalAudioSource;
+  imageValidator?: typeof validateLocalDerivedImageSource;
   logger?: Pick<Console, "log" | "warn" | "error">;
 }
 
@@ -53,6 +57,7 @@ export function verifyOfflineDryRunReport(
     options?.reportPath ??
     path.resolve(repoRoot, ".media-migration", "manifest-dry-run-report.json");
   const audioValidator = options?.audioValidator ?? validateLocalAudioSource;
+  const imageValidator = options?.imageValidator ?? validateLocalDerivedImageSource;
 
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -264,6 +269,23 @@ export function verifyOfflineDryRunReport(
           if (asset.byteSize !== audioVal.byteSize) {
             errors.push(
               `Byte size mismatch for '${asset.sourceLocation}': report says ${asset.byteSize}, actual is ${audioVal.byteSize}`
+            );
+          }
+          verifiedLocal++;
+        }
+      } else if (
+        asset.sourceLocation.startsWith(".media-migration/input/images/") ||
+        asset.sourceLocation.includes("rika-fauzi-hero.jpg")
+      ) {
+        const imageVal = imageValidator(asset.sourceLocation, { repoRoot });
+        if (!imageVal.valid) {
+          errors.push(
+            `Local derived image validation failed for '${asset.sourceLocation}' in asset '${asset.targetPublicId}': ${imageVal.reason}`
+          );
+        } else {
+          if (asset.byteSize !== imageVal.byteSize) {
+            errors.push(
+              `Byte size mismatch for '${asset.sourceLocation}': report says ${asset.byteSize}, actual is ${imageVal.byteSize}`
             );
           }
           verifiedLocal++;

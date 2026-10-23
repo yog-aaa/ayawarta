@@ -9,10 +9,12 @@ import {
 } from "./invitation-media-manifest";
 import { validateInvitationPublicId } from "@/features/media/public-id";
 import { createFixtureAudioResolver } from "@/features/media/testing/fixture-audio";
+import { createFixtureImageResolver } from "@/features/media/testing/fixture-image";
 
 describe("invitation-media-manifest", () => {
   const repoRoot = process.cwd();
   const fixtureAudioResolver = createFixtureAudioResolver();
+  const fixtureImageResolver = createFixtureImageResolver();
 
   describe("remote URL validation (MEDIA-05)", () => {
     it("accepts valid HTTPS old Cloudinary URLs", () => {
@@ -185,6 +187,7 @@ describe("invitation-media-manifest", () => {
     const manifest = generateMediaManifest({
       repoRoot,
       audioResolver: fixtureAudioResolver,
+      imageResolver: fixtureImageResolver,
     });
 
     it("contains exactly the 4 approved production slugs", () => {
@@ -417,10 +420,12 @@ describe("invitation-media-manifest", () => {
       const manifest1 = generateMediaManifest({
         repoRoot,
         audioResolver: fixtureAudioResolver,
+      imageResolver: fixtureImageResolver,
       });
       const manifest2 = generateMediaManifest({
         repoRoot,
         audioResolver: fixtureAudioResolver,
+      imageResolver: fixtureImageResolver,
       });
       expect(manifest1).toEqual(manifest2);
     });
@@ -431,10 +436,12 @@ describe("invitation-media-manifest", () => {
       const manifest1 = generateMediaManifest({
         repoRoot,
         audioResolver: fixtureAudioResolver,
+      imageResolver: fixtureImageResolver,
       });
       const manifest2 = generateMediaManifest({
         repoRoot,
         audioResolver: fixtureAudioResolver,
+      imageResolver: fixtureImageResolver,
       });
 
       const report1 = buildDryRunReport(manifest1, "my-cloudinary-cloud");
@@ -449,6 +456,7 @@ describe("invitation-media-manifest", () => {
       const manifest = generateMediaManifest({
         repoRoot,
         audioResolver: fixtureAudioResolver,
+      imageResolver: fixtureImageResolver,
       });
       const report = buildDryRunReport(manifest, "my-cloudinary-cloud");
 

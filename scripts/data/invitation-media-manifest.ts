@@ -17,6 +17,11 @@ import {
   isLocalAudioSlug,
   validateLocalAudioSource,
 } from "@/features/media/audio-resolution";
+import {
+  DefaultLocalImageResolver,
+  type ImageResolver,
+  validateLocalDerivedImageSource,
+} from "@/features/media/image-resolution";
 import type {
   DryRunReport,
   InvitationSlug,
@@ -32,6 +37,7 @@ import type {
 export interface ManifestOptions {
   repoRoot?: string;
   audioResolver?: AudioResolver;
+  imageResolver?: ImageResolver;
 }
 
 export const OLD_CLOUDINARY_HOST = "res.cloudinary.com";
@@ -285,6 +291,7 @@ export function validateLocalSource(
 export function generateMediaManifest(options?: ManifestOptions): MediaManifest {
   const repoRoot = options?.repoRoot ? path.resolve(options.repoRoot) : process.cwd();
   const audioResolver = options?.audioResolver ?? new DefaultLocalAudioResolver();
+  const imageResolver = options?.imageResolver ?? new DefaultLocalImageResolver();
 
   const physicalAssets: PhysicalAsset[] = [];
   const logicalUsages: LogicalUsage[] = [];
@@ -362,6 +369,29 @@ export function generateMediaManifest(options?: ManifestOptions): MediaManifest 
         sourceLocation = audioValidation.posixRelativePath!;
         byteSize = audioValidation.byteSize!;
         format = getFileExtension(sourceLocation);
+        originalFileName = getFileName(sourceLocation);
+      }
+    } else if (
+      rawSource.startsWith(".media-migration/input/images/") ||
+      rawSource.includes("rika-fauzi-hero.jpg")
+    ) {
+      if (knownByteSize !== undefined) {
+        sourceLocation = rawSource;
+        byteSize = knownByteSize;
+        format = "jpg";
+        originalFileName = getFileName(rawSource);
+      } else {
+        const imageValidation = validateLocalDerivedImageSource(rawSource, {
+          repoRoot,
+        });
+        if (!imageValidation.valid) {
+          throw new Error(
+            `Invalid local derived image source for slug '${slug}': ${imageValidation.reason}`
+          );
+        }
+        sourceLocation = imageValidation.posixRelativePath!;
+        byteSize = imageValidation.byteSize!;
+        format = "jpg";
         originalFileName = getFileName(sourceLocation);
       }
     } else {
@@ -481,14 +511,21 @@ export function generateMediaManifest(options?: ManifestOptions): MediaManifest 
     });
 
     // 3. Hero (Mandatory exactly 1 per slug)
+    const derivedHero = imageResolver.resolveDerivedHero(slug, repoRoot);
+    const heroRawSource = derivedHero
+      ? derivedHero.sourceLocation
+      : data.couple.heroImage;
+    const heroKnownBytes = derivedHero ? derivedHero.byteSize : undefined;
+
     registerAssetUsage({
       slug,
       category: "couple",
       role: "hero",
-      rawSource: data.couple.heroImage,
+      rawSource: heroRawSource,
       altText: `Foto Utama Pasangan ${groomName} dan ${brideName}`,
       targetPublicIdProposal: buildCouplePublicId(slug, "hero"),
       cloudinaryResourceType: "image",
+      knownByteSize: heroKnownBytes,
     });
 
     // 4. Gallery Images (1-indexed, ordered)
@@ -500,14 +537,24 @@ export function generateMediaManifest(options?: ManifestOptions): MediaManifest 
             ? `Foto Galeri ${position}: Contoh Foto Undangan Pernikahan`
             : `Foto Galeri ${position}: Momen Bahagia ${groomName} dan ${brideName}`;
 
+        const isReusedHero =
+          slug === "rika-fauzi" && idx === 5 && Boolean(derivedHero);
+        const galleryRawSource = isReusedHero
+          ? derivedHero!.sourceLocation
+          : imgSource;
+        const galleryKnownBytes = isReusedHero
+          ? derivedHero!.byteSize
+          : undefined;
+
         registerAssetUsage({
           slug,
           category: "gallery",
           position,
-          rawSource: imgSource,
+          rawSource: galleryRawSource,
           altText,
           targetPublicIdProposal: buildGalleryPublicId(slug, position),
           cloudinaryResourceType: "image",
+          knownByteSize: galleryKnownBytes,
         });
       });
     }

@@ -90,3 +90,62 @@ export interface DryRunReport {
   manifest: MediaManifest;
   stage5BProposedEffects: Stage5BProposedEffects;
 }
+
+export type UploadAssetStatus = "uploaded" | "existing_verified" | "failed";
+
+export interface UploadAssetRecord {
+  id: string; // Target public ID
+  slug: InvitationSlug;
+  category: MediaCategory;
+  targetPublicId: string;
+  resourceType: CloudinaryResourceType;
+  status: UploadAssetStatus;
+  sourceType: SourceType;
+  sourceLocation: string;
+  secureUrl: string | null;
+  format: string | null;
+  bytes: number | null;
+  width?: number | null;
+  height?: number | null;
+  error?: string | null;
+}
+
+export interface SlugUploadSummary {
+  totalAssets: number;
+  uploaded: number;
+  existingVerified: number;
+  failed: number;
+  heroTargetPublicId: string;
+  heroVerified: boolean;
+  audioTargetPublicId?: string;
+  audioVerified?: boolean;
+}
+
+export interface CloudinaryUploadSummary {
+  totalPhysicalAssets: number;
+  uploadedCount: number;
+  existingVerifiedCount: number;
+  failedCount: number;
+  imagesCount: number;
+  audioCount: number;
+  videoCount: number;
+  heroesVerifiedCount: number;
+  audiosVerifiedCount: number;
+  slugBreakdown: Record<InvitationSlug, SlugUploadSummary>;
+}
+
+export interface CloudinaryUploadReport {
+  mode: "stage-5b-upload";
+  targetCloudName: string;
+  generatedAt: string;
+  summary: CloudinaryUploadSummary;
+  assets: UploadAssetRecord[];
+  externalEffects: {
+    targetCloudName: string;
+    uploadsPerformed: number;
+    remoteFetched: number;
+    databaseMutations: 0;
+    fileDeletions: 0;
+    details: string[];
+  };
+}

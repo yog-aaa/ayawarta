@@ -13,18 +13,25 @@ import {
   createFixtureAudioResolver,
   createFixtureAudioValidator,
 } from "@/features/media/testing/fixture-audio";
+import {
+  createFixtureImageResolver,
+  createFixtureImageValidator,
+} from "@/features/media/testing/fixture-image";
 
 describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
   let tempDir: string;
   const repoRoot = process.cwd();
   const fixtureAudioResolver = createFixtureAudioResolver();
   const fixtureAudioValidator = createFixtureAudioValidator();
+  const fixtureImageResolver = createFixtureImageResolver();
+  const fixtureImageValidator = createFixtureImageValidator();
 
   function verifyReport(reportPath: string) {
     return verifyOfflineDryRunReport({
       reportPath,
       repoRoot,
       audioValidator: fixtureAudioValidator,
+      imageValidator: fixtureImageValidator,
     });
   }
 
@@ -39,7 +46,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
   });
 
   describe("CLI guards and options (MEDIA-04)", () => {
-    it("blocks live execution attempts with Stage 5A guard", async () => {
+    it("guards live execution against missing credentials or old account", async () => {
       const logs: string[] = [];
       const errors: string[] = [];
       const mockLogger = {
@@ -48,18 +55,27 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         error: (msg: string) => errors.push(msg),
       };
 
+      // 1. Target cloud name is old account doig3gwek
       const code1 = await runMigrationCli(["--execute"], {
+        cloudName: "doig3gwek",
+        apiKey: "test-key",
+        apiSecret: "test-secret",
         logger: mockLogger,
         repoRoot,
       });
       expect(code1).toBe(1);
-      expect(errors.some((e) => e.includes("STAGE 5A GUARD"))).toBe(true);
+      expect(errors.some((e) => e.includes("cannot be old account"))).toBe(true);
 
-      const code2 = await runMigrationCli(["--migrate"], {
+      // 2. Missing credentials
+      const code2 = await runMigrationCli(["--execute"], {
+        cloudName: "new-cloud",
+        apiKey: "",
+        apiSecret: "",
         logger: mockLogger,
         repoRoot,
       });
       expect(code2).toBe(1);
+      expect(errors.some((e) => e.includes("must be configured"))).toBe(true);
     });
 
     it("rejects CLI output-dir with absolute paths", async () => {
@@ -146,6 +162,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
           repoRoot,
           outputDir: tempDir,
           audioResolver: fixtureAudioResolver,
+          imageResolver: fixtureImageResolver,
         }
       );
 
@@ -185,12 +202,14 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         repoRoot,
         outputDir: dir1,
         audioResolver: fixtureAudioResolver,
+        imageResolver: fixtureImageResolver,
       });
       const code2 = await runMigrationCli(["--dry-run"], {
         logger: mockLogger,
         repoRoot,
         outputDir: dir2,
         audioResolver: fixtureAudioResolver,
+        imageResolver: fixtureImageResolver,
       });
 
       expect(code1).toBe(0);
@@ -243,6 +262,7 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
       const manifest = generateMediaManifest({
         repoRoot,
         audioResolver: fixtureAudioResolver,
+        imageResolver: fixtureImageResolver,
       });
       return buildDryRunReport(manifest, "test-cloud");
     }

@@ -106,3 +106,70 @@ export const dryRunReportSchema = z.object({
 });
 
 export type ValidatedDryRunReport = z.infer<typeof dryRunReportSchema>;
+
+export const uploadAssetStatusSchema = z.enum([
+  "uploaded",
+  "existing_verified",
+  "failed",
+]);
+
+export const uploadAssetRecordSchema = z.object({
+  id: z.string().min(1),
+  slug: invitationSlugSchema,
+  category: mediaCategorySchema,
+  targetPublicId: z.string().min(1),
+  resourceType: cloudinaryResourceTypeSchema,
+  status: uploadAssetStatusSchema,
+  sourceType: sourceTypeSchema,
+  sourceLocation: z.string().min(1),
+  secureUrl: z.string().url().nullable(),
+  format: z.string().min(1).nullable(),
+  bytes: z.number().int().nonnegative().nullable(),
+  width: z.number().int().nonnegative().nullable().optional(),
+  height: z.number().int().nonnegative().nullable().optional(),
+  error: z.string().nullable().optional(),
+});
+
+export const slugUploadSummarySchema = z.object({
+  totalAssets: z.number().int().nonnegative(),
+  uploaded: z.number().int().nonnegative(),
+  existingVerified: z.number().int().nonnegative(),
+  failed: z.number().int().nonnegative(),
+  heroTargetPublicId: z.string().min(1),
+  heroVerified: z.boolean(),
+  audioTargetPublicId: z.string().optional(),
+  audioVerified: z.boolean().optional(),
+});
+
+export const cloudinaryUploadSummarySchema = z.object({
+  totalPhysicalAssets: z.number().int().positive(),
+  uploadedCount: z.number().int().nonnegative(),
+  existingVerifiedCount: z.number().int().nonnegative(),
+  failedCount: z.number().int().nonnegative(),
+  imagesCount: z.number().int().nonnegative(),
+  audioCount: z.number().int().nonnegative(),
+  videoCount: z.number().int().nonnegative(),
+  heroesVerifiedCount: z.number().int().nonnegative(),
+  audiosVerifiedCount: z.number().int().nonnegative(),
+  slugBreakdown: z.record(z.string(), slugUploadSummarySchema),
+});
+
+export const cloudinaryUploadReportSchema = z.object({
+  mode: z.literal("stage-5b-upload"),
+  targetCloudName: z.string().min(1),
+  generatedAt: z.string().min(1),
+  summary: cloudinaryUploadSummarySchema,
+  assets: z.array(uploadAssetRecordSchema),
+  externalEffects: z.object({
+    targetCloudName: z.string().min(1),
+    uploadsPerformed: z.number().int().nonnegative(),
+    remoteFetched: z.number().int().nonnegative(),
+    databaseMutations: z.literal(0),
+    fileDeletions: z.literal(0),
+    details: z.array(z.string().min(1)),
+  }),
+});
+
+export type ValidatedCloudinaryUploadReport = z.infer<
+  typeof cloudinaryUploadReportSchema
+>;

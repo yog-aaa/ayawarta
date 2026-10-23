@@ -20,11 +20,13 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
     "prisma:studio": "prisma studio",
-    "media:dry-run": "tsx scripts/migrate-invitation-media.ts --dry-run",
-    "media:migrate": "tsx scripts/migrate-invitation-media.ts",
-    "media:verify": "tsx scripts/verify-invitation-media.ts",
-    "media:verify-audio": "tsx scripts/verify-local-audio.ts",
-    "admin:bootstrap": "tsx scripts/bootstrap-admin.ts"
+    "media:dry-run": "tsx --conditions=react-server scripts/migrate-invitation-media.ts --dry-run",
+    "media:migrate": "tsx --conditions=react-server scripts/migrate-invitation-media.ts",
+    "media:verify": "tsx --conditions=react-server scripts/verify-invitation-media.ts",
+    "media:verify-audio": "tsx --conditions=react-server scripts/verify-local-audio.ts",
+    "media:verify-upload": "tsx --conditions=react-server scripts/verify-cloudinary-upload.ts",
+    "media:audit-identity": "tsx --conditions=react-server scripts/audit-media-identity.ts",
+    "admin:bootstrap": "tsx --conditions=react-server scripts/bootstrap-admin.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
@@ -43,6 +45,7 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "server-only": "^0.0.1",
+    "sharp": "0.35.5",
     "zod": "^4.6.7"
   },
   "devDependencies": {

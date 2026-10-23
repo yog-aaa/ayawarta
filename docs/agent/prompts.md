@@ -404,6 +404,172 @@ Handoff wajib menyertakan:
 - daftar file source yang berubah dan status `not committed`.
 ```
 
+## Stage 5B.1 — Oversized Hero Remediation and Live Verification Hardening
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya koreksi Stage 5B.1 — Oversized Hero Remediation and Live Verification Hardening. Baca `docs/reviews/stage-05b-cloudinary-upload-review.md` dan petakan setiap perubahan ke `CLOUD-01` sampai `CLOUD-04`.
+
+Kondisi eksternal saat ini:
+- Target Cloudinary baru: `uhwi7xvb`, bukan akun lama `doig3gwek`.
+- 30 dari 31 target public ID sudah ada menurut partial run: 28 uploaded, 2 existing_verified.
+- Satu target yang belum ada adalah `ayawarta/production/invitations/rika-fauzi/couple/hero`.
+- Sumber asli `public/images/SAMPLE/FOTO - Couple.jpg` adalah JPEG 3.877 × 5.816, 11.261.085 byte, SHA-256 `ACCB84DEA196E0AF36ADBFA914867654965CBAA97CB9B2A798EFC382CA161776`.
+- Limit akun adalah 10.485.760 byte per image.
+- Pemilik menyetujui kompresi otomatis kualitas tinggi dan meminta primitive yang kelak dapat digunakan oleh sistem/admin upload.
+
+Scope koreksi:
+
+### CLOUD-01 — Deterministic high-quality preparation
+
+1. Tambahkan `sharp` sebagai direct pnpm dependency dengan versi yang kompatibel dengan lockfile saat ini; jangan memakai package manager lain.
+2. Buat modul server-only reusable untuk menyiapkan image upload dari Buffer/path tanpa menyimpan rahasia atau bergantung pada UI.
+3. Validator wajib membaca signature/metadata hasil decode, membatasi input maksimum dan decoded pixel count, menolak format tak didukung, auto-rotate dari EXIF, strip metadata yang tidak diperlukan, mempertahankan aspect ratio, dan tidak melakukan upscale.
+4. Untuk JPEG oversized, gunakan algoritme deterministik: coba re-encode kualitas tinggi tanpa resize terlebih dahulu, lalu turunkan kualitas melalui ladder tetap hanya sampai output berada di bawah safety target 9.500.000 byte. Jangan turun di bawah quality floor 82 dan jangan resize pada kasus Rika/Fauzi bila target sudah tercapai dengan re-encode saja.
+5. Output wajib tetap JPEG dengan dimensi visual/orientasi yang sama, berukuran >0 dan <=9.500.000 byte. Kembalikan metadata output: format, width, height, byte size, SHA-256, dan quality terpilih.
+6. Buat derived file deterministik di `.media-migration/input/images/rika-fauzi-hero.jpg`. Folder ini tetap ignored. Jangan mengubah, menghapus, atau mengganti file asli di `public/images/SAMPLE`.
+7. Tambahkan typed descriptor dan strict realpath containment untuk migration image input. Manifest hero Rika/Fauzi harus memakai derived source tersebut, sedangkan gallery position 6 tetap mereferensikan physical hero asset yang sama. Totals wajib tetap 31 physical assets, 37 usages, dan 15 local assets.
+8. Perbarui verifier/dry-run agar memvalidasi source descriptor, output size/hash/dimensions, dan deterministic generation. Report hash canonical boleh berubah karena source descriptor berubah; laporkan hash lama dan baru.
+9. Buat visual comparison artifact lokal/ignored antara original dan derived serta laporkan dimensi, byte reduction, quality, dan hasil pemeriksaan visual. Jangan commit bitmap turunan atau comparison artifact.
+
+### CLOUD-02 — Real post-upload read-back
+
+10. Setelah fase upload/skip, panggil Admin API kembali untuk seluruh 31 expected public ID, dipisahkan menurut resource type. Final report, status, byte size, dimensions, hero count, dan audio count harus dibangun dari live read-back ini, bukan hanya upload response atau preflight cache.
+11. Bila salah satu target hilang atau metadata live tidak cocok, hasil Stage 5B tetap gagal dan Stage 6 tetap diblokir.
+
+### CLOUD-03 — Strong existing-resource proof
+
+12. Perketat `existing_verified`. Untuk local sources, cocokkan exact expected byte size, format, dan expected dimensions; gunakan digest/Cloudinary `etag` bila API menyediakannya dan dapat dibandingkan secara benar.
+13. Untuk 30 target hasil partial run, rekonsiliasi live metadata dengan report partial ber-hash `66113191C5A714D0D2DAC71AAECADC317DAAF6A4F4CB60405AC8E1D9C9A10D80` dan source/manifest metadata. Jangan menerima target hanya karena JPEG/nonzero bytes.
+14. Jika identitas existing target tidak dapat dibuktikan, berhenti sebagai conflict. Jangan overwrite atau delete otomatis.
+
+### CLOUD-04 — Report and URL integrity
+
+15. Bangun seluruh teks summary/detail dari counter aktual; partial report tidak boleh mengklaim hero 4/4. Verifier harus menolak detail yang bertentangan dengan summary.
+16. Parse delivery URL secara ketat: scheme `https:`, hostname tepat `res.cloudinary.com`, tanpa userinfo, custom port, query, atau fragment, dan target cloud harus menjadi path segment pertama. Substring match tidak cukup.
+17. Tambahkan mutation/unit tests hermetis untuk live read-back wajib, missing-after-upload, local byte/dimension mismatch, unprovable existing conflict, URL spoofing, partial-detail mismatch, deterministic compression, size ceiling, orientation/aspect preservation, invalid image, pixel limit, dan no-upscale behavior.
+
+Retry live yang diotorisasi:
+
+18. Jalankan seluruh local verification terlebih dahulu. Setelah derived source dan read-back logic lolos review internal/test, jalankan kembali command Stage 5B `--execute` ke cloud `uhwi7xvb`.
+19. Retry harus menemukan dan membuktikan 30 existing targets, lalu mengunggah hanya hero Rika/Fauzi yang hilang dengan public ID yang sama. Expected retry effects: 1 upload baru, 30 existing_verified, 0 failed, 31/31 live read-back, 4/4 heroes, dan 4/4 audio.
+20. Simpan report final ke `.media-migration/cloudinary-upload-report.json`, hitung SHA-256 baru, lalu jalankan `pnpm media:verify-upload`.
+
+Batasan keras:
+- Jangan menyentuh database, seed, route, Firestore, Aiven, Vercel, atau Stage 6.
+- Jangan menambah UI admin/upload pada tahap ini; hanya primitive server-side reusable dan dokumentasi kontraknya.
+- Jangan menghapus, rename, atau overwrite aset akun lama maupun 30 target yang sudah berhasil.
+- Jangan menghapus/mengubah source asli atau tiga MP3.
+- Jangan commit derived image, report, comparison artifact, credential, atau `.env.local`.
+- Jangan commit source implementation. Berhenti setelah retry, verifikasi, dan handoff review.
+
+Verifikasi minimum:
+- `pnpm install --frozen-lockfile` setelah dependency/lockfile final
+- test kompresor dan uploader hermetis
+- `pnpm test`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+- `pnpm media:verify-audio`
+- `pnpm media:dry-run` dua kali dan bandingkan hash
+- `pnpm media:verify`
+- Stage 5B retry `--execute`
+- `pnpm media:verify-upload`
+- complete 31-target live read-back evidence
+- `git diff --check` dan credential/binary staging scan
+
+Handoff wajib memuat mapping `CLOUD-01`–`CLOUD-04`, algoritme kompresi, original-vs-derived metadata/hash, visual review result, old-vs-new manifest/report hash, retry counts, 31-target live read-back result, daftar exact file source yang berubah, external effects aktual, bukti source/aset lama tetap utuh, dan status `not committed`.
+```
+
+## Stage 5B.2 — Reproducibility and Content-Identity Correction
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 5B.2 — Reproducibility and Content-Identity Correction. Baca bagian "Stage 5B.1 Correction Review" pada `docs/reviews/stage-05b-cloudinary-upload-review.md` dan petakan perubahan ke `CLOUD-05` sampai `CLOUD-08`.
+
+Kondisi yang sudah final:
+- Target Cloudinary `uhwi7xvb` sudah memiliki 31/31 aset: 4/4 hero dan 4/4 audio.
+- Jangan mengunggah ulang, overwrite, rename, atau delete aset apa pun kecuali read-only audit menemukan mismatch nyata dan reviewer memberi otorisasi baru.
+- Laporan final saat ini ber-SHA-256 `03BE7F497480598C66FEC7BB88D8015C5071FDA2BE966ECA3AE8860EA928EAF2`.
+- Derived hero yang diterima: 4.151.481 byte, 3.877 × 5.816, SHA-256 `9A268A4EEA90EAC96F4180D3AF0B121121DD4D32A17FD30484460A0752B3BC77`.
+
+Tugas wajib:
+
+1. `CLOUD-05`: hubungkan `ensureDerivedHeroImage()` atau preparation service ekuivalen ke alur CLI production sebelum `generateMediaManifest()` pada dry-run dan execute. Missing file harus diregenerasi dari original yang hash-nya telah diverifikasi. File valid boleh digunakan tanpa rewrite. File tampered harus diregenerasi lalu hasilnya wajib cocok exact terhadap descriptor; bila tidak cocok, fail closed. Test missing/valid/tampered secara hermetis.
+2. Jangan membuat manifest production hanya dari hard-coded `knownByteSize`. Default resolver wajib memvalidasi file nyata atau preparation gate wajib menjamin existence, regular-file status, containment, size, dimensions, dan SHA-256 sebelum descriptor dipakai.
+3. `CLOUD-06`: buat command audit read-only yang membuktikan content identity aset. Untuk 16 remote sources, stream sumber lama yang allowlisted dan target `secure_url` baru, hitung SHA-256 dan byte count, lalu require equality. Terapkan source-vs-target digest pada local sources bila delivery original stabil. Batasi response size/time, tolak userinfo/custom port/query/fragment, dan nonaktifkan redirect atau validasi ulang setiap hop. Jangan menyimpan body media atau credential ke report/log.
+4. Audit identity harus melaporkan tepat 31 target, hash aman per aset, mismatch/missing count, 4 hero, dan 4 audio. Mismatch harus exit nonzero dan tidak boleh memicu upload/overwrite/delete. Tambahkan test dengan HTTP/client dependency injection untuk digest match, mismatch, oversize response, redirect spoof, timeout, dan sanitized errors.
+5. `CLOUD-07`: pastikan setiap successful `prepareImage()` selalu menghasilkan `0 < byteSize <= targetMaxBytes`. Implementasikan bounded deterministic processing untuk oversized PNG/WebP atau tolak oversized non-JPEG secara eksplisit sampai format itu didukung. Tambahkan tests untuk PNG dan WebP normal serta oversized.
+6. `CLOUD-08`: pin exact `"sharp": "0.35.5"`, sinkronkan `pnpm-lock.yaml`, dan tambahkan guard `import "server-only"` pada image runtime boundary. Pastikan modul client tidak dapat mengimpor primitive tersebut.
+7. Ubah comparison artifact agar tidak menyimpulkan "visually lossless" hanya dari dimensi. Catat metrik objektif dan status manual review terpisah; hasil review saat ini boleh dicatat sebagai diterima setelah inspeksi reviewer.
+8. Pertahankan seluruh invariant manifest: 31 physical assets, 37 usages, 15 local, 16 remote, 4 hero, 4 audio, dan 0 blocker.
+
+Verifikasi minimum:
+- `pnpm install --frozen-lockfile`
+- `pnpm test`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+- `pnpm media:verify-audio`
+- `pnpm media:dry-run` dua kali dengan hash byte-identik
+- `pnpm media:verify`
+- command baru read-only content-identity audit
+- `pnpm media:verify-upload` untuk report yang sudah ada
+- `git diff --check` dan credential scan
+
+Batasan keras:
+- Jangan menjalankan `pnpm media:migrate --execute` pada koreksi ini.
+- Jangan menyentuh PostgreSQL, seed, Stage 6, route, Firestore, Aiven, Vercel, atau UI admin.
+- Jangan mengubah/menghapus source asli, MP3, aset Cloudinary lama, atau target Cloudinary baru.
+- Jangan commit. Berhenti setelah seluruh verifikasi selesai dan kirim handoff review.
+
+Handoff wajib memuat mapping `CLOUD-05`–`CLOUD-08`, bukti generation gate missing/valid/tampered, algoritme audit hash dan proteksi network, hasil 31/31 identity audit, exact Sharp version, PNG/WebP behavior, seluruh command verification, external effects (harus read-only), daftar file berubah, dan status `not committed`.
+```
+
+## Stage 5B.3 — Identity Audit Input Boundary Finalization
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 5B.3 — Identity Audit Input Boundary Finalization. Baca bagian "Stage 5B.2 Correction Review" pada `docs/reviews/stage-05b-cloudinary-upload-review.md` dan petakan perubahan ke `CLOUD-09` serta `CLOUD-10`.
+
+Kondisi yang sudah final:
+- Cloudinary target `uhwi7xvb` sudah lengkap dan telah dibuktikan byte-identical: 31/31 aset, 16 remote source, 15 local source, 4/4 hero, dan 4/4 audio.
+- Jangan menjalankan upload ulang, overwrite, rename, atau delete apa pun.
+- Final upload report tetap ber-SHA-256 `03BE7F497480598C66FEC7BB88D8015C5071FDA2BE966ECA3AE8860EA928EAF2`.
+- Stage 5B.2 sudah menyelesaikan preparation gate, exact Sharp pin, server boundary, image postcondition, dan live content digest. Jangan memperluas perubahan di luar audit-input boundary.
+
+Tugas wajib:
+
+1. `CLOUD-09`: perlakukan `.media-migration/cloudinary-upload-report.json` sebagai untrusted input. Parse JSON secara terkontrol, validasi runtime memakai `cloudinaryUploadReportSchema`, dan jangan dereference payload sebelum validasi berhasil. Error schema harus aman, ringkas, dan tidak memantulkan credential atau nilai sensitif.
+2. Bangun expected asset map dari canonical manifest yang telah melewati resolver/gate produksi. Require tepat 31 public ID unik dan exact set equality antara upload report dan manifest: tidak boleh duplicate, missing, extra, atau substituted target.
+3. Untuk setiap target, cocokkan minimal slug, category, sourceType, sourceLocation, dan Cloudinary resource type dengan canonical manifest. Gunakan source metadata/path dari canonical manifest sebagai input hashing; jangan mempercayai `sourceLocation` dari report untuk pembacaan filesystem.
+4. Pertahankan strict containment validator yang sudah ada untuk seluruh local source root: `public/images/SAMPLE`, `public/images/dummy-couples`, `.media-migration/input/audio`, dan `.media-migration/input/images`. Report tampering seperti absolute path, traversal, sibling-prefix, symlink escape, atau source substitution harus gagal sebelum file dibaca atau network dimulai.
+5. Pastikan exact unique set juga memiliki tepat 4 hero dan 4 audio. Jangan menghitung kelengkapan hanya dari suffix pada 31 record yang belum direkonsiliasi.
+6. Sanitize error pada boundary CLI `scripts/audit-media-identity.ts`; top-level failure tidak boleh mencetak raw exception yang mungkin mengandung path sensitif, token, query, atau credential.
+7. `CLOUD-10`: hitung request attempt aktual. Successful full audit melakukan 31 target GET dan 16 remote-source GET, sehingga report harus menyimpan `networkRequestsMade: 47`, bukan 62. Bila audit berhenti/gagal, counter harus mencerminkan attempt yang benar dan tidak boleh memakai fixed multiplier.
+8. Audit core wajib menolak injected `HttpStreamResponse.status` di luar 200–299 sebelum body diproses. Contract ini harus sama untuk default fetcher dan dependency-injected test fetcher.
+9. Tambahkan test hermetis untuk malformed JSON/root, schema-invalid payload, duplicate/missing/extra public ID, slug/category/source type/source location/resource type substitution, local traversal/absolute path, canonical-set hero/audio invariant, sanitized top-level errors, non-2xx injected response, successful 47-request count, dan request count pada failure/early stop.
+10. Pertahankan seluruh hasil Stage 5B.2: 281+ tests, manifest 31 physical/37 usages/15 local/16 remote/4 hero/4 audio/0 blockers, exact `sharp` pin, server-only boundary, serta derived hero descriptor.
+
+Verifikasi minimum:
+- `pnpm install --frozen-lockfile`
+- `pnpm test`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+- `pnpm media:verify-audio`
+- `pnpm media:dry-run` dua kali dan buktikan hash byte-identik
+- `pnpm media:verify`
+- `pnpm media:verify-upload`
+- `pnpm media:audit-identity` read-only dan buktikan 31/31 match serta tepat 47 request
+- `git diff --check` dan credential scan
+
+Batasan keras:
+- Jangan menjalankan `pnpm media:migrate --execute`.
+- Jangan menyentuh PostgreSQL, seed, Stage 6, route, Firestore, Aiven, Vercel, atau UI admin.
+- Jangan mengubah/menghapus source asli, MP3, derived image yang diterima, aset Cloudinary lama, atau target Cloudinary baru.
+- Jangan commit. Berhenti setelah seluruh verifikasi selesai dan kirim handoff review.
+
+Handoff wajib memuat mapping `CLOUD-09`–`CLOUD-10`, runtime schema/reconciliation strategy, canonical-set dan containment proof, mutation-test matrix, HTTP status behavior, actual request-count evidence (expected 47 pada full pass), seluruh command verification, external effects read-only, daftar file berubah, dan status `not committed`.
+```
+
 ## Stage 6 — Idempotent Local Seed
 
 ```text

@@ -26,6 +26,22 @@ This document explains the current system and the approved target architecture. 
 - Other production media points at an older Cloudinary account with unstructured public IDs.
 - Static UI and theme artwork is stored under `public/images`.
 
+### Media Ingestion and Image Preparation
+
+Dynamic image uploads from the future admin system pass through a server-only preparation pipeline before Cloudinary upload. Browser code never receives Cloudinary API credentials and never writes upload files into the repository.
+
+The preparation pipeline must:
+
+- validate the actual image signature and decoded metadata instead of trusting the filename or browser MIME type;
+- enforce input-byte and decoded-pixel limits to reject unsupported or decompression-bomb inputs;
+- normalize EXIF orientation and strip unnecessary metadata;
+- preserve aspect ratio and avoid upscaling;
+- deterministically compress oversized images to a configured safety target below the active Cloudinary account limit;
+- return output bytes, format, dimensions, byte size, and content digest for upload verification;
+- fail without creating a database media record when preparation, upload, or post-upload verification fails.
+
+Stage 5B may introduce the reusable server-only preparation primitive needed to remediate an oversized migration image. The admin upload UI and its persistence workflow remain separate later-stage work and must reuse that primitive rather than implement a second compressor.
+
 ### Authentication
 
 There is no admin authentication or protected admin area.
