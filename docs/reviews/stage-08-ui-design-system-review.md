@@ -2,9 +2,28 @@
 
 ## Status
 
-`ACCEPTED — READY FOR FINALIZATION`
+`ACCEPTED — FINALIZED`
 
-Stage 8, including correction rounds 8.1 and 8.2, is accepted. The final worktree preserves the Stage 7 visual baseline, establishes the approved Tailwind/UI primitives, reduces client boundaries, corrects the accessibility and responsive defects, and replaces dead controls and source-scan interaction claims with working semantic actions and rendered behavior tests.
+Stage 8 implementation, including correction rounds 8.1 and 8.2, is accepted. Commit `fb2c039` contains the approved feature scope, but the post-commit audit found eight EOF whitespace errors, so finalization needs one narrow follow-up correction before Stage 9.
+
+## Post-Commit Finalization Audit
+
+### Status
+
+`ACCEPTED`
+
+Commit `fb2c039c7363792f3e4eb758c21cf2cc2d7c038e` has the correct message, approved file scope, branch state, and case-correct final landing paths. However, `git show --check fb2c039` and `git diff fb2c039^ fb2c039 --check` report an extra blank line at EOF in exactly eight files:
+
+- `src/components/ui/AnimateIn.tsx`
+- `src/components/ui/Button.tsx`
+- `src/components/ui/Container.tsx`
+- `src/components/ui/IconButton.tsx`
+- `src/components/ui/SectionHeader.tsx`
+- `src/components/ui/landing-interaction.test.tsx`
+- `src/config/landing.ts`
+- `src/lib/motion.ts`
+
+This is non-functional but contradicts the reported clean cached-diff gate. Do not amend `fb2c039`. Remove only the surplus EOF blank lines, verify the resulting commit range, and create the authorized follow-up commit described in `docs/agent/prompts.md`. After the correction passes, update this audit status and the top-level status to final accepted wording in the same follow-up commit.
 
 ## Stage 8.2 Final Review
 

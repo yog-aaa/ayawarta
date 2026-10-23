@@ -974,6 +974,39 @@ Boundaries:
 - If any final gate fails—source, environment, infrastructure, database, or otherwise—stop without committing and report it; do not repair source, config, or data during finalization. The only permitted exception is one unchanged retry of a clearly transient `next/font`/network failure, which must be disclosed. If that retry fails, stop.
 ```
 
+## Stage 8 Finalization Whitespace Correction
+
+```text
+The Stage 8 implementation is accepted, but post-commit audit of `fb2c039c7363792f3e4eb758c21cf2cc2d7c038e` found eight extra blank lines at EOF. Perform only this finalization correction. Do not amend the existing commit, do not modify UI behavior, and do not start Stage 9.
+
+Read `docs/reviews/stage-08-ui-design-system-review.md`, especially `Post-Commit Finalization Audit`.
+
+Authorized source edits — remove only the final surplus blank line while retaining exactly one normal newline at EOF:
+- `src/components/ui/AnimateIn.tsx`
+- `src/components/ui/Button.tsx`
+- `src/components/ui/Container.tsx`
+- `src/components/ui/IconButton.tsx`
+- `src/components/ui/SectionHeader.tsx`
+- `src/components/ui/landing-interaction.test.tsx`
+- `src/config/landing.ts`
+- `src/lib/motion.ts`
+
+Authorized documentation edits:
+- In `docs/reviews/stage-08-ui-design-system-review.md`, after every verification below passes, change the top-level status to `ACCEPTED — FINALIZED` and the Post-Commit Finalization Audit status to `ACCEPTED`.
+- Keep this correction prompt in `docs/agent/prompts.md` as audit history; do not alter other prompts.
+
+Required verification:
+1. Before editing, reproduce `git show --check fb2c039` and confirm it reports only the eight known EOF findings.
+2. After editing, run `git diff --check`, `pnpm test`, `pnpm typecheck`, and `pnpm lint`.
+3. Stage only the eight source files plus the two authorized documentation files.
+4. Run `git diff --cached --check` and verify the cached file list contains exactly those ten paths.
+5. Commit with the exact message: `chore: fix stage 8 EOF whitespace`.
+6. Run `git show --check HEAD` and `git diff fb2c039^ HEAD --check`; both must produce no whitespace findings.
+7. Report the short/full follow-up hash, exact committed paths, verification results, and clean `git status --short --branch`.
+
+Stop without committing if any other file changes, any gate fails, or the original audit contains findings beyond the eight listed paths. Do not repair unrelated code, configuration, data, or infrastructure.
+```
+
 ## Stage 9 — Firestore Isolation and Wishes Hardening
 
 ```text

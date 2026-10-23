@@ -272,4 +272,3 @@ export const FOOTER_CONFIG = {
     email: "ayawarta123@gmail.com",
   },
 } as const;
-

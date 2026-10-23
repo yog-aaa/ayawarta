@@ -376,4 +376,3 @@ describe("Landing Interactive Behavior & Rendered State Tests (UI-10, UI-11, UI-
     });
   });
 });
-
