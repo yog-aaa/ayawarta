@@ -224,6 +224,259 @@ export function validateCloudinaryDeliveryUrl(
   return { valid: true };
 }
 
+export interface CloudinaryAssetBindingOptions {
+  secureUrl: string;
+  expectedCloudName: string;
+  expectedResourceType: "image" | "video";
+  expectedPublicId: string;
+  expectedFormat?: string | null;
+}
+
+/**
+ * Validates binding of Cloudinary delivery URL to canonical asset record (SEED-07).
+ * Enforces:
+ * 1. HTTPS res.cloudinary.com with exact target cloud name.
+ * 2. Exact expected resourceType ('image' or 'video').
+ * 3. Delivery segment must be 'upload'.
+ * 4. Valid optional transformations and version (no duplicate/ambiguous versions).
+ * 5. Reconstructed and decoded public ID path must match expectedPublicId 1:1.
+ * 6. File extension must match expected format.
+ * 7. Strictly rejects non-local/tampered URLs: swapped public IDs, wrong resourceType,
+ *    encoded traversal (%2e%2e, %2f, %5c, ..), credentials, query params, fragments, custom ports.
+ */
+export function validateCloudinaryAssetBinding(
+  options: CloudinaryAssetBindingOptions
+): { valid: boolean; reason?: string } {
+  const {
+    secureUrl,
+    expectedCloudName,
+    expectedResourceType,
+    expectedPublicId,
+    expectedFormat,
+  } = options;
+
+  if (typeof secureUrl !== "string" || secureUrl.trim().length === 0) {
+    return { valid: false, reason: "Delivery URL must be a non-empty string" };
+  }
+
+  // Fail closed against encoded traversal, directory traversal, and backslashes
+  const lowerUrl = secureUrl.toLowerCase();
+  if (
+    lowerUrl.includes("%2e") ||
+    secureUrl.includes("..") ||
+    lowerUrl.includes("%2f") ||
+    lowerUrl.includes("%5c") ||
+    secureUrl.includes("\\")
+  ) {
+    return {
+      valid: false,
+      reason: "URL contains prohibited traversal characters or encoded slashes/dots",
+    };
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(secureUrl);
+  } catch {
+    return { valid: false, reason: `Invalid URL format: '${secureUrl}'` };
+  }
+
+  if (parsed.protocol !== "https:") {
+    return { valid: false, reason: `Protocol must be HTTPS, got '${parsed.protocol}'` };
+  }
+
+  if (parsed.hostname !== "res.cloudinary.com") {
+    return {
+      valid: false,
+      reason: `Hostname must be strictly 'res.cloudinary.com', got '${parsed.hostname}'`,
+    };
+  }
+
+  if (parsed.username || parsed.password) {
+    return { valid: false, reason: "URL must not contain credentials" };
+  }
+
+  if (parsed.port && parsed.port !== "443" && parsed.port !== "") {
+    return {
+      valid: false,
+      reason: `URL must not specify custom port '${parsed.port}'`,
+    };
+  }
+
+  if (parsed.search && parsed.search.length > 0) {
+    return { valid: false, reason: "URL must not contain query parameters" };
+  }
+
+  if (parsed.hash && parsed.hash.length > 0) {
+    return { valid: false, reason: "URL must not contain hash fragments" };
+  }
+
+  // Cloudinary URL path structure:
+  // /{cloudName}/{resourceType}/{deliveryType}/{optional_transformations}/{optional_version}/{public_id}.{format}
+  const segments = parsed.pathname.split("/").filter(Boolean);
+
+  if (segments.length < 4) {
+    return {
+      valid: false,
+      reason: `URL path has insufficient segments (${segments.length}); expected at least cloud, resource, delivery, and public ID`,
+    };
+  }
+
+  // 1. Cloud Name
+  if (segments[0] !== expectedCloudName) {
+    return {
+      valid: false,
+      reason: `First path segment must be target cloud name '${expectedCloudName}', got '${segments[0]}'`,
+    };
+  }
+  if (segments[0] === OLD_CLOUDINARY_CLOUD_NAME) {
+    return {
+      valid: false,
+      reason: `URL points to old Cloudinary account '${OLD_CLOUDINARY_CLOUD_NAME}'`,
+    };
+  }
+
+  // 2. Resource Type
+  if (segments[1] !== expectedResourceType) {
+    return {
+      valid: false,
+      reason: `Resource type in URL '${segments[1]}' does not match expected '${expectedResourceType}'`,
+    };
+  }
+
+  // 3. Delivery Type
+  if (segments[2] !== "upload") {
+    return {
+      valid: false,
+      reason: `Delivery type in URL must be 'upload', got '${segments[2]}'`,
+    };
+  }
+
+  // 4. Remaining segments: [transformations?, version?, ...publicIdSegments]
+  const remaining = segments.slice(3);
+  const expectedSegments = expectedPublicId.split("/").filter(Boolean);
+  const expectedLength = expectedSegments.length;
+
+  if (remaining.length < expectedLength) {
+    return {
+      valid: false,
+      reason: `Path segments (${remaining.length}) fewer than expected public ID segments (${expectedLength})`,
+    };
+  }
+
+  const publicIdSegments = remaining.slice(remaining.length - expectedLength);
+  const middleSegments = remaining.slice(0, remaining.length - expectedLength);
+
+  // Validate middle segments (optional transformations and version)
+  const versionSegments = middleSegments.filter((s) => /^v\d+$/.test(s));
+  if (versionSegments.length > 1) {
+    return {
+      valid: false,
+      reason: "Ambiguous URL: multiple version segments detected",
+    };
+  }
+
+  const validTransformRegex = /^[a-zA-Z0-9_,:-]+$/;
+  for (const seg of middleSegments) {
+    if (!validTransformRegex.test(seg)) {
+      return {
+        valid: false,
+        reason: `Invalid transformation or version segment '${seg}'`,
+      };
+    }
+    // Reject ambiguous version-like patterns, e.g. v123abc or v_foo
+    if (seg.startsWith("v") && !/^v\d+$/.test(seg) && !/^(vc_|vs_)/.test(seg)) {
+      return {
+        valid: false,
+        reason: `Ambiguous version-like segment '${seg}'`,
+      };
+    }
+  }
+
+  if (
+    versionSegments.length === 1 &&
+    middleSegments[middleSegments.length - 1] !== versionSegments[0]
+  ) {
+    return {
+      valid: false,
+      reason: "Version segment must immediately precede the public ID",
+    };
+  }
+
+  // Validate public ID directory segments (all except last)
+  for (let i = 0; i < expectedLength - 1; i++) {
+    if (publicIdSegments[i] !== expectedSegments[i]) {
+      return {
+        valid: false,
+        reason: `Public ID segment mismatch at index ${i}: URL has '${publicIdSegments[i]}', expected '${expectedSegments[i]}'`,
+      };
+    }
+  }
+
+  // Validate the leaf segment (asset name and optional file extension)
+  const expectedLeaf = expectedSegments[expectedLength - 1];
+  const urlLeaf = publicIdSegments[expectedLength - 1];
+
+  let urlLeafBase = urlLeaf;
+  let urlLeafExt: string | null = null;
+
+  if (urlLeaf === expectedLeaf) {
+    urlLeafBase = urlLeaf;
+  } else if (urlLeaf.startsWith(expectedLeaf + ".")) {
+    urlLeafBase = expectedLeaf;
+    urlLeafExt = urlLeaf.slice(expectedLeaf.length + 1);
+  } else {
+    return {
+      valid: false,
+      reason: `URL leaf segment '${urlLeaf}' does not match expected public ID leaf '${expectedLeaf}'`,
+    };
+  }
+
+  if (urlLeafExt !== null) {
+    if (!/^[a-zA-Z0-9]+$/.test(urlLeafExt)) {
+      return {
+        valid: false,
+        reason: `Prohibited characters in file extension '${urlLeafExt}'`,
+      };
+    }
+    if (expectedFormat) {
+      const normUrlExt = urlLeafExt.toLowerCase();
+      const normExpectedFormat = expectedFormat.toLowerCase();
+      const isJpgMatch =
+        (normUrlExt === "jpg" || normUrlExt === "jpeg") &&
+        (normExpectedFormat === "jpg" || normExpectedFormat === "jpeg");
+      if (!isJpgMatch && normUrlExt !== normExpectedFormat) {
+        return {
+          valid: false,
+          reason: `URL extension '${urlLeafExt}' does not match expected format '${expectedFormat}'`,
+        };
+      }
+    }
+  }
+
+  // Reconstruct and verify decoded public ID path
+  const reconstructedPublicId = [
+    ...publicIdSegments.slice(0, expectedLength - 1),
+    urlLeafBase,
+  ].join("/");
+
+  if (reconstructedPublicId !== expectedPublicId) {
+    return {
+      valid: false,
+      reason: `Reconstructed public ID '${reconstructedPublicId}' does not match expected '${expectedPublicId}'`,
+    };
+  }
+
+  if (decodeURIComponent(reconstructedPublicId) !== expectedPublicId) {
+    return {
+      valid: false,
+      reason: "Decoded public ID does not match expected public ID",
+    };
+  }
+
+  return { valid: true };
+}
+
 export interface MatchVerificationResult {
   match: boolean;
   reason?: string;

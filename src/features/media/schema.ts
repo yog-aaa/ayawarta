@@ -170,6 +170,8 @@ export const cloudinaryUploadReportSchema = z.object({
   }),
 });
 
+export type UploadAssetRecord = z.infer<typeof uploadAssetRecordSchema>;
+
 export type ValidatedCloudinaryUploadReport = z.infer<
   typeof cloudinaryUploadReportSchema
 >;

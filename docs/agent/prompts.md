@@ -597,6 +597,152 @@ Batasan:
 Handoff wajib menyertakan count run pertama/kedua, query reconstruction result, transaction strategy, dan bukti hanya database lokal yang berubah.
 ```
 
+## Stage 6.1 — Seed Atomicity and Local-Target Hardening
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 6.1 — Seed Atomicity and Local-Target Hardening. Baca `docs/reviews/stage-06-idempotent-seed-review.md` dan petakan perubahan ke `SEED-01` sampai `SEED-04`.
+
+Kondisi saat ini:
+- Database lokal pernah berhasil di-seed dua kali menjadi 82 row, tetapi PostgreSQL Laragon sedang sempat tidak menerima koneksi saat review. Pastikan servicenya aktif sebelum verification database.
+- Tidak ada izin menulis ke Aiven, Vercel, Firestore, atau database selain PostgreSQL lokal `localhost:5432/ayawarta`.
+- Jangan mulai Stage 7 dan jangan commit.
+
+Tugas wajib:
+
+1. `SEED-01`: ubah seed dataset menjadi satu outer interactive transaction yang mencakup 31 MediaAsset, keempat Invitation beserta seluruh ordered children, dan administrator bila bootstrap diaktifkan. Jangan membuka nested transaction per invitation. Bila satu invariant atau write gagal, seluruh perubahan Stage 6 pada run tersebut harus rollback.
+2. Validasi seluruh required media dan seed definition sebelum write bila memungkinkan. Tambahkan fault-injection test yang gagal setelah beberapa media upsert dan saat invitation ke-3; buktikan tidak ada partial state yang tersisa.
+3. `SEED-02`: buat reusable server-only local database target guard. Parse `DATABASE_URL` tanpa mencetak URL mentah/user/password. Hanya izinkan protocol PostgreSQL, host `localhost`, `127.0.0.1`, atau `::1`, port `5432`, dan database `ayawarta`.
+4. Jalankan guard sebelum Prisma client di-import atau koneksi/write dibuat pada `prisma/seed.ts`. Terapkan juga pada `scripts/verify-seed.ts`. Tambahkan test approved target serta penolakan Aiven/non-local host, port/database salah, malformed URL, query override berbahaya bila relevan, dan error yang tidak membocorkan credential.
+5. `SEED-03`: sebelum transaksi, validasi upload report sebagai untrusted input dan reconcile terhadap canonical Stage 5B manifest. Require tepat 31 unique public ID, exact set equality, target cloud `uhwi7xvb`, status sukses, slug/category/source/resource type sesuai, strict target delivery URL, positive bytes/format, valid image dimensions, serta tepat satu hero dan audio per approved slug.
+6. Jangan default metadata penting yang hilang menjadi `0`. Missing/invalid `bytes`, format, secure URL, atau dimensions untuk image harus fail closed. Gunakan metadata report yang sudah direkonsiliasi untuk MediaAsset upsert.
+7. Perbaiki test report agar benar-benar memanggil production validator. Tambahkan mutation tests untuk duplicate/missing/extra/substituted ID, forged summary, old/wrong cloud, spoofed secure URL, failed status, zero/null bytes, dan missing dimensions.
+8. `SEED-04`: ubah semua canonical `weddingDate` menjadi timestamp eksplisit WIB (`+07:00`) agar hasil identik pada mesin Asia/Jakarta maupun UTC. Pertahankan wall-clock yang sekarang dan test exact ISO instant untuk keempat slug.
+9. Pertahankan seluruh konten, section flags, ordering, account number string, gallery reuse, hero/music relation, dan galleryVideoUrl yang telah diterima. Jangan mengedit copy pelanggan.
+
+Verifikasi minimum setelah PostgreSQL lokal aktif:
+- `pnpm prisma:format`
+- `pnpm prisma:validate`
+- `pnpm test`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+- `pnpm test:db`
+- preflight target aman yang hanya mencetak protocol/host/port/database
+- `pnpm prisma:seed` run 1
+- `pnpm seed:verify`
+- `pnpm prisma:seed` run 2
+- `pnpm seed:verify`
+- buktikan count dan content reconstruction identik
+- `git diff --check` dan credential scan
+
+Batasan keras:
+- Jangan menjalankan seed bila local-target guard gagal.
+- Jangan menyentuh Aiven, Vercel, Firestore, route publik, atau Cloudinary.
+- Jangan menghapus hard-coded data maupun media lokal.
+- Jangan commit. Berhenti setelah verifikasi dan kirim handoff review.
+
+Handoff wajib memuat mapping `SEED-01`–`SEED-04`, transaction boundary, rollback fault-injection proof, local-target guard matrix, report reconciliation/mutation-test matrix, exact weddingDate ISO values, run-1/run-2 counts, repository reconstruction, external effects, daftar file berubah, dan status `not committed`.
+```
+
+## Stage 6.2 — Seed Boundary Proof Finalization
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 6.2 — Seed Boundary Proof Finalization. Baca `docs/reviews/stage-06-idempotent-seed-review.md` dan petakan pekerjaan ke `SEED-05`, `SEED-06`, dan `SEED-07`.
+
+Kondisi yang sudah diterima:
+- Transaction production seed sudah mencakup 31 media, 4 invitation beserta child, dan admin.
+- Local database guard, canonical report reconciliation, serta timestamp WIB sudah benar secara umum.
+- Database lokal `localhost:5432/ayawarta` saat ini berisi 82 row yang valid.
+
+Tugas wajib:
+
+1. `SEED-05`: susun ulang `scripts/verify-seed.ts` agar local database target guard selesai dan lulus sebelum modul Prisma/database di-import atau dievaluasi. Setelah guarded import, cleanup `$disconnect()` tetap wajib berjalan pada sukses maupun gagal.
+2. Tambahkan hermetic module-boundary test dengan dependency injection atau isolated module loading yang membuktikan URL non-lokal/malformed ditolak dan Prisma import factory tidak pernah dipanggil. Jangan hanya grep/source scan.
+3. `SEED-06`: ganti rollback proof berbasis row count dengan deterministic full-state snapshot untuk semua 9 tabel sebelum dan sesudah fault injection. Snapshot harus credential-free, sorted, dan cukup sensitif untuk menangkap perubahan value, `updatedAt`, foreign key, serta penghapusan/pembuatan ulang child ID.
+4. Pertahankan dua skenario live rollback: gagal setelah 5 media upsert dan gagal pada invitation ke-3. Kedua hasil harus identik secara struktural atau byte-for-byte dengan baseline, bukan hanya count. Jalankan hanya setelah local-target guard lulus.
+5. `SEED-07`: tambahkan validator binding delivery URL Cloudinary ke record kanonis. Require HTTPS `res.cloudinary.com`, cloud `uhwi7xvb`, resource path yang sesuai (`image` atau `video`), segmen `upload`, optional transformation/version yang valid, dan decoded public-ID path yang sama persis dengan `targetPublicId` setelah extension dilepas.
+6. Validator harus fail closed terhadap URL milik public ID approved lain, pertukaran dua secure URL, resource type salah, path/version ambigu, encoded slash/dot traversal, credentials, query, fragment, dan custom port. Jangan merusak 31 URL report produksi yang sudah disetujui.
+7. Tambahkan mutation tests yang benar-benar melewati production report reader dan membuktikan seluruh substitusi URL di atas ditolak sebelum transaksi.
+8. Jangan mengubah data pelanggan, schema Prisma, canonical public IDs, jumlah row, UI, route publik, atau konfigurasi layanan eksternal.
+
+Verifikasi minimum:
+- `pnpm install --frozen-lockfile`
+- `pnpm prisma:format`
+- `pnpm prisma:validate`
+- `pnpm test`
+- `pnpm test:db`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+- `pnpm seed:verify`
+- satu negative CLI/module-boundary proof bahwa non-local URL berhenti sebelum Prisma import
+- `git diff --check` dan credential scan
+
+Batasan keras:
+- Hanya PostgreSQL lokal `localhost:5432/ayawarta` boleh dibaca/ditulis.
+- Jangan menjalankan seed ke Aiven, Vercel, Firestore, atau database lain.
+- Jangan mengakses/memutasi Cloudinary; URL validation harus offline.
+- Jangan memulai Stage 7 dan jangan commit.
+
+Handoff wajib memuat mapping `SEED-05`–`SEED-07`, bukti urutan guard-before-import, bentuk snapshot rollback dan hasil dua fault injection, mutation matrix URL/public-ID binding, seluruh hasil verifikasi, external effects, daftar file berubah, dan status `not committed`.
+```
+
+## Stage 6.3 — Seed Proof Integrity Final Correction
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya koreksi final Stage 6.3. Baca `docs/reviews/stage-06-idempotent-seed-review.md` dan perbaiki tepat `SEED-08` serta `SEED-09`. Jangan memperluas scope, jangan memulai Stage 7, dan jangan commit.
+
+Tugas wajib:
+
+1. `SEED-08`: perbaiki `computeSnapshotDigest()` agar SHA-256 mencakup seluruh nested field dari sembilan tabel. Jangan gunakan replacer array yang menghapus property nested. Gunakan serialisasi snapshot yang deterministik dan content-sensitive.
+2. Tambahkan unit test hermetis yang membuat dua snapshot dengan jumlah row identik tetapi satu nested ID/value/timestamp berbeda; digest wajib berbeda. Dua snapshot yang identik secara semantik wajib menghasilkan digest sama.
+3. Pertahankan full structural equality pada kedua live rollback test. Jalankan kembali fault injection setelah 5 media upsert dan pada invitation ke-3; buktikan digest dan struktur sama dengan baseline.
+4. `SEED-09`: reconcile `asset.format` dari upload report terhadap `canonical.format` sebelum memvalidasi URL. Gunakan aturan canonical yang eksplisit; hanya normalisasi `jpg`/`jpeg` bila memang diterima contract proyek.
+5. Pass format kanonis, bukan report format, sebagai `expectedFormat` ke `validateCloudinaryAssetBinding()`.
+6. Tambahkan mutation test melalui production `reconcileUploadReport()` yang mengubah report `format` dan URL extension secara bersamaan (misalnya canonical JPG menjadi PNG). Test wajib membuktikan perubahan tersebut ditolak sebelum transaksi.
+7. Pastikan 31 record upload report produksi tetap lulus, 82 row database tetap sama, dan tidak ada network request maupun external mutation.
+
+Verifikasi minimum:
+- `pnpm install --frozen-lockfile`
+- `pnpm prisma:validate`
+- `pnpm test`
+- `pnpm test:db`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+- `pnpm seed:verify`
+- `git diff --check` dan credential scan
+
+Batasan keras:
+- Hanya database lokal `localhost:5432/ayawarta` yang boleh diakses.
+- Jangan seed ulang bila tidak diperlukan untuk test; jangan menyentuh Aiven, Vercel, Firestore, atau Cloudinary.
+- Jangan mengubah data pelanggan, schema, public ID, URL produksi, UI, route, atau dependency.
+- Jangan commit.
+
+Handoff wajib memetakan `SEED-08` dan `SEED-09` ke koreksi, menunjukkan unit proof digest content-sensitive, mutation proof canonical-format binding, dua hasil rollback snapshot, seluruh verification, external effects, dan status `not committed`.
+```
+
+## Finalize and Commit Stage 6
+
+```text
+Stage 6 — Idempotent Local Seed, termasuk koreksi Stage 6.1 sampai 6.3, telah ACCEPTED oleh reviewer.
+
+Kerjakan finalisasi saja:
+1. Baca `docs/reviews/stage-06-idempotent-seed-review.md` dan pastikan statusnya ACCEPTED.
+2. Pastikan worktree hanya berisi implementasi, test, script, dan dokumentasi Stage 6 yang telah direview. Jangan menambah fitur atau refactor baru.
+3. Jalankan pemeriksaan akhir: `pnpm test`, `pnpm test:db`, `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm seed:verify`, dan `git diff --check`.
+4. Pastikan `.env.local`, credential, binary media, `.media-migration/`, dan file tidak terkait tidak masuk staging.
+5. Stage seluruh scope Stage 6 yang diterima dan periksa `git diff --cached --check` serta daftar file staged.
+6. Commit dengan pesan tepat: `feat: add idempotent invitation seed`.
+7. Laporkan short/full commit hash, daftar file committed, hasil gate, row count database lokal, external effects, dan `git status --short --branch`.
+
+Batasan:
+- Jangan amend commit lama.
+- Jangan menjalankan seed ke Aiven atau database non-lokal.
+- Jangan mengubah Cloudinary, Firestore, Vercel, route publik, atau UI.
+- Jangan memulai Stage 7 dalam handoff ini.
+```
+
 ## Stage 7 — Public Route Cutover
 
 ```text

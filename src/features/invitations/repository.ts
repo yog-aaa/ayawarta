@@ -51,3 +51,4 @@ export function createInvitationRepository(
 }
 
 export const invitationRepository = createInvitationRepository();
+export type InvitationRepository = ReturnType<typeof createInvitationRepository>;
