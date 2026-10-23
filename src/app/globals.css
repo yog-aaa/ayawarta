@@ -1,8 +1,71 @@
 @import "tailwindcss";
 
-/* Kita definisikan utility class untuk font secara manual menggunakan CSS biasa.
-  Ini adalah cara yang paling stabil dan bebas dari potensi bug parser @theme.
-*/
+@theme {
+  /* Semantic Surface & Text Colors */
+  --color-background: #ffffff;
+  --color-foreground: #111827;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f9fafb;
+  --color-surface-muted: #f3f6fd;
+  --color-muted: #6b7280;
+  --color-muted-foreground: #4b5563;
+
+  /* Brand Primary Blue */
+  --color-brand-primary: #0264ff;
+  --color-brand-primary-hover: #014cc4;
+  --color-brand-primary-foreground: #ffffff;
+  --color-brand-secondary: #0d285b;
+  --color-brand-accent: #2563eb;
+  --color-brand-soft: #f3f6fd;
+
+  /* Border & Ring */
+  --color-border: #e5e7eb;
+  --color-border-subtle: #f3f4f6;
+  --color-ring: #0264ff;
+  --color-ring-offset: #ffffff;
+
+  /* Status Colors */
+  --color-success: #16a34a;
+  --color-success-foreground: #ffffff;
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #ffffff;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+
+  /* Radii */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+  --radius-pill: 9999px;
+
+  /* Shadows */
+  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 4px 15px rgba(0, 0, 0, 0.08);
+  --shadow-floating: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-brand: 0 4px 15px rgba(2, 100, 255, 0.4);
+
+  /* Standard Content Widths */
+  --content-width-narrow: 48rem;
+  --content-width-default: 80rem;
+  --content-width-fluid: 100%;
+
+  /* Spacing */
+  --spacing-section-sm: 4rem;
+  --spacing-section: 5rem;
+  --spacing-section-lg: 8rem;
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-deliberate: 600ms;
+  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-out-cubic: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* Typography utility classes */
 .font-body {
   font-family: var(--font-noto-sans-thai);
 }
@@ -23,8 +86,7 @@
   font-family: var(--font-alice);
 }
 
-
-/* Efek garis bawah untuk link navigasi di header */
+/* Navigation link underline effect */
 .nav-link-hover {
   position: relative;
   transition: color 0.3s ease;
@@ -40,15 +102,16 @@
   left: 50%;
   transform: translateX(-50%);
   background-color: #2563EB;
-  /* Tailwind's blue-600 */
   transition: width 0.3s ease-out;
 }
 
 .nav-link-hover:hover::after,
-.nav-link-hover.active::after {
+.nav-link-hover.active::after,
+.nav-link-hover[aria-current="page"]::after {
   width: 100%;
 }
 
+/* Classic Rose specific variables */
 :root {
   --color-primary-rose: #630718;
 }
@@ -58,6 +121,7 @@ body {
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 .bg-primary-rose {
@@ -66,4 +130,40 @@ body {
 
 .text-primary-rose {
   color: var(--color-primary-rose);
+}
+
+/* Accessibility: Standard Focus Ring */
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-ring-offset, #ffffff), 0 0 0 4px var(--color-ring, #0264ff);
+}
+
+/* Skip link for screen readers and keyboard users */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  background-color: #0264ff;
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Reduced motion preference support */
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body {
+    scroll-behavior: auto;
+  }
 }

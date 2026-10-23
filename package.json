@@ -58,6 +58,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
+    "happy-dom": "^21.0.4",
     "prisma": "^7.10.1",
     "tailwindcss": "^4.1.11",
     "tsx": "^4.23.15",

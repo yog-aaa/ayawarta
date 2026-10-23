@@ -820,6 +820,160 @@ Batasan:
 Handoff wajib menyertakan daftar perubahan visual, viewport yang diperiksa, accessibility/reduced-motion result, screenshot bila tersedia, dan build result.
 ```
 
+## Stage 8.1 — UI Refactor Correction
+
+```text
+Stage 8 — UI and Tailwind Design-System Refactor received CHANGES REQUIRED.
+
+Read `docs/reviews/stage-08-ui-design-system-review.md` completely and correct only findings UI-01 through UI-09. Do not start Stage 9, do not clean up legacy invitation data/media, and do not commit.
+
+Required skills:
+- `frontend-design`: preserve the Stage 7 visual baseline while correcting demonstrated layout defects.
+- `tailwind-design-system`: complete the Tailwind v4 token and primitive contracts without creating a broad component library.
+- `web-design-guidelines`: run the final audit and report remaining findings in `file:line` format.
+
+Required corrections:
+1. Fix the invalid `FramedImage` syntax and strengthen its valid prop combinations. All compile/test gates must run from the same final worktree reported in the handoff.
+2. Revert material redesign in `ThemeSection` and `PricingSection`. Preserve Stage 7 copy, initial visible theme count, category/filter behavior, card/action composition, popular-plan treatment, payment-method placement, and overall geometry. Keep only approved structural, focus, touch-target, label, overflow, and reduced-motion improvements.
+3. Remove unnecessary full-section Client Component boundaries from static feature, pricing, and testimonial content. Isolate Framer Motion behavior in the smallest practical client helper/island. Keep Header, hero carousel, and theme filtering client-side where interaction requires it.
+4. Stop hero carousel autoplay when reduced motion is requested. Add a visible, keyboard-operable pause/resume control for autoplay and preserve manual previous/next controls. Test pause, resume, and reduced-motion behavior.
+5. Ensure every focusable theme-card action is visible on keyboard focus and usable on touch. Do not add bookmark persistence; remove or honestly disable dead actions. Add `aria-controls`, Escape close, and focus-return behavior to the mobile menu disclosure.
+6. Add the missing standard content-width token category and consume semantic tokens in shared primitives where doing so preserves the exact baseline appearance. Make class overrides deterministic (Tailwind conflict merging or a narrower non-conflicting API). Avoid hard-coded duplication the tokens were introduced to replace.
+7. Correct the 360–430 px hero CTA layout so labels do not wrap into mismatched button heights. Verify actual CSS viewport widths at 360, 390–430, 768, 1280, and 1440 px. Fix overflow in owning components; do not rely on root `overflow-x: hidden` as proof.
+8. Resolve the Web Interface Guidelines findings: replace `transition-all` with explicit properties, use the ellipsis character, give the search input appropriate `name`/autocomplete/spellcheck semantics, account for sticky-header scroll margin, and document any intentionally deferred item.
+9. Replace prop-only primitive tests with rendered contract tests. Add focused interaction/accessibility tests for carousel controls, reduced motion, mobile menu, and theme-card keyboard visibility. Keep tests hermetic.
+10. Preserve correct Stage 8 work already present: typed landing config, PascalCase file names/imports, page-level Server Component, Server Footer, skip link, focus ring, `aria-current`, image alternatives, and Classic Rose isolation.
+
+Verification required on the final uncommitted worktree:
+- `pnpm install --frozen-lockfile`
+- `pnpm test`
+- `pnpm test:db`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+- start a local production server on an unused port and run `pnpm smoke:routes`
+- `git diff --check`
+- staged/unstaged scope and credential scan
+
+Visual evidence required:
+- before/after comparison against committed Stage 7 for the changed landing sections;
+- screenshots or equivalent browser evidence at actual CSS widths 360, 390–430, 768, 1280, and 1440 px;
+- keyboard traversal results for skip link, header disclosure, carousel, theme filters/cards, pricing CTAs, and footer links;
+- reduced-motion proof showing autoplay disabled and nonessential movement removed;
+- per-viewport `document.documentElement.scrollWidth <= window.innerWidth` evidence without masking defects at the root.
+
+Handoff must map UI-01 through UI-09 to exact corrections and tests, list intentional visual differences (expected to be accessibility-only), name the three required skills exactly, report all final gate results, disclose external effects, and end with `Commit: not committed`.
+```
+
+## Stage 8.2 — Final Interaction and Evidence Correction
+
+```text
+Stage 8.1 — UI Refactor Correction received CHANGES REQUIRED after independent browser review.
+
+Read `docs/reviews/stage-08-ui-design-system-review.md` completely, especially the Stage 8.1 correction review. Correct only UI-10 through UI-13. Preserve all accepted Stage 8.1 work, do not start Stage 9, do not clean up legacy data/media, and do not commit.
+
+Required skills:
+- `frontend-design`: preserve the restored Stage 7 visual baseline while making existing controls truthful and usable.
+- `tailwind-design-system`: keep primitive/token contracts coherent; do not expand the component library.
+- `web-design-guidelines`: rerun the final interaction/accessibility audit and report remaining findings as `file:line`.
+
+Required corrections:
+1. Remove all enabled dead controls in the theme and pricing sections while preserving card geometry and the current Stage 7 composition:
+   - Set each external/open-preview action to the existing approved template route `/wedding/classic-rose/red`, preserving its new-tab behavior and accessible name.
+   - Render each visible Preview action as a semantic link to `/wedding/classic-rose/red` in the current tab. Do not create per-theme routes in this stage.
+   - Keep the color swatches visible for baseline composition, but mark each one `disabled` and `aria-disabled="true"` with a truthful “filter warna segera hadir” label/title. Give every swatch a minimum 44 × 44 px touch target. Do not implement color selection/filtering.
+   - Render every pricing CTA as a semantic link to the existing `#tentang` contact section. Do not add checkout, WhatsApp, forms, or external messaging integration.
+   - Keep bookmark controls honestly disabled as already implemented.
+2. Correct the hero autoplay control for `prefers-reduced-motion`:
+   - autoplay must remain disabled;
+   - manual previous/next controls must remain usable;
+   - under reduced motion, render the existing central control as disabled with `aria-disabled="true"`, a stopped/pause-state icon, and the exact accessible label/title `Putar otomatis dinonaktifkan karena preferensi gerak dikurangi`;
+   - under ordinary motion, keep the operable pause/resume toggle with truthful labels and icons;
+   - do not show “Jeda” when nothing is playing and do not offer an inoperable resume action.
+3. Replace source-string-only interaction claims with focused rendered behavior tests using the existing test stack:
+   - fake-timer proof that ordinary autoplay advances, pause stops it, and resume restarts it;
+   - reduced-motion proof for autoplay and the visible/accessible toggle state;
+   - mobile menu open, Escape close, and focus return;
+   - destination/disabled behavior for one representative card per action type plus an assertion that all rendered instances share the same valid destination/disabled contract; new-tab preview behavior must be asserted explicitly rather than inferred from the current tab URL.
+   Architectural source scans may remain only as supplemental checks.
+   Small dev-only test dependencies and Vitest environment configuration are permitted only if the current stack cannot render client interactions; record any such dependency and lockfile change. Do not add a runtime UI dependency solely for tests.
+4. Correct breakpoint evidence. Keep the Stage 7-compatible `lg:grid-cols-3` pricing breakpoint unchanged and report one pricing column at 768 px. Evidence belongs in the handoff only; do not create another evidence document.
+5. Keep the current 360–430 px CTA fix, Server Component boundaries, `AnimateIn` island, FramedImage contract, Tailwind tokens, search semantics, scroll margins, mobile-menu disclosure, and Classic Rose isolation unchanged unless a minimal adjustment is required by the findings above.
+
+Verification required on the same final uncommitted worktree:
+- `pnpm install --frozen-lockfile`
+- `pnpm test`
+- `pnpm test:db`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+- start a production server on an unused port and run `PORT=<that-port> pnpm smoke:routes`
+- `git diff --check`
+- staged/unstaged scope and credential scan
+
+Browser evidence required at exact CSS viewport widths:
+- 360, 390, 430, 768, 1280, and 1440 px;
+- report the actual theme and pricing column counts at each sampled width;
+- keyboard-test the mobile menu, autoplay controls, theme actions, and pricing actions. Footer links are regression-only checks and do not authorize Footer changes;
+- prove every enabled control changes route/state as promised, and every unavailable control is disabled or absent;
+- prove manual previous/next still work under reduced motion;
+- for overflow proof, temporarily override the root `overflow-x` to `visible` in the browser test, then record `document.documentElement.scrollWidth <= window.innerWidth` and inspect owning-component bounds at every sampled width. Restore the override afterward; do not change the production root rule in this correction.
+
+Handoff must map UI-10 through UI-13 to exact corrections and behavior tests, distinguish automated test evidence from manual browser evidence, list the three required skills exactly, report external effects, and end with `Commit: not committed`.
+```
+
+## Finalize and Commit Stage 8
+
+```text
+Stage 8 — UI and Tailwind Design-System Refactor, including correction rounds 8.1 and 8.2, has been ACCEPTED by the reviewer.
+
+Perform finalization only:
+1. Read `docs/reviews/stage-08-ui-design-system-review.md` and confirm the current status is `ACCEPTED — READY FOR FINALIZATION`.
+2. The exact accepted file manifest is below. Stage only these paths, including both documentation files; any other changed or untracked path is out of scope and must stop finalization for reviewer guidance:
+   - `docs/agent/prompts.md`
+   - `docs/reviews/stage-08-ui-design-system-review.md`
+   - `package.json`
+   - `pnpm-lock.yaml`
+   - `scripts/smoke-test-routes.ts`
+   - `src/app/globals.css`
+   - `src/app/page.tsx`
+   - the seven case-only landing renames and their final PascalCase contents: `FeatureSection.tsx`, `Footer.tsx`, `Header.tsx`, `HomeSection.tsx`, `PricingSection.tsx`, `TestimonialSection.tsx`, and `ThemeSection.tsx` under `src/app/components/landing/`
+   - `src/components/ui/AnimateIn.tsx`
+   - `src/components/ui/Button.tsx`
+   - `src/components/ui/Container.tsx`
+   - `src/components/ui/FramedImage.tsx`
+   - `src/components/ui/IconButton.tsx`
+   - `src/components/ui/SectionHeader.tsx`
+   - `src/components/ui/design-system.test.ts`
+   - `src/components/ui/landing-interaction.test.tsx`
+   - `src/components/ui/primitives.test.tsx`
+   - `src/config/landing.ts`
+   - `src/lib/cn.ts`
+   - `src/lib/motion.ts`
+3. Do not add features, redesign sections, change copy/data contracts, alter destinations, or refactor unrelated files during finalization.
+4. Run the final gates from the same worktree:
+   - `pnpm install --frozen-lockfile`
+   - `pnpm test`
+   - `pnpm test:db`
+   - `pnpm typecheck`
+   - `pnpm lint`
+   - `pnpm build`
+   - start a production server on an unused non-default port and run `PORT=<that-port> pnpm smoke:routes`, then stop it cleanly
+   - `pnpm seed:verify`
+   - `git diff --check`
+5. Confirm `.env.local`, credentials, binary media, `.media-migration/`, database dumps, and unrelated files are absent from staging. Preserve the case-only PascalCase renames correctly in Git.
+6. Stage the exact accepted manifest only. Inspect `git diff --cached --check` and compare `git diff --cached --name-status` path-for-path against the manifest, including both sides of case-only renames. Scan the cached file list and complete cached diff, including newly added files, for credential-like key names or values (`DATABASE_URL`, auth/admin secrets, Cloudinary secrets, Firebase private credentials, passwords, tokens, and private keys). Fail closed on any suspected real credential without printing its value. Confirm `.env.local` is absent and `happy-dom` remains dev-only.
+7. Commit with the exact message: `refactor: standardize landing UI system`.
+8. Report the short/full commit hash, exact committed file list, all gate results, browser/smoke results, external effects, and `git status --short --branch`.
+
+Boundaries:
+- Do not amend prior commits.
+- Do not start Stage 9.
+- Do not delete legacy invitation data or media; cleanup remains Stage 10.
+- Do not mutate PostgreSQL data, Cloudinary, Firestore, Aiven, or Vercel.
+- If any final gate fails—source, environment, infrastructure, database, or otherwise—stop without committing and report it; do not repair source, config, or data during finalization. The only permitted exception is one unchanged retry of a clearly transient `next/font`/network failure, which must be disclosed. If that retry fails, stop.
+```
+
 ## Stage 9 — Firestore Isolation and Wishes Hardening
 
 ```text

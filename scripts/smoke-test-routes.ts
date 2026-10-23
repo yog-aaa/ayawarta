@@ -11,6 +11,12 @@ async function runSmokeTests() {
 
   const tests = [
     {
+      name: "Landing Page: /",
+      path: "/",
+      expectedStatus: 200,
+      mustContain: ["Bagikan kabar bahagia mu", "AyaWarta", "skip-link"],
+    },
+    {
       name: "Invitation: rika-fauzi",
       path: "/rika-fauzi",
       expectedStatus: 200,
