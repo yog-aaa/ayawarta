@@ -1,8 +1,8 @@
 import "@/app/(templates)/wedding/classic-rose/background.css";
+import { notFound } from "next/navigation";
 
 import ClassicRoseClientView from "../(templates)/wedding/classic-rose/[variant]/components/ClassicRoseClientView";
-import { invitationData } from "@/lib/dummy-data/wedding/dummy-wedding";
-import { getInvitationBySlug } from "@/lib/invitations";
+import { invitationRepository } from "@/features/invitations/repository";
 import { getClassicRoseThemeConfig } from "@/lib/theme-config/classic-rose";
 
 type InvitationPageProps = {
@@ -11,17 +11,19 @@ type InvitationPageProps = {
 
 export default async function InvitationPage({ params }: InvitationPageProps) {
   const { slug } = await params;
-  const invitation = getInvitationBySlug(slug);
+  const invitation = await invitationRepository.findBySlug(slug);
 
-  const variant = invitation?.meta.variant ?? "red";
-  const data = invitation?.data ?? invitationData;
-  const invitationSlug = invitation ? slug : "default";
+  if (!invitation) {
+    notFound();
+  }
+
+  const variant = invitation.meta.variant ?? "red";
 
   return (
     <ClassicRoseClientView
-      invitationSlug={invitationSlug}
+      invitationSlug={slug}
       themeConfig={getClassicRoseThemeConfig(variant)}
-      data={data}
+      data={invitation.data}
     />
   );
 }

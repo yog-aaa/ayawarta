@@ -34,6 +34,7 @@ const CornerFlower: React.FC<CornerFlowerProps> = ({ flowerSrc, position }) => {
 				src={flowerSrc}
 				alt={`Bunga Hiasan ${position}`}
 				fill
+				sizes='(max-width: 768px) 192px, 256px'
 				className='object-contain'
 			/>
 		</motion.div>

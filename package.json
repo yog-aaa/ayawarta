@@ -20,6 +20,7 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
     "seed:verify": "tsx --conditions=react-server scripts/verify-seed.ts",
+    "smoke:routes": "tsx scripts/smoke-test-routes.ts",
     "prisma:studio": "prisma studio",
     "media:dry-run": "tsx --conditions=react-server scripts/migrate-invitation-media.ts --dry-run",
     "media:migrate": "tsx --conditions=react-server scripts/migrate-invitation-media.ts",

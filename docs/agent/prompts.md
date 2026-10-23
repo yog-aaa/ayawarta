@@ -768,6 +768,28 @@ Batasan:
 Handoff wajib menyertakan route results, 404 proof, client/server boundary review, dan build result.
 ```
 
+## Finalize and Commit Stage 7
+
+```text
+Stage 7 — Public Route Cutover telah ACCEPTED oleh reviewer.
+
+Kerjakan finalisasi saja:
+1. Baca `docs/reviews/stage-07-public-route-cutover-review.md` dan pastikan statusnya ACCEPTED.
+2. Pastikan worktree hanya berisi route cutover, InviteClientView extraction, route tests/smoke script, image sizing hints yang telah direview, konfigurasi test terkait, dan dokumentasi Stage 7.
+3. Jalankan pemeriksaan akhir: `pnpm test`, `pnpm test:db`, `pnpm typecheck`, `pnpm lint`, `pnpm build`, dan `git diff --check`.
+4. Jalankan production server lokal pada port non-default yang kosong, jalankan `pnpm smoke:routes`, lalu hentikan server dengan bersih.
+5. Pastikan `.env.local`, credential, binary media, `.media-migration/`, database dump, dan file tidak terkait tidak masuk staging.
+6. Periksa `git diff --cached --check` dan daftar file staged.
+7. Commit dengan pesan tepat: `feat: cut over public invitation routes`.
+8. Laporkan short/full commit hash, daftar file committed, seluruh gate, route/404 result, external effects, dan `git status --short --branch`.
+
+Batasan:
+- Jangan amend commit lama.
+- Jangan menghapus hard-coded data atau media lokal; itu tetap menunggu Stage 10.
+- Jangan mengubah Aiven, Vercel, Cloudinary, Firestore, database data, atau schema.
+- Jangan memulai Stage 8 atau melakukan refactor visual tambahan.
+```
+
 ## Stage 8 — UI and Tailwind Design-System Refactor
 
 ```text

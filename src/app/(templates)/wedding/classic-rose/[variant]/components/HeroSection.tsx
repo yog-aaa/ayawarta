@@ -32,6 +32,8 @@ const HeroSection: React.FC<HeroProps> = ({ data, theme }) => {
 							src={theme.assets.photoFrame}
 							alt='Frame'
 							fill
+							sizes='256px'
+							priority
 							className='z-10 object-contain'
 						/>
 						<div className='absolute inset-[35px] rounded-full overflow-hidden'>
@@ -39,6 +41,8 @@ const HeroSection: React.FC<HeroProps> = ({ data, theme }) => {
 								src={data.heroImage}
 								alt={`${data.groom.name} & ${data.bride.name}`}
 								fill
+								sizes='186px'
+								priority
 								className='object-cover'
 							/>
 						</div>
