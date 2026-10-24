@@ -1276,31 +1276,34 @@ Gunakan prompt ini hanya setelah reviewer menyatakan Stage 9 ACCEPTED setelah ko
 Jangan mengubah fitur, data Firestore, PostgreSQL, Cloudinary, Aiven, atau Vercel. Jangan memulai Stage 10. Berhenti setelah handoff finalisasi.
 ```
 
-## Stage 10 — Verified Repository Cleanup
+## Stage 10A — Cleanup Gate and Dependency Audit (Read-only)
 
 ```text
-Anda adalah programmer agent untuk proyek AyaWarta. Evaluasi dan kerjakan hanya Stage 10 — Verified Repository Cleanup. Stage 9 telah diterima dan cleanup telah diberi persetujuan eksplisit.
+Anda adalah programmer agent untuk AyaWarta. Mulai Stage 10 dengan substage 10A yang non-mutatif terhadap file terlacak/source/docs, database, dan layanan eksternal. Pemilik telah mengizinkan Stage 10, tetapi penghapusan file harus menunggu seluruh Mandatory Cleanup Gates terbukti dan dependensi operasional terlepas dari sumber lama. Stage 9 selesai pada commit implementasi c998a2a dan dokumen eced7d0. Jangan mulai Stage 10B atau menghapus file dalam tugas ini.
 
-Baca AGENTS.md, docs/media-migration.md bagian Mandatory Cleanup Gates, dan docs/qa-checklist.md bagian Cleanup Approval.
+Baca AGENTS.md beserta seluruh Required Reading, khususnya docs/media-migration.md bagian Mandatory Cleanup Gates dan Failure Behavior, docs/qa-checklist.md bagian Cleanup Approval, docs/agent-workflow.md Stage 10, dan implementation plan Phase 10. Pastikan branch develop serta worktree bersih sebelum audit. Bila tidak, laporkan tanpa memodifikasi perubahan yang ada.
 
-Tugas:
-1. Evaluasi setiap cleanup gate satu per satu dan laporkan bukti.
-2. Jika satu gate gagal atau tidak terbukti, STOP tanpa menghapus apa pun dan status harus blocked.
-3. Jika seluruh gate lulus, hapus hanya public/images/SAMPLE, public/images/dummy-couples, hard-coded invitation data yang sudah digantikan Prisma, dan dead files/imports terkait.
-4. Scan seluruh source untuk local dynamic paths dan URL akun Cloudinary lama.
-5. Hitung pengurangan ukuran repository.
-6. Jalankan full typecheck, tests, lint, production build, serta route smoke tests.
-7. Pastikan file dapat dipulihkan dari Git dan aset akun lama tidak disentuh.
+Fakta awal untuk diverifikasi ulang, bukan diasumsikan lulus:
+- 12 file Git-tracked di public/images/SAMPLE (8) dan public/images/dummy-couples (4), total 12.060.994 byte. Catat daftar path dan ukuran persis, tetapi jangan hapus atau pindahkan.
+- src/lib/invitations.ts dan src/lib/dummy-data/wedding/dummy-wedding.ts masih menyimpan data runtime lama; route publik sudah memakai repository Prisma.
+- scripts/data/invitation-media-manifest.ts masih mengimpor src/lib/invitations.ts dan membaca sumber lokal/Cloudinary lama. src/features/invitations/seed-report-reader.ts dan src/features/media/identity-auditor.ts memanggil generator manifest tersebut. src/features/media/image-resolution.ts merujuk foto hero lokal. Karena itu penghapusan langsung dapat merusak prisma:seed, media:dry-run, media:verify, media:audit-identity, dan test terkait. Buktikan atau koreksi peta ketergantungan ini secara read-only.
+- Seed produksi dalam src/features/invitations/seed-data.ts adalah sumber bootstrap relasional dan tidak otomatis termasuk hard-coded runtime lama yang boleh dihapus.
 
-Batasan:
-- Jangan menghapus aset Cloudinary mana pun.
-- Jangan menggunakan destructive Git reset/checkout.
-- Jangan menyentuh Aiven atau Vercel.
-- Jangan menghapus static UI/theme/payment assets.
-- Jangan commit. Berhenti setelah handoff untuk review akhir cleanup.
+Tugas audit:
+1. Buat matriks seluruh Mandatory Cleanup Gates dengan status PASS / FAIL / UNPROVEN, bukti file/command/artifact, dan konsekuensi bila belum lulus. Tinjau manifest 31 physical assets/37 usages, 4 hero/4 audio, laporan upload dan identitas, target cloud baru, migrasi lokal, dua seed idempotent, 4 route Prisma, audio dudi-aini, build, scan referensi, dan persetujuan cleanup dari pesan pemilik. Izin pemilik untuk memulai Stage 10 bukan persetujuan final penghapusan: tandai gate persetujuan reviewer atas inventaris penghapusan Stage 10C sebagai UNPROVEN dalam 10A; minta keputusan itu setelah 10B dan sebelum 10C. Jangan menyebut audio berfungsi hanya dari tag HTML; bedakan delivery/identitas byte dari bukti pemutaran bila tersedia.
+2. Klasifikasikan setiap referensi ke /images/SAMPLE, /images/dummy-couples, akun Cloudinary lama, dan dummy invitation sebagai: runtime aktif, seed/bootstrap, alat migrasi/verifikasi, tes, atau dokumentasi historis. Bedakan referensi aktif yang harus dihilangkan dari catatan historis yang boleh tetap ada. Audit imports transitif, bukan hanya pencarian teks.
+3. Untuk setiap CLI/package script dan suite tes yang bergantung pada sumber lama, catat apakah tetap berjalan bila 12 gambar dan dua file data lama dihapus. Fokus pada prisma:seed untuk database baru, seed:verify, media:dry-run, media:verify, media:verify-upload, media:audit-identity, media:migrate, pnpm test, pnpm typecheck, pnpm lint, pnpm build, dan smoke:routes. Jangan menjalankan seed/migrate mutator untuk membuktikan hal ini; gunakan pembacaan kode dan test read-only.
+4. Usulkan urutan Stage 10B (melepaskan dependensi dan menjaga bootstrap/verifikasi pada fresh checkout) lalu Stage 10C (menghapus hanya file Git-tracked yang sudah terbukti tidak diperlukan). Usulan harus mempertahankan 4 record produksi, 31 target public IDs, kontrak MediaAsset, kemampuan seed aman untuk database Aiven kelak tanpa bergantung pada file ignored .media-migration atau gambar yang dihapus, serta pemeriksaan media yang masih relevan sesudah cleanup. Jika alat migrasi lama menjadi historis, jelaskan secara eksplisit apakah diarsipkan, dipensiunkan, atau diubah, termasuk konsekuensi pada package scripts, test, dan docs Stage 11. Jangan menurunkan ketatnya validasi report/URL demi membuat gate hijau.
+5. Hitung proyeksi pengurangan ukuran tracked repository dan bukti seluruh target dapat dipulihkan dari Git. Jangan menghapus static UI/theme/payment assets, ignored .media-migration inputs/reports, atau aset akun Cloudinary lama. Jangan menyentuh Aiven, Vercel, Firebase, atau Cloudinary state.
 
-Handoff wajib menyertakan gate checklist, daftar exact deletion, stale-reference scan, size before/after, dan full verification results.
+Verifikasi non-mutatif: git status, git ls-files pada target, ukuran disk, source/import scan, pnpm seed:verify, pnpm test, pnpm typecheck, pnpm lint, pnpm build, dan route smoke test lokal bila service tersedia. pnpm build/test boleh menghasilkan artefak sementara di lokasi yang di-ignore (misalnya .next/cache), tetapi tidak boleh mengubah file terlacak, source/docs, database, atau state cloud. Verifikasi media boleh memakai report/GET read-only, tanpa upload atau overwrite. Jangan jalankan pnpm test:db karena suite tersebut memuat transaksi tulis/rollback. Jika layanan lokal tidak tersedia, tandai gate UNPROVEN tanpa mengubah environment. Jangan commit atau membuat perubahan source/docs dalam Stage 10A; laporkan git status akhir dan setiap artefak ignored yang dibuat.
+
+Handoff: Stage: Stage 10A — Cleanup Gate and Dependency Audit; Status: ready for review atau blocked; gate matrix, exact target inventory, active dependency graph, command-survival matrix, keputusan yang diperlukan untuk 10B/10C, hasil verifikasi, Data or external effects (nol mutasi; laporkan jumlah GET read-only bila dilakukan), risks, Skills used: none, Commit: not committed. Berhenti untuk review planner.
 ```
+
+## Stage 10B/10C — Planned After Stage 10A Review
+
+The planner will provide implementation and deletion prompts after reviewing the Stage 10A gate and dependency evidence. Do not infer permission to delete from this heading.
 
 ## Stage 11 — Documentation and Final QA
 

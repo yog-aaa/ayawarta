@@ -214,7 +214,7 @@ Implement Phase 9 only. Preserve collection paths and real-time behavior while t
 
 ### Assignment
 
-First evaluate every cleanup gate in `docs/media-migration.md`. If any gate fails, stop without deleting anything. If all pass and the stage is explicitly approved, remove migrated local media and obsolete hard-coded data, then run full verification.
+Stage 10A first audits every cleanup gate and the dependencies of seed, media verification, tests, and CLI commands on legacy sources. This audit is read-only. If a gate fails or is unproven, stop before deletion and resolve the dependency in a separately reviewed Stage 10B. Only Stage 10C may remove migrated Git-tracked media and obsolete hard-coded runtime data after every gate passes; run full verification after removal. Owner approval of Stage 10 does not waive any cleanup gate.
 
 ### Exit evidence
 
