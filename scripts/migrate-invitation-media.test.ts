@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runMigrationCli } from "./migrate-invitation-media";
 import { verifyOfflineDryRunReport } from "./verify-invitation-media";
 import {
@@ -17,14 +17,26 @@ import {
   createFixtureImageResolver,
   createFixtureImageValidator,
 } from "@/features/media/testing/fixture-image";
+import { setupFixtureLocalFiles } from "@/features/media/testing/fixture-manifest";
 
 describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
   let tempDir: string;
-  const repoRoot = process.cwd();
+  const fixtureRepoDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "ayawarta-migration-fixture-")
+  );
+  setupFixtureLocalFiles(fixtureRepoDir);
+  fs.mkdirSync(path.join(fixtureRepoDir, ".media-migration"), { recursive: true });
+  const repoRoot = fixtureRepoDir;
   const fixtureAudioResolver = createFixtureAudioResolver();
   const fixtureAudioValidator = createFixtureAudioValidator();
   const fixtureImageResolver = createFixtureImageResolver();
   const fixtureImageValidator = createFixtureImageValidator();
+
+  afterAll(() => {
+    if (fs.existsSync(fixtureRepoDir)) {
+      fs.rmSync(fixtureRepoDir, { recursive: true, force: true });
+    }
+  });
 
   function verifyReport(reportPath: string) {
     return verifyOfflineDryRunReport({
@@ -62,6 +74,8 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         apiSecret: "test-secret",
         logger: mockLogger,
         repoRoot,
+        imageResolver: fixtureImageResolver,
+        audioResolver: fixtureAudioResolver,
       });
       expect(code1).toBe(1);
       expect(errors.some((e) => e.includes("cannot be old account"))).toBe(true);
@@ -73,6 +87,8 @@ describe("migrate-invitation-media CLI and verify-invitation-media CLI", () => {
         apiSecret: "",
         logger: mockLogger,
         repoRoot,
+        imageResolver: fixtureImageResolver,
+        audioResolver: fixtureAudioResolver,
       });
       expect(code2).toBe(1);
       expect(errors.some((e) => e.includes("must be configured"))).toBe(true);

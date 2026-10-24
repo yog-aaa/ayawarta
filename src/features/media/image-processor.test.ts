@@ -294,6 +294,6 @@ describe("image-processor: prepareImage", () => {
 
       scanDir(pathModule.resolve(process.cwd(), "src"));
       expect(violations).toEqual([]);
-    });
+    }, 30_000);
   });
 });

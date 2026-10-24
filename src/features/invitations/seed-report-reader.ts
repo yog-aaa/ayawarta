@@ -10,15 +10,15 @@ import {
   APPROVED_INVITATION_SLUGS,
   validateInvitationPublicId,
 } from "@/features/media/public-id";
-import { generateMediaManifest } from "../../../scripts/data/invitation-media-manifest";
-import type { AudioResolver } from "@/features/media/audio-resolution";
-import type { ImageResolver } from "@/features/media/image-resolution";
+import {
+  CANONICAL_PRODUCTION_MEDIA,
+  type CanonicalMediaAsset,
+} from "@/features/media/canonical-catalog";
 import {
   OLD_CLOUDINARY_CLOUD_NAME,
   validateCloudinaryDeliveryUrl,
   validateCloudinaryAssetBinding,
 } from "@/features/media/cloudinary-uploader";
-import type { PhysicalAsset } from "@/features/media/types";
 
 export const DEFAULT_CLOUDINARY_UPLOAD_REPORT_PATH =
   ".media-migration/cloudinary-upload-report.json";
@@ -52,8 +52,7 @@ export function isFormatEquivalent(
 export interface ReconcileReportOptions {
   repoRoot?: string;
   targetCloudName?: string;
-  audioResolver?: AudioResolver;
-  imageResolver?: ImageResolver;
+  canonicalAssets?: readonly CanonicalMediaAsset[];
 }
 
 export interface ReadReportOptions extends ReconcileReportOptions {
@@ -78,7 +77,6 @@ export function reconcileUploadReport(
   report: ValidatedCloudinaryUploadReport,
   options?: ReconcileReportOptions
 ): ValidatedCloudinaryUploadReport {
-  const repoRoot = options?.repoRoot ?? process.cwd();
   const expectedCloud =
     options?.targetCloudName ??
     process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ??
@@ -99,16 +97,12 @@ export function reconcileUploadReport(
     );
   }
 
-  // 2. Canonical Manifest Reconciliation
-  const canonicalManifest = generateMediaManifest({
-    repoRoot,
-    audioResolver: options?.audioResolver,
-    imageResolver: options?.imageResolver,
-  });
+  // 2. Canonical Catalog Reconciliation
+  const canonicalAssets = options?.canonicalAssets ?? CANONICAL_PRODUCTION_MEDIA;
 
-  if (canonicalManifest.physicalAssets.length !== 31) {
+  if (canonicalAssets.length !== 31) {
     throw new SeedReportError(
-      `Canonical manifest contains ${canonicalManifest.physicalAssets.length} physical assets; expected exactly 31.`
+      `Canonical catalog contains ${canonicalAssets.length} physical assets; expected exactly 31.`
     );
   }
 
@@ -118,9 +112,9 @@ export function reconcileUploadReport(
     );
   }
 
-  const canonicalMap = new Map<string, PhysicalAsset>();
-  for (const asset of canonicalManifest.physicalAssets) {
-    canonicalMap.set(asset.targetPublicId, asset);
+  const canonicalMap = new Map<string, CanonicalMediaAsset>();
+  for (const asset of canonicalAssets) {
+    canonicalMap.set(asset.publicId, asset);
   }
 
   // 3. Set Equality and Uniqueness of 31 Public IDs
@@ -178,19 +172,13 @@ export function reconcileUploadReport(
         `Category mismatch for asset '${asset.targetPublicId}': report='${asset.category}', canonical='${canonical.category}'.`
       );
     }
-    if (asset.sourceType !== canonical.sourceType) {
+    const expectedCloudinaryResourceType =
+      canonical.resourceType === "AUDIO" || canonical.resourceType === "VIDEO"
+        ? "video"
+        : "image";
+    if (asset.resourceType !== expectedCloudinaryResourceType) {
       throw new SeedReportError(
-        `SourceType mismatch for asset '${asset.targetPublicId}': report='${asset.sourceType}', canonical='${canonical.sourceType}'.`
-      );
-    }
-    if (asset.sourceLocation !== canonical.sourceLocation) {
-      throw new SeedReportError(
-        `SourceLocation mismatch for asset '${asset.targetPublicId}': report='${asset.sourceLocation}', canonical='${canonical.sourceLocation}'.`
-      );
-    }
-    if (asset.resourceType !== canonical.cloudinaryResourceType) {
-      throw new SeedReportError(
-        `ResourceType mismatch for asset '${asset.targetPublicId}': report='${asset.resourceType}', canonical='${canonical.cloudinaryResourceType}'.`
+        `ResourceType mismatch for asset '${asset.targetPublicId}': report='${asset.resourceType}', canonical='${expectedCloudinaryResourceType}'.`
       );
     }
 
@@ -242,11 +230,17 @@ export function reconcileUploadReport(
 
     // Strict Cloudinary Delivery URL to Canonical Public ID Binding (SEED-07, SEED-09)
     // Pass canonical.format (NOT untrusted asset.format) as expectedFormat!
+    const expectedResourceType =
+      canonical.resourceType === "AUDIO"
+        ? "video"
+        : canonical.resourceType === "VIDEO"
+          ? "video"
+          : "image";
     const urlBindingVal = validateCloudinaryAssetBinding({
       secureUrl: asset.secureUrl,
       expectedCloudName: report.targetCloudName,
-      expectedResourceType: canonical.cloudinaryResourceType,
-      expectedPublicId: canonical.targetPublicId,
+      expectedResourceType,
+      expectedPublicId: canonical.publicId,
       expectedFormat: canonical.format,
     });
     if (!urlBindingVal.valid) {

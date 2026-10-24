@@ -45,9 +45,146 @@ export interface DerivedImageValidationResult {
   reason?: string;
 }
 
+export interface ValidateDerivedImageOptions {
+  repoRoot?: string;
+  descriptor?: LocalImageDescriptor;
+}
+
+export function pathsEqual(p1: string, p2: string): boolean {
+  const norm1 = path.normalize(path.resolve(p1));
+  const norm2 = path.normalize(path.resolve(p2));
+  if (process.platform === "win32") {
+    return norm1.toLowerCase() === norm2.toLowerCase();
+  }
+  return norm1 === norm2;
+}
+
+export function isPathContained(parentDir: string, candidatePath: string): boolean {
+  const normParent = path.normalize(path.resolve(parentDir));
+  const normCandidate = path.normalize(path.resolve(candidatePath));
+  const rel = path.relative(normParent, normCandidate);
+  if (rel.startsWith("..") || path.isAbsolute(rel)) {
+    return false;
+  }
+  return true;
+}
+
+export interface ValidatePathTreeOptions {
+  repoRoot: string;
+  relativePath: string;
+  approvedRelativeRoot?: string;
+  label?: string;
+}
+
+/**
+ * Validates that every directory component from repoRoot down to relativePath:
+ * 1. Contains no traversal, null bytes, backslashes, absolute, or drive prefixes.
+ * 2. Does not escape repoRoot (syntactically and physically).
+ * 3. Does not escape approvedRelativeRoot if specified.
+ * 4. Checks EVERY ancestor directory component that currently exists BEFORE mkdirSync or file I/O:
+ *    Ensures NO component is a symlink or junction.
+ *    Ensures realpath of each component matches its approved physical path under repoRoot.
+ *    Ensures physical location resides within approvedRelativeRoot (not just inside repo).
+ */
+export function assertPathTreeSafe(options: ValidatePathTreeOptions): {
+  resolvedPath: string;
+  expectedPhysicalPath: string;
+} {
+  const { repoRoot, relativePath, approvedRelativeRoot, label = "Path" } = options;
+
+  if (typeof relativePath !== "string" || relativePath.length === 0) {
+    throw new Error(`${label} must be a non-empty string`);
+  }
+  if (relativePath.includes("\0")) {
+    throw new Error(`${label} cannot contain null bytes`);
+  }
+  if (relativePath.includes("\\")) {
+    throw new Error(`${label} cannot contain backslashes`);
+  }
+  if (
+    relativePath.includes("..") ||
+    relativePath.split("/").some((seg) => seg === "..")
+  ) {
+    throw new Error(`${label} cannot contain traversal (..)`);
+  }
+  if (
+    relativePath.startsWith("/") ||
+    /^[a-zA-Z]:/.test(relativePath) ||
+    relativePath.startsWith("//") ||
+    relativePath.startsWith("\\\\")
+  ) {
+    throw new Error(`${label} cannot be absolute, drive-rooted, or UNC`);
+  }
+
+  if (!fs.existsSync(repoRoot)) {
+    throw new Error(`Repository root does not exist: '${repoRoot}'`);
+  }
+  const realRepo = fs.realpathSync(repoRoot);
+
+  const resolvedTarget = path.resolve(repoRoot, relativePath);
+  const relFromRepo = path.relative(repoRoot, resolvedTarget);
+  if (relFromRepo.startsWith("..") || path.isAbsolute(relFromRepo)) {
+    throw new Error(`${label} '${relativePath}' escapes approved repository root`);
+  }
+
+  let expectedApprovedPhysical: string | undefined;
+  if (approvedRelativeRoot) {
+    const resolvedApproved = path.resolve(repoRoot, approvedRelativeRoot);
+    const relFromApproved = path.relative(resolvedApproved, resolvedTarget);
+    if (relFromApproved.startsWith("..") || path.isAbsolute(relFromApproved)) {
+      throw new Error(
+        `${label} '${relativePath}' must be located within approved derived root '${approvedRelativeRoot}'`
+      );
+    }
+    expectedApprovedPhysical = path.resolve(realRepo, approvedRelativeRoot);
+  }
+
+  // Inspect every directory component from repoRoot down to resolvedTarget
+  const segments = relativePath.split("/").filter(Boolean);
+  let currentLogical = repoRoot;
+  let currentExpectedPhysical = realRepo;
+
+  for (const segment of segments) {
+    currentLogical = path.join(currentLogical, segment);
+    currentExpectedPhysical = path.join(currentExpectedPhysical, segment);
+
+    const lstat = fs.lstatSync(currentLogical, { throwIfNoEntry: false });
+    if (lstat) {
+      if (lstat.isSymbolicLink()) {
+        throw new Error(
+          `${label} component '${segment}' at '${path.relative(repoRoot, currentLogical).replace(/\\/g, "/")}' cannot be a symbolic link or junction. Symlinks and junctions are strictly forbidden.`
+        );
+      }
+
+      const realCurrent = fs.realpathSync(currentLogical);
+      if (!pathsEqual(realCurrent, currentExpectedPhysical)) {
+        throw new Error(
+          `${label} component '${segment}' realpath '${realCurrent}' deviates from approved physical path '${currentExpectedPhysical}'.`
+        );
+      }
+
+      if (
+        expectedApprovedPhysical &&
+        isPathContained(expectedApprovedPhysical, currentExpectedPhysical)
+      ) {
+        if (!isPathContained(expectedApprovedPhysical, realCurrent)) {
+          throw new Error(
+            `${label} physical location '${realCurrent}' escapes approved root '${approvedRelativeRoot}'.`
+          );
+        }
+      }
+    }
+  }
+
+  return {
+    resolvedPath: resolvedTarget,
+    expectedPhysicalPath: currentExpectedPhysical,
+  };
+}
+
 export function validateLocalDerivedImageSource(
   rawPath: string,
-  options?: { repoRoot?: string }
+  options?: ValidateDerivedImageOptions
 ): DerivedImageValidationResult {
   const repoRoot = options?.repoRoot ? path.resolve(options.repoRoot) : process.cwd();
 
@@ -63,11 +200,19 @@ export function validateLocalDerivedImageSource(
     return { valid: false, reason: "Derived image path cannot contain backslashes" };
   }
 
-  if (rawPath.includes("..")) {
+  if (
+    rawPath.includes("..") ||
+    rawPath.split("/").some((segment) => segment === "..")
+  ) {
     return { valid: false, reason: "Derived image path cannot contain traversal (..)" };
   }
 
-  if (/^[a-zA-Z]:/.test(rawPath) || rawPath.startsWith("//")) {
+  if (
+    rawPath.startsWith("/") ||
+    /^[a-zA-Z]:/.test(rawPath) ||
+    rawPath.startsWith("//") ||
+    rawPath.startsWith("\\\\")
+  ) {
     return { valid: false, reason: "Derived image path cannot be absolute or drive-rooted" };
   }
 
@@ -85,15 +230,38 @@ export function validateLocalDerivedImageSource(
     };
   }
 
-  const descriptor = LOCAL_DERIVED_IMAGE_DESCRIPTORS.find(
-    (d) => d.fileName === baseName
-  );
+  const descriptor =
+    options?.descriptor ??
+    LOCAL_DERIVED_IMAGE_DESCRIPTORS.find((d) => d.fileName === baseName);
   if (!descriptor) {
     return { valid: false, reason: `No descriptor registered for '${baseName}'` };
   }
 
   const approvedRootAbs = path.resolve(repoRoot, APPROVED_DERIVED_IMAGE_ROOT);
   const candidateAbs = path.resolve(repoRoot, normalized);
+
+  const relFromApproved = path.relative(approvedRootAbs, candidateAbs);
+  if (relFromApproved.startsWith("..") || path.isAbsolute(relFromApproved)) {
+    return {
+      valid: false,
+      reason: `Derived image path '${normalized}' escapes approved root '${APPROVED_DERIVED_IMAGE_ROOT}'`,
+    };
+  }
+
+  // Inspect all parent directory components for symlinks or junctions
+  try {
+    assertPathTreeSafe({
+      repoRoot,
+      relativePath: normalized,
+      approvedRelativeRoot: APPROVED_DERIVED_IMAGE_ROOT,
+      label: "Derived image path",
+    });
+  } catch (err) {
+    return {
+      valid: false,
+      reason: (err as Error).message,
+    };
+  }
 
   if (!fs.existsSync(candidateAbs)) {
     return {
@@ -102,28 +270,7 @@ export function validateLocalDerivedImageSource(
     };
   }
 
-  // Realpath containment check
-  let candidateReal: string;
-  let rootReal: string;
-  try {
-    candidateReal = fs.realpathSync(candidateAbs);
-    rootReal = fs.realpathSync(approvedRootAbs);
-  } catch (err) {
-    return {
-      valid: false,
-      reason: `Failed to resolve realpath for '${normalized}': ${(err as Error).message}`,
-    };
-  }
-
-  const rel = path.relative(rootReal, candidateReal);
-  if (rel.startsWith("..") || path.isAbsolute(rel)) {
-    return {
-      valid: false,
-      reason: `Derived image path '${candidateReal}' escapes approved root '${rootReal}'`,
-    };
-  }
-
-  const stat = fs.statSync(candidateReal);
+  const stat = fs.statSync(candidateAbs);
   if (!stat.isFile()) {
     return { valid: false, reason: `Path is not a regular file: '${normalized}'` };
   }
@@ -135,6 +282,7 @@ export function validateLocalDerivedImageSource(
     };
   }
 
+  const candidateReal = fs.realpathSync(candidateAbs);
   const buffer = fs.readFileSync(candidateReal);
   const hash = crypto.createHash("sha256").update(buffer).digest("hex").toUpperCase();
   if (hash !== descriptor.expectedSha256) {
@@ -171,6 +319,9 @@ export interface EnsureDerivedHeroOptions {
   repoRoot?: string;
   logger?: Pick<Console, "log" | "warn" | "error">;
   forceRegenerate?: boolean;
+  descriptor?: LocalImageDescriptor;
+  expectedOriginalSize?: number;
+  expectedOriginalSha256?: string;
 }
 
 export interface EnsureDerivedHeroResult {
@@ -191,12 +342,54 @@ export async function ensureDerivedHeroImage(
   options?: EnsureDerivedHeroOptions
 ): Promise<EnsureDerivedHeroResult> {
   const repoRoot = options?.repoRoot ? path.resolve(options.repoRoot) : process.cwd();
-  const desc = LOCAL_DERIVED_IMAGE_DESCRIPTORS[0]; // rika-fauzi
-  const outputDir = path.resolve(repoRoot, APPROVED_DERIVED_IMAGE_ROOT);
-  const outputPath = path.resolve(repoRoot, desc.relativeSourcePath);
+
+  // Production path strictly uses pinned descriptor and pinned hashes.
+  // Overrides are accepted only when options.descriptor is provided for hermetic tests.
+  const isOverride = Boolean(options?.descriptor);
+  const desc = isOverride ? options!.descriptor! : LOCAL_DERIVED_IMAGE_DESCRIPTORS[0];
+  const expectedOriginalSize = isOverride
+    ? (options?.expectedOriginalSize ?? ORIGINAL_HERO_EXPECTED_SIZE)
+    : ORIGINAL_HERO_EXPECTED_SIZE;
+  const expectedOriginalSha256 = isOverride
+    ? (options?.expectedOriginalSha256 ?? ORIGINAL_HERO_EXPECTED_SHA256)
+    : ORIGINAL_HERO_EXPECTED_SHA256;
+
+  // Validate repoRoot exists and is a directory
+  if (!fs.existsSync(repoRoot)) {
+    throw new Error(`Repository root directory does not exist: '${repoRoot}'`);
+  }
+
+  // 1. Validate originalSourcePath containment & tree safety BEFORE reading
+  assertPathTreeSafe({
+    repoRoot,
+    relativePath: desc.originalSourcePath,
+    label: "Original source path",
+  });
   const originalPath = path.resolve(repoRoot, desc.originalSourcePath);
 
-  // 1. Verify original source exists and matches pinned hash/size
+  // 2. Validate relativeSourcePath (output) containment & tree safety BEFORE any mkdirSync or write
+  assertPathTreeSafe({
+    repoRoot,
+    relativePath: desc.relativeSourcePath,
+    approvedRelativeRoot: APPROVED_DERIVED_IMAGE_ROOT,
+    label: "Derived image output path",
+  });
+
+  const baseName = path.basename(desc.relativeSourcePath);
+  if (
+    !APPROVED_DERIVED_IMAGE_FILE_NAMES.includes(
+      baseName as (typeof APPROVED_DERIVED_IMAGE_FILE_NAMES)[number]
+    )
+  ) {
+    throw new Error(
+      `Derived image filename '${baseName}' is not in approved derived image list: ${APPROVED_DERIVED_IMAGE_FILE_NAMES.join(", ")}`
+    );
+  }
+
+  const outputDir = path.resolve(repoRoot, APPROVED_DERIVED_IMAGE_ROOT);
+  const outputPath = path.resolve(repoRoot, desc.relativeSourcePath);
+
+  // 3. Verify original source exists and matches pinned hash/size
   if (!fs.existsSync(originalPath)) {
     throw new Error(
       `Original source file not found at: '${desc.originalSourcePath}'. Cannot generate derived hero.`
@@ -210,9 +403,9 @@ export async function ensureDerivedHeroImage(
     );
   }
 
-  if (originalStat.size !== ORIGINAL_HERO_EXPECTED_SIZE) {
+  if (originalStat.size !== expectedOriginalSize) {
     throw new Error(
-      `Original source byte size mismatch: expected ${ORIGINAL_HERO_EXPECTED_SIZE} bytes, got ${originalStat.size}`
+      `Original source byte size mismatch: expected ${expectedOriginalSize} bytes, got ${originalStat.size}`
     );
   }
 
@@ -223,15 +416,22 @@ export async function ensureDerivedHeroImage(
     .digest("hex")
     .toUpperCase();
 
-  if (originalHash !== ORIGINAL_HERO_EXPECTED_SHA256) {
+  if (originalHash !== expectedOriginalSha256) {
     throw new Error(
-      `Original source SHA-256 hash mismatch: expected ${ORIGINAL_HERO_EXPECTED_SHA256}, got ${originalHash}`
+      `Original source SHA-256 hash mismatch: expected ${expectedOriginalSha256}, got ${originalHash}`
     );
   }
 
-  // 2. Check existing derived file (if present)
+  // 4. Check existing derived file (if present)
   let isExistingValid = false;
   if (!options?.forceRegenerate && fs.existsSync(outputPath)) {
+    assertPathTreeSafe({
+      repoRoot,
+      relativePath: desc.relativeSourcePath,
+      approvedRelativeRoot: APPROVED_DERIVED_IMAGE_ROOT,
+      label: "Derived image output path",
+    });
+
     const stat = fs.statSync(outputPath);
     if (stat.isFile() && stat.size === desc.expectedByteSize) {
       const derivedBuf = fs.readFileSync(outputPath);
@@ -259,10 +459,26 @@ export async function ensureDerivedHeroImage(
     return { regenerated: false, outputPath };
   }
 
-  // 3. Regenerate derived hero deterministically
+  // 5. Regenerate derived hero deterministically
+  // Validate existing ancestors of outputDir BEFORE calling mkdirSync
+  assertPathTreeSafe({
+    repoRoot,
+    relativePath: APPROVED_DERIVED_IMAGE_ROOT,
+    approvedRelativeRoot: APPROVED_DERIVED_IMAGE_ROOT,
+    label: "Derived image output directory",
+  });
+
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
+
+  // Post-mkdir check on outputDir
+  assertPathTreeSafe({
+    repoRoot,
+    relativePath: APPROVED_DERIVED_IMAGE_ROOT,
+    approvedRelativeRoot: APPROVED_DERIVED_IMAGE_ROOT,
+    label: "Derived image output directory",
+  });
 
   const prepared = await prepareImage(originalBuffer, {
     targetMaxBytes: 9_500_000,
@@ -290,16 +506,49 @@ export async function ensureDerivedHeroImage(
     );
   }
 
+  // Pre-write check on outputPath
+  assertPathTreeSafe({
+    repoRoot,
+    relativePath: desc.relativeSourcePath,
+    approvedRelativeRoot: APPROVED_DERIVED_IMAGE_ROOT,
+    label: "Derived image output path",
+  });
+
   fs.writeFileSync(outputPath, prepared.buffer);
   options?.logger?.log?.(
     `  • [DERIVED IMAGE REGENERATED] '${desc.relativeSourcePath}' written and verified against pinned descriptor.`
   );
 
-  // 4. Write comparison artifact with objective metrics and review status
+  // 6. Write comparison artifact with tree safety check
+  // Validate existing ancestors of artifactDir BEFORE calling mkdirSync
+  assertPathTreeSafe({
+    repoRoot,
+    relativePath: ".media-migration/artifacts",
+    approvedRelativeRoot: ".media-migration/artifacts",
+    label: "Artifact directory",
+  });
+
   const artifactDir = path.resolve(repoRoot, ".media-migration", "artifacts");
   if (!fs.existsSync(artifactDir)) {
     fs.mkdirSync(artifactDir, { recursive: true });
   }
+
+  // Post-mkdir check on artifactDir
+  assertPathTreeSafe({
+    repoRoot,
+    relativePath: ".media-migration/artifacts",
+    approvedRelativeRoot: ".media-migration/artifacts",
+    label: "Artifact directory",
+  });
+
+  const artifactFilePath = path.join(artifactDir, "hero-comparison.json");
+  // Pre-write check on artifactFilePath
+  assertPathTreeSafe({
+    repoRoot,
+    relativePath: ".media-migration/artifacts/hero-comparison.json",
+    approvedRelativeRoot: ".media-migration/artifacts",
+    label: "Artifact output file",
+  });
 
   const byteReductionBytes = originalBuffer.length - prepared.byteSize;
   const byteReductionPercent = Number(
@@ -312,8 +561,8 @@ export async function ensureDerivedHeroImage(
     targetPublicId: desc.targetPublicId,
     original: {
       sourcePath: desc.originalSourcePath,
-      width: 3877,
-      height: 5816,
+      width: desc.expectedWidth,
+      height: desc.expectedHeight,
       byteSize: originalBuffer.length,
       sha256: originalHash,
     },
@@ -333,7 +582,9 @@ export async function ensureDerivedHeroImage(
       derivedByteSize: prepared.byteSize,
       byteReductionBytes,
       byteReductionPercent,
-      dimensionsPreserved: prepared.width === 3877 && prepared.height === 5816,
+      dimensionsPreserved:
+        prepared.width === desc.expectedWidth &&
+        prepared.height === desc.expectedHeight,
       aspectRatioPreserved: true,
       noDownscalingApplied: !prepared.wasResized,
     },
@@ -346,7 +597,7 @@ export async function ensureDerivedHeroImage(
   };
 
   fs.writeFileSync(
-    path.join(artifactDir, "hero-comparison.json"),
+    artifactFilePath,
     JSON.stringify(comparison, null, 2),
     "utf-8"
   );
@@ -355,11 +606,14 @@ export async function ensureDerivedHeroImage(
 }
 
 export class DefaultLocalImageResolver implements ImageResolver {
+  constructor(private options?: { descriptor?: LocalImageDescriptor }) {}
+
   resolveDerivedHero(slug: InvitationSlug, repoRoot = process.cwd()) {
     if (slug === "rika-fauzi") {
-      const desc = LOCAL_DERIVED_IMAGE_DESCRIPTORS[0];
+      const desc = this.options?.descriptor ?? LOCAL_DERIVED_IMAGE_DESCRIPTORS[0];
       const validation = validateLocalDerivedImageSource(desc.relativeSourcePath, {
         repoRoot,
+        descriptor: this.options?.descriptor,
       });
       if (!validation.valid) {
         throw new Error(

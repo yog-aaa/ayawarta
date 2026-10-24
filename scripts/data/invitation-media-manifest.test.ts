@@ -1,6 +1,7 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import {
   buildDryRunReport,
   generateMediaManifest,
@@ -10,11 +11,28 @@ import {
 import { validateInvitationPublicId } from "@/features/media/public-id";
 import { createFixtureAudioResolver } from "@/features/media/testing/fixture-audio";
 import { createFixtureImageResolver } from "@/features/media/testing/fixture-image";
+import { setupFixtureLocalFiles } from "@/features/media/testing/fixture-manifest";
 
 describe("invitation-media-manifest", () => {
-  const repoRoot = process.cwd();
+  const tempFixtureDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "ayawarta-manifest-fixture-")
+  );
+  setupFixtureLocalFiles(tempFixtureDir);
+  const outsidePath = path.join(
+    tempFixtureDir,
+    "public/images/landing/payments/BCA.png"
+  );
+  fs.mkdirSync(path.dirname(outsidePath), { recursive: true });
+  fs.writeFileSync(outsidePath, Buffer.from("outside-content"));
+  const repoRoot = tempFixtureDir;
   const fixtureAudioResolver = createFixtureAudioResolver();
   const fixtureImageResolver = createFixtureImageResolver();
+
+  afterAll(() => {
+    if (fs.existsSync(tempFixtureDir)) {
+      fs.rmSync(tempFixtureDir, { recursive: true, force: true });
+    }
+  });
 
   describe("remote URL validation (MEDIA-05)", () => {
     it("accepts valid HTTPS old Cloudinary URLs", () => {
@@ -491,6 +509,7 @@ describe("invitation-media-manifest", () => {
       const manifestWithMock = generateMediaManifest({
         repoRoot,
         audioResolver: mockResolver,
+        imageResolver: fixtureImageResolver,
       });
 
       expect(manifestWithMock.summary.totalAudio).toBe(4);

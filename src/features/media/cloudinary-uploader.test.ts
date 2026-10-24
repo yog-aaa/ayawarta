@@ -15,13 +15,10 @@ import {
 import {
   verifyCloudinaryUploadReport,
 } from "../../../scripts/verify-cloudinary-upload";
-import { generateMediaManifest } from "../../../scripts/data/invitation-media-manifest";
 import {
-  createFixtureAudioResolver,
-} from "./testing/fixture-audio";
-import {
-  createFixtureImageResolver,
-} from "./testing/fixture-image";
+  createFixtureMediaManifest,
+  setupFixtureLocalFiles,
+} from "./testing/fixture-manifest";
 
 class MockCloudinaryClient implements ICloudinaryClient {
   public resources: Map<string, CloudinaryResourceInfo> = new Map();
@@ -108,13 +105,13 @@ class MockCloudinaryClient implements ICloudinaryClient {
 
 describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
   let tempDir: string;
-  const repoRoot = process.cwd();
-  const fixtureAudioResolver = createFixtureAudioResolver();
-  const fixtureImageResolver = createFixtureImageResolver();
+  let repoRoot: string;
   const targetCloudName = "test-target-cloud";
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ayawarta-stage5b-test-"));
+    repoRoot = tempDir;
+    setupFixtureLocalFiles(tempDir);
   });
 
   afterEach(() => {
@@ -160,11 +157,7 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
 
   describe("Manifest Selection and Option Mapping", () => {
     it("selects exactly 31 physical assets and NOT 37 logical usages", async () => {
-      const manifest = generateMediaManifest({
-        repoRoot,
-        audioResolver: fixtureAudioResolver,
-        imageResolver: fixtureImageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       expect(manifest.physicalAssets.length).toBe(31);
       expect(manifest.logicalUsages.length).toBe(37);
@@ -180,6 +173,8 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
         logger: mockLogger,
       });
 
+
+
       expect(result.success).toBe(true);
       expect(mockClient.uploadCalls.length).toBe(31);
       expect(result.report.summary.totalPhysicalAssets).toBe(31);
@@ -189,11 +184,7 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
     });
 
     it("maps image resources to 'image' and audio resources to 'video' with unique_filename: false and overwrite: false", async () => {
-      const manifest = generateMediaManifest({
-        repoRoot,
-        audioResolver: fixtureAudioResolver,
-        imageResolver: fixtureImageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       const mockClient = new MockCloudinaryClient();
       const mockLogger = { log: () => {}, warn: () => {}, error: () => {} };
@@ -221,11 +212,7 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
 
   describe("Idempotency and Existing Resource Verification", () => {
     it("marks existing matching resources as 'existing_verified' without calling upload()", async () => {
-      const manifest = generateMediaManifest({
-        repoRoot,
-        audioResolver: fixtureAudioResolver,
-        imageResolver: fixtureImageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       const mockClient = new MockCloudinaryClient();
       const mockLogger = { log: () => {}, warn: () => {}, error: () => {} };
@@ -253,6 +240,8 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
         logger: mockLogger,
       });
 
+
+
       expect(result.success).toBe(true);
       // 30 uploaded, 1 existing_verified
       expect(result.report.summary.uploadedCount).toBe(30);
@@ -266,11 +255,7 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
     });
 
     it("converges on rerun when all assets are already uploaded", async () => {
-      const manifest = generateMediaManifest({
-        repoRoot,
-        audioResolver: fixtureAudioResolver,
-        imageResolver: fixtureImageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       const mockClient = new MockCloudinaryClient();
       const mockLogger = { log: () => {}, warn: () => {}, error: () => {} };
@@ -302,11 +287,7 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
 
   describe("Conflict Refusal", () => {
     it("refuses overwrite and throws when existing asset has mismatched resource_type", async () => {
-      const manifest = generateMediaManifest({
-        repoRoot,
-        audioResolver: fixtureAudioResolver,
-        imageResolver: fixtureImageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       const mockClient = new MockCloudinaryClient();
       const mockLogger = { log: () => {}, warn: () => {}, error: () => {} };
@@ -336,11 +317,7 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
     });
 
     it("refuses overwrite when existing asset points to old cloud name 'doig3gwek'", async () => {
-      const manifest = generateMediaManifest({
-        repoRoot,
-        audioResolver: fixtureAudioResolver,
-        imageResolver: fixtureImageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       const mockClient = new MockCloudinaryClient();
       const mockLogger = { log: () => {}, warn: () => {}, error: () => {} };
@@ -368,11 +345,7 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
 
   describe("Partial Failure and Safe Stop", () => {
     it("halts safely on first upload failure, records partial results, and does not delete", async () => {
-      const manifest = generateMediaManifest({
-        repoRoot,
-        audioResolver: fixtureAudioResolver,
-        imageResolver: fixtureImageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       const mockClient = new MockCloudinaryClient();
       const mockLogger = { log: () => {}, warn: () => {}, error: () => {} };
@@ -388,6 +361,8 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
         repoRoot,
         logger: mockLogger,
       });
+
+
 
       expect(result.success).toBe(false);
       expect(result.report.summary.uploadedCount).toBe(30);
@@ -406,11 +381,7 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
 
   describe("Report Verification Contract (verifyCloudinaryUploadReport)", () => {
     it("verifies a valid upload report successfully", async () => {
-      const manifest = generateMediaManifest({
-        repoRoot,
-        audioResolver: fixtureAudioResolver,
-        imageResolver: fixtureImageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       const mockClient = new MockCloudinaryClient();
       const mockLogger = { log: () => {}, warn: () => {}, error: () => {} };
@@ -422,6 +393,8 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
         repoRoot,
         logger: mockLogger,
       });
+
+
 
       const reportPath = path.join(tempDir, "cloudinary-upload-report.json");
       fs.writeFileSync(reportPath, JSON.stringify(result.report, null, 2), "utf-8");
@@ -458,11 +431,7 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
     });
 
     it("rejects report with targetCloudName === 'doig3gwek'", async () => {
-      const manifest = generateMediaManifest({
-        repoRoot,
-        audioResolver: fixtureAudioResolver,
-        imageResolver: fixtureImageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       const mockClient = new MockCloudinaryClient();
       const mockLogger = { log: () => {}, warn: () => {}, error: () => {} };
@@ -474,6 +443,8 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
         repoRoot,
         logger: mockLogger,
       });
+
+
 
       // Tamper cloud name
       result.report.targetCloudName = OLD_CLOUDINARY_CLOUD_NAME;
@@ -486,11 +457,7 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
     });
 
     it("rejects report when hero asset is missing or failed", async () => {
-      const manifest = generateMediaManifest({
-        repoRoot,
-        audioResolver: fixtureAudioResolver,
-        imageResolver: fixtureImageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       const mockClient = new MockCloudinaryClient();
       const mockLogger = { log: () => {}, warn: () => {}, error: () => {} };
@@ -502,6 +469,8 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
         repoRoot,
         logger: mockLogger,
       });
+
+
 
       // Tamper hero asset status
       const hero = result.report.assets.find((a) =>
@@ -519,11 +488,7 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
     });
 
     it("rejects report when externalEffects.details makes inconsistent claims (CLOUD-04)", async () => {
-      const manifest = generateMediaManifest({
-        repoRoot,
-        audioResolver: fixtureAudioResolver,
-        imageResolver: fixtureImageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       const mockClient = new MockCloudinaryClient();
       const mockLogger = { log: () => {}, warn: () => {}, error: () => {} };
@@ -535,6 +500,8 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
         repoRoot,
         logger: mockLogger,
       });
+
+
 
       // Tamper details to claim a false hero count
       result.report.externalEffects.details = [
@@ -557,11 +524,7 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
 
   describe("Post-Upload Live Read-Back Hardening (CLOUD-02)", () => {
     it("fails migration if an uploaded asset is missing on post-upload live read-back", async () => {
-      const manifest = generateMediaManifest({
-        repoRoot,
-        audioResolver: fixtureAudioResolver,
-        imageResolver: fixtureImageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       const mockClient = new MockCloudinaryClient();
       const mockLogger = { log: () => {}, warn: () => {}, error: () => {} };
@@ -578,6 +541,8 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
         logger: mockLogger,
       });
 
+
+
       expect(result.success).toBe(false);
       const droppedRecord = result.report.assets.find((a) => a.targetPublicId === missingId)!;
       expect(droppedRecord.status).toBe("failed");
@@ -587,11 +552,7 @@ describe("Cloudinary Uploader & Stage 5B Migration (Hermetic)", () => {
 
   describe("Strong Existing-Resource Matching (CLOUD-03)", () => {
     it("rejects existing asset with mismatched dimensions or byte size as conflict", async () => {
-      const manifest = generateMediaManifest({
-        repoRoot,
-        audioResolver: fixtureAudioResolver,
-        imageResolver: fixtureImageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       const mockClient = new MockCloudinaryClient();
       const mockLogger = { log: () => {}, warn: () => {}, error: () => {} };

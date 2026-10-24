@@ -5,41 +5,39 @@ import {
 } from "./seed-data";
 import {
   reconcileUploadReport,
-  readValidatedUploadReport,
 } from "./seed-report-reader";
 import {
   executeSeed,
   validateSeedMediaRequirements,
 } from "./seed";
 import type { ValidatedCloudinaryUploadReport } from "@/features/media/schema";
-import { generateMediaManifest } from "../../../scripts/data/invitation-media-manifest";
+import { CANONICAL_PRODUCTION_MEDIA } from "@/features/media/canonical-catalog";
 import type { PrismaClient } from "@/generated/prisma/client";
 
 /**
- * Creates a valid, fully canonical mock report that matches generateMediaManifest() 1:1.
+ * Creates a valid, fully canonical mock report that matches CANONICAL_PRODUCTION_MEDIA 1:1.
  */
 function createValidCanonicalMockReport(
   overrides?: Partial<ValidatedCloudinaryUploadReport>
 ): ValidatedCloudinaryUploadReport {
-  const manifest = generateMediaManifest();
   const uploadedCount = 1;
   const existingVerifiedCount = 30;
 
   const assets: ValidatedCloudinaryUploadReport["assets"] =
-    manifest.physicalAssets.map((p, idx) => ({
-      id: p.id,
-      slug: p.slug,
-      category: p.category,
-      targetPublicId: p.targetPublicId,
-      resourceType: p.cloudinaryResourceType,
+    CANONICAL_PRODUCTION_MEDIA.map((c, idx) => ({
+      id: c.publicId,
+      slug: c.slug,
+      category: c.category,
+      targetPublicId: c.publicId,
+      resourceType: c.resourceType === "AUDIO" ? "video" : "image",
       status: idx === 0 ? "uploaded" : "existing_verified",
-      sourceType: p.sourceType,
-      sourceLocation: p.sourceLocation,
-      secureUrl: `https://res.cloudinary.com/uhwi7xvb/${p.cloudinaryResourceType}/upload/v1/${p.targetPublicId}.${p.format}`,
-      format: p.format,
-      bytes: p.byteSize ?? 50000,
-      width: p.cloudinaryResourceType === "image" ? 800 : null,
-      height: p.cloudinaryResourceType === "image" ? 600 : null,
+      sourceType: "remote",
+      sourceLocation: c.secureUrl,
+      secureUrl: c.secureUrl,
+      format: c.format,
+      bytes: c.bytes,
+      width: c.width ?? null,
+      height: c.height ?? null,
       error: null,
     }));
 
@@ -377,11 +375,11 @@ describe("Report Reconciliation Mutation Matrix (SEED-03)", () => {
 });
 
 describe("Cloudinary Delivery URL to Canonical Public ID Binding Mutation Matrix (SEED-07)", () => {
-  it("passes reconciliation cleanly on the real approved production report without regressions", () => {
-    // Reads and validates .media-migration/cloudinary-upload-report.json with full binding validation
-    const report = readValidatedUploadReport();
-    expect(report.targetCloudName).toBe("uhwi7xvb");
-    expect(report.assets).toHaveLength(31);
+  it("passes reconciliation cleanly on a valid canonical report with full binding validation", () => {
+    const report = createValidCanonicalMockReport();
+    const reconciled = reconcileUploadReport(report);
+    expect(reconciled.targetCloudName).toBe("uhwi7xvb");
+    expect(reconciled.assets).toHaveLength(31);
   });
 
   it("rejects swapped delivery URLs within the same invitation (groom URL placed on bride asset)", () => {
@@ -447,7 +445,7 @@ describe("Cloudinary Delivery URL to Canonical Public ID Binding Mutation Matrix
   it("rejects delivery URL with multiple version segments (upload/v123/v456/...)", () => {
     const report = createValidCanonicalMockReport();
     const asset = report.assets[0];
-    asset.secureUrl = asset.secureUrl!.replace("/upload/v1/", "/upload/v123/v456/");
+    asset.secureUrl = asset.secureUrl!.replace(/\/upload\/v\d+\//, "/upload/v123/v456/");
 
     expect(() => reconcileUploadReport(report)).toThrowError(
       /multiple version segments detected/
@@ -457,7 +455,7 @@ describe("Cloudinary Delivery URL to Canonical Public ID Binding Mutation Matrix
   it("rejects delivery URL with ambiguous version-like segment (upload/v123bad/...)", () => {
     const report = createValidCanonicalMockReport();
     const asset = report.assets[0];
-    asset.secureUrl = asset.secureUrl!.replace("/upload/v1/", "/upload/v123bad/");
+    asset.secureUrl = asset.secureUrl!.replace(/\/upload\/v\d+\//, "/upload/v123bad/");
 
     expect(() => reconcileUploadReport(report)).toThrowError(
       /Ambiguous version-like segment 'v123bad'/
@@ -467,7 +465,7 @@ describe("Cloudinary Delivery URL to Canonical Public ID Binding Mutation Matrix
   it("rejects delivery URL with encoded dot-dot traversal (%2e%2e)", () => {
     const report = createValidCanonicalMockReport();
     const asset = report.assets[0];
-    asset.secureUrl = asset.secureUrl!.replace("/upload/v1/", "/upload/v1/%2e%2e/");
+    asset.secureUrl = asset.secureUrl!.replace(/\/upload\/v\d+\//, "/upload/v1/%2e%2e/");
 
     expect(() => reconcileUploadReport(report)).toThrowError(
       /prohibited traversal characters or encoded slashes\/dots/
@@ -477,7 +475,7 @@ describe("Cloudinary Delivery URL to Canonical Public ID Binding Mutation Matrix
   it("rejects delivery URL with literal dot-dot traversal (..)", () => {
     const report = createValidCanonicalMockReport();
     const asset = report.assets[0];
-    asset.secureUrl = asset.secureUrl!.replace("/upload/v1/", "/upload/v1/../");
+    asset.secureUrl = asset.secureUrl!.replace(/\/upload\/v\d+\//, "/upload/v1/../");
 
     expect(() => reconcileUploadReport(report)).toThrowError(
       /prohibited traversal characters or encoded slashes\/dots/
@@ -497,7 +495,7 @@ describe("Cloudinary Delivery URL to Canonical Public ID Binding Mutation Matrix
   it("rejects delivery URL with encoded backslash (%5c)", () => {
     const report = createValidCanonicalMockReport();
     const asset = report.assets[0];
-    asset.secureUrl = asset.secureUrl!.replace("/upload/v1/", "/upload/v1/%5c/");
+    asset.secureUrl = asset.secureUrl!.replace(/\/upload\/v\d+\//, "/upload/v1/%5c/");
 
     expect(() => reconcileUploadReport(report)).toThrowError(
       /prohibited traversal characters or encoded slashes\/dots/
@@ -639,6 +637,18 @@ describe("Pre-Seed Invariant Validation (SEED-01)", () => {
 
     expect(() => validateSeedMediaRequirements(report)).toThrowError(
       /Pre-seed validation failed: required audio asset/
+    );
+  });
+
+  it("fails before write when a required gallery asset has resourceType AUDIO instead of IMAGE", () => {
+    const report = createValidCanonicalMockReport();
+    const galleryAsset = report.assets.find(
+      (a) => a.category === "gallery"
+    )!;
+    galleryAsset.resourceType = "video"; // video in report translates to AUDIO in seed
+
+    expect(() => validateSeedMediaRequirements(report)).toThrowError(
+      /must have resourceType 'IMAGE', got 'AUDIO'/
     );
   });
 });

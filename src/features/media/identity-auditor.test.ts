@@ -13,7 +13,7 @@ import {
   type HttpStreamFetcher,
   type HttpStreamResponse,
 } from "./identity-auditor";
-import { generateMediaManifest } from "../../../scripts/data/invitation-media-manifest";
+import { createFixtureMediaManifest } from "./testing/fixture-manifest";
 import { createFixtureAudioResolver } from "./testing/fixture-audio";
 import { createFixtureImageResolver } from "./testing/fixture-image";
 import type { SlugUploadSummary } from "./types";
@@ -448,12 +448,7 @@ describe("Identity Auditor (CLOUD-06, CLOUD-09, CLOUD-10)", () => {
 
       const audioResolver = createFixtureAudioResolver();
       const imageResolver = createFixtureImageResolver();
-
-      const manifest = generateMediaManifest({
-        repoRoot: dir,
-        audioResolver,
-        imageResolver,
-      });
+      const manifest = createFixtureMediaManifest();
 
       const targetCloudName = "test-cloud";
       const assets = manifest.physicalAssets.map((a) => ({

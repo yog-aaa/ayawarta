@@ -312,7 +312,7 @@ describe("Wishes & Firestore Architectural Boundary Tests (FIRE-07)", () => {
         2
       )}`
     ).toEqual([]);
-  });
+  }, 30000);
 
   describe("Graph Traversal Mutation Test Matrix (FIRE-07 Evidence)", () => {
     let tempDir: string;

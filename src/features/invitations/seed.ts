@@ -2,10 +2,17 @@ import "server-only";
 
 import { readValidatedUploadReport, reconcileUploadReport } from "./seed-report-reader";
 import {
+  mapCanonicalAssetToMediaAssetInput,
   mapUploadAssetToMediaAssetInput,
+  type MediaAssetUpsertInput,
   SEED_INVITATIONS,
   type SeedInvitationDefinition,
 } from "./seed-data";
+import {
+  CANONICAL_PRODUCTION_MEDIA,
+  type CanonicalMediaAsset,
+  validateCanonicalMediaCatalog,
+} from "@/features/media/canonical-catalog";
 import { bootstrapAdminUser, type BootstrapAdminResult } from "@/features/auth/bootstrap";
 import type { ValidatedCloudinaryUploadReport } from "@/features/media/schema";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
@@ -38,6 +45,7 @@ export interface SeedFaultInjectionOptions {
 export interface SeedOptions {
   reportPath?: string;
   report?: ValidatedCloudinaryUploadReport;
+  canonicalMedia?: readonly CanonicalMediaAsset[];
   repoRoot?: string;
   bootstrapAdmin?: boolean;
   logger?: Pick<Console, "log" | "warn" | "error">;
@@ -53,39 +61,81 @@ export class SeedExecutionError extends Error {
 
 /**
  * Validates all required media asset target public IDs across all seed invitations
- * against the report before any database transactions begin (SEED-01 / SEED-03).
+ * against the report or canonical media inputs before any database transactions begin (SEED-01 / SEED-03).
  */
 export function validateSeedMediaRequirements(
-  report: ValidatedCloudinaryUploadReport,
+  mediaSource:
+    | ValidatedCloudinaryUploadReport
+    | readonly MediaAssetUpsertInput[]
+    | readonly CanonicalMediaAsset[],
   invitations: readonly SeedInvitationDefinition[] = SEED_INVITATIONS
 ): void {
-  const availablePublicIds = new Set(report.assets.map((a) => a.targetPublicId));
+  const assetMap = new Map<string, { resourceType: string }>();
+  if ("assets" in mediaSource && Array.isArray(mediaSource.assets)) {
+    for (const a of mediaSource.assets) {
+      assetMap.set(a.targetPublicId, {
+        resourceType: a.resourceType === "video" ? "AUDIO" : "IMAGE",
+      });
+    }
+  } else if (Array.isArray(mediaSource)) {
+    for (const a of mediaSource) {
+      assetMap.set(a.publicId, {
+        resourceType: a.resourceType,
+      });
+    }
+  }
 
   for (const inv of invitations) {
-    if (!availablePublicIds.has(inv.heroTargetPublicId)) {
+    const heroAsset = assetMap.get(inv.heroTargetPublicId);
+    if (!heroAsset) {
       throw new SeedExecutionError(
         `Pre-seed validation failed: required hero asset '${inv.heroTargetPublicId}' missing from report for slug '${inv.slug}'.`
       );
     }
-
-    if (inv.musicTargetPublicId && !availablePublicIds.has(inv.musicTargetPublicId)) {
+    if (heroAsset.resourceType !== "IMAGE") {
       throw new SeedExecutionError(
-        `Pre-seed validation failed: required audio asset '${inv.musicTargetPublicId}' missing from report for slug '${inv.slug}'.`
+        `Pre-seed validation failed: required hero asset '${inv.heroTargetPublicId}' must have resourceType 'IMAGE', got '${heroAsset.resourceType}'.`
       );
     }
 
+    if (inv.musicTargetPublicId) {
+      const musicAsset = assetMap.get(inv.musicTargetPublicId);
+      if (!musicAsset) {
+        throw new SeedExecutionError(
+          `Pre-seed validation failed: required audio asset '${inv.musicTargetPublicId}' missing from report for slug '${inv.slug}'.`
+        );
+      }
+      if (musicAsset.resourceType !== "AUDIO") {
+        throw new SeedExecutionError(
+          `Pre-seed validation failed: required audio asset '${inv.musicTargetPublicId}' must have resourceType 'AUDIO', got '${musicAsset.resourceType}'.`
+        );
+      }
+    }
+
     for (const partner of inv.partners) {
-      if (!availablePublicIds.has(partner.photoTargetPublicId)) {
+      const partnerAsset = assetMap.get(partner.photoTargetPublicId);
+      if (!partnerAsset) {
         throw new SeedExecutionError(
           `Pre-seed validation failed: required photo asset '${partner.photoTargetPublicId}' for partner '${partner.name}' missing from report for slug '${inv.slug}'.`
+        );
+      }
+      if (partnerAsset.resourceType !== "IMAGE") {
+        throw new SeedExecutionError(
+          `Pre-seed validation failed: required photo asset '${partner.photoTargetPublicId}' for partner '${partner.name}' must have resourceType 'IMAGE', got '${partnerAsset.resourceType}'.`
         );
       }
     }
 
     for (const [idx, item] of inv.galleryItems.entries()) {
-      if (!availablePublicIds.has(item.assetTargetPublicId)) {
+      const galleryAsset = assetMap.get(item.assetTargetPublicId);
+      if (!galleryAsset) {
         throw new SeedExecutionError(
           `Pre-seed validation failed: required gallery asset '${item.assetTargetPublicId}' at position ${idx + 1} missing from report for slug '${inv.slug}'.`
+        );
+      }
+      if (galleryAsset.resourceType !== "IMAGE") {
+        throw new SeedExecutionError(
+          `Pre-seed validation failed: required gallery asset '${item.assetTargetPublicId}' at position ${idx + 1} must have resourceType 'IMAGE', got '${galleryAsset.resourceType}'.`
         );
       }
     }
@@ -107,17 +157,39 @@ export async function executeSeed(
   const logger = options?.logger ?? console;
   const repoRoot = options?.repoRoot ?? process.cwd();
 
-  // 1. Resolve and Reconcile Cloudinary Upload Report (SEED-03)
-  const report = options?.report
-    ? reconcileUploadReport(options.report, { repoRoot })
-    : readValidatedUploadReport(options?.reportPath, { repoRoot });
+  let mediaInputs: MediaAssetUpsertInput[];
 
-  logger.log(
-    `[Seed] Reconciled upload report for cloud '${report.targetCloudName}' with ${report.assets.length} assets.`
-  );
-
-  // 2. Pre-validate Seed Media Requirements before DB writes (SEED-01)
-  validateSeedMediaRequirements(report, SEED_INVITATIONS);
+  if (options?.report) {
+    const report = reconcileUploadReport(options.report, {
+      repoRoot,
+      canonicalAssets: options.canonicalMedia,
+    });
+    logger.log(
+      `[Seed] Reconciled custom upload report for cloud '${report.targetCloudName}' with ${report.assets.length} assets.`
+    );
+    validateSeedMediaRequirements(report, SEED_INVITATIONS);
+    mediaInputs = report.assets.map(mapUploadAssetToMediaAssetInput);
+  } else if (options?.reportPath) {
+    const report = readValidatedUploadReport(options.reportPath, {
+      repoRoot,
+      canonicalAssets: options.canonicalMedia,
+    });
+    logger.log(
+      `[Seed] Reconciled upload report file from '${options.reportPath}' with ${report.assets.length} assets.`
+    );
+    validateSeedMediaRequirements(report, SEED_INVITATIONS);
+    mediaInputs = report.assets.map(mapUploadAssetToMediaAssetInput);
+  } else {
+    // Portable Default Seed Flow: uses Git-tracked canonical production catalog
+    // Zero dependencies on ignored .media-migration or local legacy media files
+    const canonical = options?.canonicalMedia ?? CANONICAL_PRODUCTION_MEDIA;
+    validateCanonicalMediaCatalog(canonical);
+    mediaInputs = canonical.map(mapCanonicalAssetToMediaAssetInput);
+    validateSeedMediaRequirements(mediaInputs, SEED_INVITATIONS);
+    logger.log(
+      `[Seed] Loaded canonical production media catalog with ${mediaInputs.length} verified assets.`
+    );
+  }
 
   // 3. Resolve Prisma Client
   let db: PrismaClient;
@@ -141,7 +213,7 @@ export async function executeSeed(
   await db.$transaction(
     async (tx) => {
       // 4a. Upsert MediaAsset records inside transaction
-      for (const asset of report.assets) {
+      for (const input of mediaInputs) {
         if (
           options?.testFaultInjection?.failAfterMediaUpsertCount &&
           mediaAssetsUpserted >= options.testFaultInjection.failAfterMediaUpsertCount
@@ -151,7 +223,6 @@ export async function executeSeed(
           );
         }
 
-        const input = mapUploadAssetToMediaAssetInput(asset);
         await tx.mediaAsset.upsert({
           where: { publicId: input.publicId },
           update: {

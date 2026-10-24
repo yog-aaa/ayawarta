@@ -1,10 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
-  getDefaultInvitation,
-  getInvitationBySlug,
-} from "@/lib/invitations";
-import {
   APPROVED_INVITATION_SLUGS,
   buildAudioPublicId,
   buildCouplePublicId,
@@ -477,14 +473,96 @@ export function generateMediaManifest(options?: ManifestOptions): MediaManifest 
     }
   }
 
+  const HISTORICAL_INVITATION_MEDIA_INPUTS: Record<
+    InvitationSlug,
+    {
+      couple: {
+        groom: { name: string; photo: string };
+        bride: { name: string; photo: string };
+        heroImage: string;
+      };
+      gallery?: { images: string[] };
+      musicUrl?: string;
+    }
+  > = {
+    "rika-fauzi": {
+      couple: {
+        groom: { name: "Moch Fauzi Febriana", photo: "/images/SAMPLE/FOTO - Fauzi.jpg" },
+        bride: { name: "Rika Widiarti", photo: "/images/SAMPLE/FOTO - Rika Widiarti.jpg" },
+        heroImage: "/images/SAMPLE/FOTO - Couple.jpg",
+      },
+      gallery: {
+        images: [
+          "/images/SAMPLE/IMG-20250802-WA0006.jpg",
+          "/images/SAMPLE/IMG-20250802-WA0005.jpg",
+          "/images/SAMPLE/IMG-20250802-WA0007.jpg",
+          "/images/SAMPLE/IMG-20250802-WA0008.jpg",
+          "/images/SAMPLE/IMG-20250802-WA0009.jpg",
+          "/images/SAMPLE/FOTO - Couple.jpg",
+        ],
+      },
+      musicUrl: "https://youtu.be/GAf2DQPYvGE?si=JemtvfvApS7Dmt_t",
+    },
+    "shidqi-mita": {
+      couple: {
+        groom: { name: "Shidqi Nurpermadi", photo: "https://res.cloudinary.com/doig3gwek/image/upload/v1758636624/PWD_Shidqi_im7frp.jpg" },
+        bride: { name: "Mita Ali Tifta", photo: "https://res.cloudinary.com/doig3gwek/image/upload/v1758636621/PWD_Mita_xeonoq.jpg" },
+        heroImage: "https://res.cloudinary.com/doig3gwek/image/upload/v1758683815/couple_mnq0zf.jpg",
+      },
+      gallery: {
+        images: [
+          "https://res.cloudinary.com/doig3gwek/image/upload/v1758633550/PWD_Mita_Shidqi-11_-_Shidqi_Nurpermadi_m4edz9.jpg",
+          "https://res.cloudinary.com/doig3gwek/image/upload/v1758633577/PWD_Mita_Shidqi-15_-_Shidqi_Nurpermadi_yslkig.jpg",
+          "https://res.cloudinary.com/doig3gwek/image/upload/v1758633550/PWD_Mita_Shidqi-6_-_Shidqi_Nurpermadi_hfa8yt.jpg",
+          "https://res.cloudinary.com/doig3gwek/image/upload/v1758633592/PWD_Mita_Shidqi-26_-_Shidqi_Nurpermadi_txf0mo.jpg",
+          "https://res.cloudinary.com/doig3gwek/image/upload/v1758633588/PWD_Mita_Shidqi-19_-_Shidqi_Nurpermadi_cxl1ba.jpg",
+          "https://res.cloudinary.com/doig3gwek/image/upload/v1758633549/PWD_Mita_Shidqi-5_-_Shidqi_Nurpermadi_znxxvw.jpg",
+        ],
+      },
+      musicUrl: "https://youtu.be/JHyhUWcFhWY?si=Qpr144vcUe_Kmopc",
+    },
+    "dudi-aini": {
+      couple: {
+        groom: { name: "Dudi", photo: "https://res.cloudinary.com/doig3gwek/image/upload/v1763485132/dudi_aiwaeh.jpg" },
+        bride: { name: "Aini Sri Lutami", photo: "https://res.cloudinary.com/doig3gwek/image/upload/v1763485132/aini_ru5pui.jpg" },
+        heroImage: "https://res.cloudinary.com/doig3gwek/image/upload/v1765164240/hero_byywfn.jpg",
+      },
+      gallery: {
+        images: [
+          "https://res.cloudinary.com/doig3gwek/image/upload/v1763484805/heroImage_blhgl5.jpg",
+          "https://res.cloudinary.com/doig3gwek/image/upload/v1763484805/2_ladbgf.jpg",
+          "https://res.cloudinary.com/doig3gwek/image/upload/v1764585361/foto_4_w4msfb.jpg",
+        ],
+      },
+      musicUrl: "https://res.cloudinary.com/doig3gwek/video/upload/v1764532212/lagu_ruirls.mp3",
+    },
+    "default-preview": {
+      couple: {
+        groom: { name: "Bima Mahendra", photo: "/images/dummy-couples/groom.jpg" },
+        bride: { name: "Anisa Putri", photo: "/images/dummy-couples/bride.jpg" },
+        heroImage: "/images/dummy-couples/hero.png",
+      },
+      gallery: {
+        images: [
+          "/images/dummy-couples/photo-sample.jpg",
+          "/images/dummy-couples/photo-sample.jpg",
+          "/images/dummy-couples/photo-sample.jpg",
+          "/images/dummy-couples/photo-sample.jpg",
+          "/images/dummy-couples/photo-sample.jpg",
+          "/images/dummy-couples/photo-sample.jpg",
+        ],
+      },
+      musicUrl: "",
+    },
+  };
+
   // Iterate over all 4 approved slugs in order
   for (const slug of APPROVED_INVITATION_SLUGS) {
-    const inv = slug === "default-preview" ? getDefaultInvitation() : getInvitationBySlug(slug);
-    if (!inv) {
+    const data = HISTORICAL_INVITATION_MEDIA_INPUTS[slug];
+    if (!data) {
       throw new Error(`Invitation data not found for slug '${slug}'`);
     }
 
-    const { data } = inv;
     const groomName = data.couple.groom.name;
     const brideName = data.couple.bride.name;
 

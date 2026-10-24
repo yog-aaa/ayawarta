@@ -22,12 +22,8 @@
     "seed:verify": "tsx --conditions=react-server scripts/verify-seed.ts",
     "smoke:routes": "tsx scripts/smoke-test-routes.ts",
     "prisma:studio": "prisma studio",
-    "media:dry-run": "tsx --conditions=react-server scripts/migrate-invitation-media.ts --dry-run",
-    "media:migrate": "tsx --conditions=react-server scripts/migrate-invitation-media.ts",
-    "media:verify": "tsx --conditions=react-server scripts/verify-invitation-media.ts",
     "media:verify-audio": "tsx --conditions=react-server scripts/verify-local-audio.ts",
     "media:verify-upload": "tsx --conditions=react-server scripts/verify-cloudinary-upload.ts",
-    "media:audit-identity": "tsx --conditions=react-server scripts/audit-media-identity.ts",
     "admin:bootstrap": "tsx --conditions=react-server scripts/bootstrap-admin.ts"
   },
   "dependencies": {

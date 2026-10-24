@@ -8,6 +8,7 @@ import type {
 } from "./types";
 import type { InvitationSlug } from "@/features/media/types";
 import type { UploadAssetRecord } from "@/features/media/schema";
+import type { CanonicalMediaAsset } from "@/features/media/canonical-catalog";
 
 export type SeedPartner = {
   role: "GROOM" | "BRIDE";
@@ -134,6 +135,26 @@ export function mapUploadAssetToMediaAssetInput(
     width: asset.width ?? null,
     height: asset.height ?? null,
     originalName,
+  };
+}
+
+/**
+ * Maps a canonical media asset from the Git-tracked production registry to database MediaAsset input.
+ * Fully decoupled from local files and ignored migration artifacts.
+ */
+export function mapCanonicalAssetToMediaAssetInput(
+  asset: CanonicalMediaAsset
+): MediaAssetUpsertInput {
+  return {
+    publicId: asset.publicId,
+    secureUrl: asset.secureUrl,
+    folder: asset.folder,
+    resourceType: asset.resourceType,
+    format: asset.format,
+    bytes: asset.bytes,
+    width: asset.width,
+    height: asset.height,
+    originalName: asset.originalName,
   };
 }
 
