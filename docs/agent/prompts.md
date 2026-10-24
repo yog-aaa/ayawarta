@@ -1010,25 +1010,270 @@ Stop without committing if any other file changes, any gate fails, or the origin
 ## Stage 9 — Firestore Isolation and Wishes Hardening
 
 ```text
-Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 9 — Firestore Isolation and Wishes Hardening. Stage 8 telah diterima.
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 9 — Firestore Isolation and Wishes Hardening. Stage 8 telah diterima. Planner telah menyiapkan prompt ini sebagai satu-satunya perubahan awal yang diizinkan pada `docs/agent/prompts.md`; jangan edit, revert, stage, atau commit file tersebut. Bila preflight menemukan perubahan lain, berhenti dan laporkan. Jangan mengerjakan Stage 10, deployment, atau fitur admin.
 
-Baca semua dokumen wajib di AGENTS.md, khususnya docs/architecture.md bagian Wishes and RSVP dan implementation plan Phase 9.
+Baca `AGENTS.md` dan seluruh dokumen yang diwajibkannya. Fokuskan pembacaan pada:
+- `docs/superpowers/specs/2026-10-21-ayawarta-refactor-cloudinary-prisma-design.md`
+- `docs/superpowers/plans/2026-10-21-ayawarta-refactor-cloudinary-prisma-plan.md` Phase 9
+- `docs/architecture.md` bagian Runtime Boundaries dan Wishes and RSVP Data Flow
+- `docs/design.md` bagian Server and Client Components
+- `docs/qa-checklist.md` bagian Firestore dan UI/Accessibility
+- `docs/agent-workflow.md` Stage 9
+- `docs/agent/skills.md` (Stage 9 tidak memakai skill tambahan)
+
+Kondisi dan kontrak yang sudah diverifikasi reviewer:
+- Firestore tetap menjadi satu-satunya penyimpanan real-time untuk ucapan dan RSVP. Jangan memindahkan atau menduplikasi jalur ini ke PostgreSQL/Prisma.
+- Path collection produksi yang wajib dipertahankan persis adalah `wishes/{invitationSlug}/messages`.
+- Record yang sudah ada memakai field `name`, `message`, `attendance`, dan `timestamp`.
+- Nilai attendance historis yang harus tetap dapat dibaca adalah `"Hadir"`, `"Tidak Hadir"`, dan `"Belum Konfirmasi"`. Form baru hanya boleh menulis `"Hadir"` atau `"Tidak Hadir"`; jangan rename, translate, atau menambah nilai baru.
+- Query tetap mengurutkan `timestamp` secara descending.
+- Empat slug produksi adalah `rika-fauzi`, `shidqi-mita`, `dudi-aini`, dan `default-preview`.
+- Firebase web config `NEXT_PUBLIC_FIREBASE_*` memang client-capable. Jangan mengubah nama key, memindahkannya ke server-only env, atau mencetak nilainya.
+
+Preflight wajib dan read-only:
+1. Pastikan branch `develop`, catat HEAD awal, dan pastikan satu-satunya diff awal adalah `docs/agent/prompts.md` milik planner. Bila ada file lain yang modified/staged/untracked, berhenti. Pisahkan file prompt planner dari daftar file implementasi Stage 9 pada handoff.
+2. Audit `src/lib/firebase.ts`, `WishesSection.tsx`, pemanggilnya, serta test yang relevan. Catat path, query ordering, bentuk record, nilai attendance, dan lifecycle saat ini sebelum mengubah kode.
+3. Ekstrak hanya nama key Firebase dari environment bila perlu; jangan pernah menampilkan nilai.
+4. Jangan membaca, menulis, menghapus, atau memperbarui dokumen Firestore produksi selama preflight.
+
+Tugas implementasi wajib:
+1. Bentuk feature boundary client-safe yang jelas untuk wishes/RSVP: domain types dan validasi/normalisasi record terpisah dari adapter Firebase. Firebase SDK hanya boleh berada pada client-side adapter atau client island yang memang membutuhkannya. Jangan biarkan Prisma, server-only modules, Cloudinary mutator, atau credential server masuk ke boundary ini.
+2. Pertahankan exact collection builder `wishes/{invitationSlug}/messages` untuk subscription dan submission. Centralize contract tersebut agar read/write tidak dapat menyimpang, dan tambahkan test yang membuktikan segment path persis sama. Builder menerima slug undangan valid secara umum—jangan hard-code allowlist empat slug—dengan kontrak `^[a-z0-9]+(?:-[a-z0-9]+)*$`; tolak string kosong, slash/backslash, whitespace, traversal, atau karakter lain sebelum SDK dipanggil.
+3. Buat adapter/gateway yang dapat di-inject pada test. Default production adapter tetap memakai Firebase SDK dan real-time `onSnapshot`; unit/component test harus memakai fake hermetis tanpa network. Susun production adapter di atas injectable low-level SDK port agar path/query/payload dapat diuji tanpa memanggil Firebase asli.
+4. Subscription harus:
+   - menjamin paling banyak satu subscription aktif untuk satu mounted instance/generation;
+   - tetap memakai `orderBy("timestamp", "desc")`;
+   - menyediakan handler data dan handler error;
+   - mengembalikan unsubscribe;
+   - memanggil unsubscribe tepat sekali untuk setiap subscription yang pernah dibuat, termasuk pada unmount dan sebelum resubscribe ketika slug berubah;
+   - mengabaikan callback subscription lama setelah cleanup agar state slug baru tidak tertimpa;
+   - tidak crash bila snapshot kosong atau satu record lama malformed.
+5. Parsing record harus fail-safe dan kompatibel dengan data lama. Parser Firebase menerima timestamp-like object dengan fungsi `toDate()` yang menghasilkan `Date` valid, lalu mengubahnya menjadi `Date` domain. Bila satu document malformed (field salah/hilang, attendance tidak dikenal, atau timestamp invalid), skip document itu, tetap render seluruh sibling record yang valid, dan tampilkan warning generik nonfatal; jangan menjatuhkan seluruh subscription/list. Jangan menampilkan raw Firebase error, stack trace, project ID, document payload, atau config value ke pengguna/log test.
+6. Submission harus tetap menulis tepat `{ name, message, attendance, timestamp }` ke path yang sama. Default adapter tetap mengirim `timestamp: new Date()` seperti implementasi saat ini sehingga Firestore menyimpannya sebagai timestamp; jangan menggantinya dengan `serverTimestamp()` pada Stage 9. Trim `name` dan `message` sebelum validasi/write, tolak nilai kosong/whitespace dan attendance di luar dua nilai form yang disetujui.
+7. Cegah double-submit: selama write berjalan, submit berikutnya tidak boleh memicu write kedua. Tombol wajib disabled dan mengumumkan state pengiriman. Kosongkan form hanya setelah write sukses; bila write gagal, pertahankan input dan pilihan attendance agar pengguna dapat mencoba lagi.
+8. Lengkapi state UI tanpa redesign Classic Rose:
+   - loading awal yang dapat dikenali;
+   - empty state yang ramah ketika belum ada ucapan;
+   - daftar real-time setelah snapshot berhasil;
+   - subscription failure dengan pesan generik dan tombol retry yang membersihkan generation lama, menghapus error, kembali ke loading, lalu membuat tepat satu subscription generation baru;
+   - validation error yang terhubung secara aksesibel ke field/form;
+   - submitting dan submission failure state;
+   - `aria-live` yang proporsional untuk feedback status/error;
+   - focus ring yang terlihat, label native, serta semua button/control minimum 44×44 CSS px.
+9. Pertahankan komposisi visual, copy utama, tema, motion, urutan section, dan layout Classic Rose. Refactor hanya sejauh yang dibutuhkan untuk boundary dan states; jangan merombak desain undangan.
+10. Hapus `console.error` yang mencetak raw Firebase error. Bila perlu logging, gunakan pesan tetap/sanitized tanpa payload/config/stack trace.
+11. Tambahkan automated boundary scan pada `src/app/**`, `src/features/**`, dan `src/lib/**`. Yang dilarang adalah direct import Firebase/Firestore dari Server Component/server-only module/Prisma/route loader, atau dependency path ke Firebase yang melewati file tanpa boundary `"use client"`. Server Component tetap boleh mengimpor dan merender Client Component yang memiliki boundary eksplisit; jangan salah menandai graph normal server-to-client-island sebagai pelanggaran. Jangan memaksa seluruh invitation view menjadi Server Component.
+12. Scope file implementasi yang diizinkan: `src/features/wishes/**` (baru), `src/lib/firebase.ts`, `src/app/(templates)/wedding/classic-rose/[variant]/components/WishesSection.tsx`, dan test khusus Stage 9. Perubahan kecil pada Vitest config hanya boleh dilakukan bila wajib untuk menjalankan component test dan harus dijustifikasi. Jangan mengubah komponen/route lain tanpa berhenti dan meminta review scope.
+
+Test hermetis minimum:
+- exact path `wishes/{slug}/messages` untuk subscribe dan submit;
+- ordering `timestamp desc`;
+- subscribe, data emission, empty snapshot, subscription error, retry, unsubscribe on unmount, dan unsubscribe/resubscribe saat slug berubah;
+- callback stale setelah cleanup tidak mengubah UI;
+- React Strict Mode/dev probe tidak diuji sebagai “hanya satu subscribe sepanjang proses”; acceptance-nya adalah maksimum satu subscription aktif pada satu waktu dan satu unsubscribe untuk setiap subscription yang dibuat;
+- existing `Hadir`, `Tidak Hadir`, dan `Belum Konfirmasi` tetap render tanpa migrasi;
+- timestamp-like object dengan `toDate()` valid dipetakan ke `Date`; invalid date/timestamp dan malformed record di-skip, warning generik tampil, dan sibling valid tetap render;
+- validasi whitespace dan missing attendance;
+- payload write hanya berisi empat field yang disetujui dengan nilai yang sudah di-trim;
+- double-submit menghasilkan satu write;
+- sukses mereset form, gagal mempertahankan form dan menampilkan pesan generik;
+- attendance awal `null`/belum dipilih; write sukses mereset kembali ke `null`, write gagal mempertahankan pilihan;
+- loading, empty, error, retry, dan submitting state benar-benar dirender;
+- retry membersihkan error, kembali ke loading, unsubscribe generation gagal, membuat satu generation baru, dan menolak callback stale;
+- tidak ada network request atau Firestore production write pada `pnpm test`: mock modul Firebase/Firestore secara fail-closed sehingga `initializeApp`, `getFirestore`, `onSnapshot`, atau `addDoc` asli melempar bila tersentuh; assert fake write spy hanya menerima panggilan test dan default adapter yang terhubung ke SDK asli tidak pernah terinstansiasi (adapter contract tetap boleh diuji dengan injected fake SDK port).
+
+Kebijakan smoke test dan external effects:
+- Pada Stage 9 ini JANGAN melakukan write/delete/update nyata ke Firestore produksi. Uji alur baca-kirim secara behavior-level menggunakan injected fake gateway/component test.
+- Jangan menambahkan test document ke salah satu dari empat slug produksi.
+- Jangan mengubah Firebase console, Firestore rules, indexes, project configuration, atau environment values.
+- Bila live write dianggap mutlak diperlukan untuk membuktikan sesuatu yang tidak dapat diuji hermetis, berhenti dan minta otorisasi pemilik terlebih dahulu; jangan menganggap instruksi Stage 9 sebagai izin mutasi data produksi.
+- Route smoke test boleh dijalankan terhadap local production server, tetapi jangan submit form ke Firebase. Buktikan halaman dan state awal tetap render tanpa menyebabkan external mutation.
+
+Verifikasi minimum, menggunakan pnpm 10.34.7:
+- `pnpm install --frozen-lockfile`
+- `pnpm test`
+- test khusus wishes/Firestore interaction dan boundary
+- `pnpm typecheck`
+- `pnpm lint` (target 0 error, 0 warning)
+- `pnpm build`
+- `pnpm seed:verify` sebelum dan sesudah gate lain untuk membuktikan count/repository reconstruction tetap 82 row; jangan menjalankan `pnpm test:db` pada Stage 9 karena suite integrasi seed melakukan transaksi tulis/rollback dan tidak relevan dengan Firestore
+- `pnpm smoke:routes` terhadap local production server tanpa submit Firestore
+- `git diff --check`
+- scan credential, raw Firebase error logging, client/server boundary, dan perubahan collection path/attendance literal
+
+Batasan keras:
+- Jangan mengubah Prisma schema/migration, seed, data PostgreSQL, Auth.js, Cloudinary, media, landing UI, admin UI, Aiven, atau Vercel.
+- Jangan mengubah dependency, `package.json`, atau lockfile. Bila perubahan dependency ternyata mutlak diperlukan, berhenti dan minta persetujuan reviewer; agent tidak boleh menyetujui pengecualian sendiri.
+- Jangan memindahkan wishes/RSVP ke PostgreSQL atau membuat API/WebSocket pengganti real-time Firestore.
+- Jangan mengubah collection path, field record, nilai attendance, ordering, atau menulis migrasi/backfill Firestore.
+- Jangan menghapus source/data/media lama; cleanup hanya Stage 10.
+- Jangan commit. Berhenti setelah seluruh verifikasi selesai dan kirim handoff untuk review.
+
+Handoff wajib berformat:
+- `Stage: Stage 9 — Firestore Isolation and Wishes Hardening`
+- `Status: ready for review` atau `blocked`
+- daftar file berubah dan alasan setiap perubahan;
+- before/after boundary diagram singkat;
+- exact collection path, query ordering, read-compatible attendance values, dan write-only attendance values;
+- bukti subscription lifecycle/unsubscribe/stale-callback protection;
+- bukti seluruh loading/empty/error/retry/submitting/success/failure state;
+- test matrix dengan jumlah test dan hasil command lengkap, termasuk dua hasil `seed:verify` yang identik;
+- bukti boundary scan serta 0 raw credential/error leak;
+- `Data or external effects` yang pada implementasi ini harus menyatakan 0 Firestore writes, 0 Firebase console/rules/index changes, 0 PostgreSQL writes/persistent changes, dan 0 external service mutations;
+- risks/follow-ups;
+- `Skills used: none`;
+- `Commit: not committed`.
+```
+
+## Stage 9.1 — Firestore Boundary and Evidence Corrections
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 9.1 — Firestore Boundary and Evidence Corrections. Baca `docs/reviews/stage-09-firestore-isolation-review.md` dan petakan setiap perubahan ke `FIRE-01` sampai `FIRE-06`.
+
+Kondisi awal:
+- Implementasi Stage 9 masih uncommitted.
+- `docs/agent/prompts.md` dan `docs/reviews/stage-09-firestore-isolation-review.md` adalah dokumen milik planner. Jangan edit, revert, stage, atau commit keduanya.
+- Jangan mulai Stage 10 dan jangan melakukan live Firestore read/write.
+
+Tugas wajib:
+
+1. `FIRE-01`: ubah kontrak hasil subscription agar membawa valid wishes dan metadata aman `skippedCount`. Adapter harus menghitung document malformed yang di-skip tanpa menyimpan/mencetak payload. UI tetap merender sibling valid, menampilkan warning generik nonfatal bila `skippedCount > 0`, tidak salah menampilkan empty state bila seluruh document malformed, dan membersihkan warning setelah snapshot bersih. Tambahkan adapter dan rendered component tests.
+2. `FIRE-02`: pada test wishes yang mengimpor production adapter/component, mock `firebase/app` dan `firebase/firestore` secara hoisted/fail-closed. Spy `initializeApp`, `getApps`, `getFirestore`, `collection`, `query`, `orderBy`, `onSnapshot`, dan `addDoc` harus melempar bila tersentuh tanpa injected port serta terbukti memiliki zero calls pada component tests. Adapter contract tetap diuji melalui injected fake low-level port; tidak boleh ada network.
+3. `FIRE-03`: jadikan boundary eksplisit dan graph-safe:
+   - beri `"use client"` pada `src/lib/firebase.ts`;
+   - hapus export `db` Proxy yang tidak lagi memiliki consumer;
+   - jangan re-export `firebase-adapter.ts` dari barrel pure `src/features/wishes/index.ts`; import adapter langsung hanya dari Client Component;
+   - perbarui boundary test agar mengikuti static relative/alias imports dan re-exports pada `src/app/**`, `src/features/**`, dan `src/lib/**`. Traversal dari server root harus berhenti pada file dengan `"use client"`; direct atau transitive path ke Firebase sebelum boundary adalah failure. Server Component yang mengimpor Client Component adalah graph yang valid.
+4. `FIRE-04`: buat gateway test terkontrol yang menyimpan callback dan unsubscribe per subscription generation. Buktikan secara behavior-level:
+   - retry meng-unsubscribe generation lama tepat sekali, membersihkan error, kembali loading, dan membuat tepat satu replacement;
+   - slug change melakukan cleanup yang sama;
+   - maksimum satu subscription aktif;
+   - callback data maupun error dari generation lama setelah replacement aktif tidak mengubah UI;
+   - setiap subscription yang dibuat mendapat tepat satu unsubscribe, termasuk cleanup/unmount/Strict Mode probe.
+5. `FIRE-05`: tambahkan success feedback yang aksesibel setelah write berhasil, misalnya `role="status"` dengan `aria-live="polite"` dan copy ringkas `Ucapan berhasil dikirim.`. Form tetap reset ke kosong/null. Feedback sukses harus dibersihkan ketika pengguna mulai mengedit atau mengirim ulang sehingga pesan lama tidak menyesatkan. Uji render dan lifecycle-nya.
+6. `FIRE-06`: pisahkan error content validation, attendance validation, dan submit failure. `aria-invalid`/`aria-describedby` hanya boleh dipasang pada control yang benar-benar invalid. Attendance radiogroup wajib terhubung ke pesan missing-attendance. Network/write failure tetap menjadi form-level generic alert tanpa menandai field valid sebagai invalid. Tambahkan rendered accessibility assertions.
+7. Pertahankan kontrak produksi tanpa perubahan: path `wishes/{invitationSlug}/messages`, `orderBy("timestamp", "desc")`, read attendance `Hadir | Tidak Hadir | Belum Konfirmasi`, write attendance `Hadir | Tidak Hadir`, dan payload tepat `{ name, message, attendance, timestamp: new Date() }`.
+
+Verifikasi wajib:
+- `pnpm install --frozen-lockfile`
+- `pnpm seed:verify` sebelum gate lain
+- `pnpm test`
+- test khusus wishes adapter, boundary graph, component lifecycle, malformed warning, success status, dan accessibility associations
+- `pnpm typecheck`
+- `pnpm lint` (0 error, 0 warning)
+- `pnpm build`; notice umur `baseline-browser-mapping` boleh dicatat sebagai non-blocking dan tidak boleh memicu dependency update
+- `pnpm seed:verify` sesudah gate lain; hasil tetap 82 row
+- `pnpm smoke:routes` tanpa menjalankan browser-side Firestore submission
+- `git diff --check`
+- scan package/lockfile, credential, raw Firebase error logging, exact collection path, attendance literals, dan external effects
+
+Batasan keras:
+- Jangan menjalankan `pnpm test:db`.
+- Jangan mengubah dependency, `package.json`, lockfile, Prisma, PostgreSQL, Cloudinary, Auth.js, route, landing UI, Aiven, Vercel, Firebase console/rules/indexes, atau environment.
+- Jangan melakukan live Firestore read/write/delete/update.
+- Jangan memperluas redesign Classic Rose dan jangan mengerjakan cleanup Stage 10.
+- Jangan commit. Berhenti setelah verifikasi dan kirim handoff review.
+
+Handoff wajib memuat mapping `FIRE-01`–`FIRE-06`, snapshot metadata/warning behavior, bukti fail-closed SDK mocks zero-call, boundary graph algorithm dan mutation cases, exact lifecycle counters untuk retry/slug/unmount/Strict Mode, success/error accessibility behavior, seluruh hasil command, daftar file implementasi berubah (pisahkan dua docs planner), external effects harus nol, serta `Commit: not committed`.
+```
+
+## Stage 9.2 — TypeScript-AST Boundary Scanner Correction
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya Stage 9.2 — TypeScript-AST Boundary Scanner Correction (`FIRE-07`). Baca bagian Stage 9.1 Correction Review dalam `docs/reviews/stage-09-firestore-isolation-review.md`.
+
+Kondisi awal:
+- Seluruh koreksi `FIRE-01` sampai `FIRE-06` sudah diterima dan tidak boleh direfaktor ulang.
+- Implementasi Stage 9 masih uncommitted.
+- `docs/agent/prompts.md` dan `docs/reviews/stage-09-firestore-isolation-review.md` adalah dokumen planner; jangan edit, revert, stage, atau commit.
+
+Tugas tunggal `FIRE-07`:
+1. Ganti parser regex pada `src/features/wishes/boundary.test.ts` dengan parser TypeScript Compiler API dari dependency `typescript` yang sudah ada. Jangan menambah dependency.
+2. Ekstrak runtime module edges dari `ImportDeclaration` dan `ExportDeclaration` dengan string module specifier, baik single-line maupun multiline.
+3. Abaikan edge yang sepenuhnya type-only (`import type`, `export type`, `import { type Foo }`, atau `export { type Foo } from`) karena edge tersebut terhapus saat runtime. Mixed declaration seperti `import { type Foo, value }` atau `export { type Foo, value } from` tetap runtime dan wajib ditelusuri. Empty-clause `import {} from` / `export {} from`, side-effect imports, default/namespace/named imports, `export * from`, dan value re-exports juga wajib dianggap runtime karena module tetap dimuat/dievaluasi; jangan memakai `.every()` kosong yang salah mengklasifikasikannya sebagai type-only.
+4. Pertahankan resolusi alias `@/`, relative path, extension `.ts/.tsx/.js/.jsx`, dan directory index. Pertahankan cycle protection dan tampilkan full dependency chain saat violation ditemukan.
+5. Traversal dari server root berhenti hanya ketika mencapai module dengan `"use client"` sebagai bagian dari directive prologue awal yang sah menurut JavaScript/Next.js (BOM dan komentar sebelum directive boleh; import, declaration, atau statement non-directive sebelumnya membuat string tersebut bukan boundary). Server Component → ordinary Client Component tetap valid. Namun direct/transitive import dari server graph ke target khusus `src/lib/firebase.ts` atau `src/features/wishes/firebase-adapter.ts` harus dicatat sebagai violation sebelum directive target itu dipakai sebagai stop; kedua module tersebut hanya boleh dicapai di balik Client Component island. Direct/transitive runtime path ke `firebase/app` atau `firebase/firestore` sebelum boundary juga violation.
+6. Ubah mutation tests agar benar-benar memanggil detector yang sama terhadap isolated temporary module graph, bukan hanya mengetes helper parser/regex. Minimum cases:
+   - direct multiline server import `firebase/firestore` terdeteksi;
+   - transitive multiline `export * from` menuju firebase adapter terdeteksi dengan chain lengkap;
+   - alias dan relative import sama-sama terdeteksi;
+   - server → module `"use client"` → Firebase diizinkan;
+   - graph cycle berhenti aman tanpa false negative/hang;
+   - pure `import type` dan `export type` tidak menjadi runtime violation;
+   - `import { type Foo }` dan `export { type Foo } from` diabaikan, sedangkan versi mixed type+value tetap ditelusuri;
+   - empty-clause `import {} from` / `export {} from` tetap ditelusuri sebagai runtime edge;
+   - mixed type+value import tetap dianggap runtime edge;
+   - string `"use client"` setelah import/declaration/statement non-directive tidak dianggap client boundary;
+   - scan repository aktual tetap menghasilkan 0 violation.
+7. Temporary test graph harus dibuat di lokasi test-isolated yang aman, dibersihkan pada `finally/afterEach`, tidak ditulis ke `src`, dan tidak tersisa di Git status.
+
+Verifikasi wajib:
+- test khusus `boundary.test.ts` dengan mutation matrix di atas
+- `pnpm test`
+- `pnpm typecheck`
+- `pnpm lint` (0 error, 0 warning)
+- `pnpm build` (age notice `baseline-browser-mapping` tetap non-blocking; jangan update dependency)
+- `pnpm seed:verify` tetap 82 row
+- `git diff --check`
+- verifikasi tidak ada perubahan package/lockfile, external mutation, atau temporary fixture tersisa
+
+Batasan keras:
+- Scope source code hanya `src/features/wishes/boundary.test.ts`; helper test-only terpisah di `src/features/wishes/testing/**` boleh dibuat bila benar-benar diperlukan untuk membuat detector testable.
+- Jangan mengubah production Firebase/wishes implementation, UI, contract data, dependency, package/lockfile, Prisma/PostgreSQL, Cloudinary, Auth.js, routes, Aiven, Vercel, atau environment.
+- Jangan menjalankan `pnpm test:db`, live Firestore read/write, atau Stage 10 cleanup.
+- Jangan commit. Berhenti setelah verification dan kirim handoff review.
+
+Handoff wajib memuat algoritme AST, aturan type-only vs runtime edge, mutation matrix dengan hasil detector dan dependency chain, repository scan result, seluruh hasil gate, daftar file berubah (pisahkan planner docs), bukti temporary graph cleanup, external effects nol, dan `Commit: not committed`.
+```
+
+## Stage 9.2A — Namespace Re-export Boundary Correction
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya koreksi Stage 9.2A (`FIRE-07A`). Baca bagian Stage 9.2 Correction Review dalam `docs/reviews/stage-09-firestore-isolation-review.md` serta kontrak Stage 9.2 di atas.
+
+Temuan: parser AST pada `src/features/wishes/boundary.test.ts` belum menangani `ts.isNamespaceExport(statement.exportClause)`. `export * as wishes from "./firebase-adapter"` adalah runtime re-export, tetapi detector saat ini tidak menambahkan edge. Jalur server melalui barrel seperti itu luput dari boundary scan.
 
 Tugas:
-1. Pertahankan path collection Firestore dan format record yang sudah ada.
-2. Isolasi subscription/write logic dalam client boundary terkecil yang masuk akal.
-3. Pastikan unsubscribe benar.
-4. Tambahkan/perbaiki loading, empty, submitting, validation, dan failure state tanpa mengubah contract data.
-5. Smoke-test membaca dan mengirim wish/attendance dengan aman.
-6. Jalankan tests, typecheck, lint, dan build yang relevan.
+1. Perluas `extractRuntimeSpecifiers()` agar `ExportDeclaration` dengan `NamespaceExport` dan `moduleSpecifier` string menghasilkan runtime edge ketika `statement.isTypeOnly` false. Pertahankan pengabaian `export type * as ... from`.
+2. Tambahkan mutation test yang menggunakan `findTransitiveFirebasePaths()` terhadap graph temporer: Server Component -> barrel dengan multiline `export * as ... from` -> `src/features/wishes/firebase-adapter.ts`; assert violation berisi full dependency chain. Tambahkan kasus `export type * as ... from` yang tidak menghasilkan violation. Gunakan fixture temporary dan cleanup yang sudah tersedia.
+3. Pastikan semua mutation tests Stage 9.2 tetap lulus dan repository scan aktual menghasilkan nol violation.
 
-Batasan:
-- Jangan pindahkan wishes/RSVP ke PostgreSQL.
-- Jangan mengubah collection path atau attendance value.
-- Jangan mengerjakan cleanup atau deployment.
-- Jangan commit. Berhenti setelah handoff untuk review.
+Scope hanya `src/features/wishes/boundary.test.ts`. Jangan edit, revert, stage, atau commit dokumen planner (`docs/agent/prompts.md` dan `docs/reviews/stage-09-firestore-isolation-review.md`). Jangan mengubah production Firebase/wishes/UI, package/lockfile, Prisma/PostgreSQL, Cloudinary, Auth.js, route, environment, atau layanan eksternal. Jangan melakukan live Firestore read/write, menjalankan `pnpm test:db`, memulai Stage 10, atau commit.
 
-Handoff wajib menyertakan bukti path tetap sama, subscription cleanup, read/submit behavior, dan external effects jika test menulis data.
+Verifikasi: targeted `boundary.test.ts`, `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm seed:verify`, dan `git diff --check`; pastikan tidak ada fixture temporer tertinggal dan tidak ada external mutation.
+
+Handoff: laporkan perubahan tepat pada NamespaceExport, hasil dua mutation cases, full chain, hasil repository scan dan seluruh gate, file berubah, external effects nol, serta `Commit: not committed`. Berhenti untuk review.
+```
+
+## Stage 9.2B — Type-only Namespace Graph Test Correction
+
+```text
+Anda adalah programmer agent untuk proyek AyaWarta. Kerjakan hanya koreksi `FIRE-07B` dalam Stage 9.2B. Baca `docs/reviews/stage-09-firestore-isolation-review.md` bagian Stage 9.2A Final Review.
+
+Masalah: test negatif `export type * as ... from` saat ini memakai `import type { wishes }` di server root. Karena import root tersebut bukan runtime edge, detector tidak pernah mencapai barrel. Tes nol pelanggaran itu belum membuktikan bahwa `export type * as` diabaikan.
+
+Ubah hanya fixture/test di `src/features/wishes/boundary.test.ts`:
+1. Pada tes negatif, buat server root mengimpor barrel secara runtime lewat side-effect import (`import "@/features/wishes/barrel";`). Biarkan barrel memakai multiline `export type * as ... from`. Panggil `findTransitiveFirebasePaths()` dan pastikan nol violation.
+2. Tambahkan positive control dalam tes yang sama atau tes terpisah dengan graph/path yang sama: ubah isi barrel menjadi multiline runtime `export * as ... from`, panggil detector lagi, dan assert full chain server root → barrel → `firebase-adapter.ts`. Bukti ini harus gagal bila detector tidak menelusuri barrel atau mengabaikan kedua bentuk export tanpa membedakannya.
+3. Pertahankan semua tes Stage 9.2A lain dan actual repository scan. Jangan mengubah fungsi production/test detector kecuali fixture mengungkap cacat nyata; bila demikian, berhenti dan laporkan scope baru.
+
+Scope hanya `src/features/wishes/boundary.test.ts`. Jangan edit, revert, stage, atau commit `docs/agent/prompts.md` dan `docs/reviews/stage-09-firestore-isolation-review.md`. Jangan mengubah production wishes/Firebase/UI, dependency, package/lockfile, data, konfigurasi, atau layanan eksternal. Jangan menjalankan live Firestore read/write, `pnpm test:db`, Stage 10, atau commit.
+
+Verifikasi: targeted boundary suite, `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm seed:verify`, dan `git diff --check`. Pastikan fixture temporer terhapus. Kirim handoff dengan hasil negative dan positive control, full chain, seluruh gate, scope diff, external effects nol, dan `Commit: not committed`.
+```
+
+## Stage 9 — Finalize and Commit Accepted Implementation (Only After Reviewer Acceptance)
+
+```text
+Gunakan prompt ini hanya setelah reviewer menyatakan Stage 9 ACCEPTED setelah koreksi Stage 9.2B. Lakukan finalisasi dan commit implementasi saja.
+
+1. Pastikan branch `develop`, inspeksi `git status`, dan cocokkan tepat file implementasi berikut: `src/features/wishes/**`, `src/lib/firebase.ts`, serta `src/app/(templates)/wedding/classic-rose/[variant]/components/WishesSection.tsx`. Bila ada perubahan implementasi di luar daftar itu, berhenti dan laporkan.
+2. Jangan edit, revert, stage, atau commit dua dokumen planner: `docs/agent/prompts.md` dan `docs/reviews/stage-09-firestore-isolation-review.md`. Keduanya sengaja tetap menjadi perubahan terpisah milik planner; status worktree secara keseluruhan boleh tetap menampilkan kedua dokumen tersebut setelah commit.
+3. Jalankan pemeriksaan cepat final: `pnpm test`, `pnpm typecheck`, `pnpm lint`, dan `git diff --check`. Tidak perlu live Firestore atau `pnpm test:db`.
+4. Stage hanya tiga path implementasi pada langkah 1. Inspeksi `git diff --cached --name-status` dan `git diff --cached --check`; pastikan tidak ada kredensial, `.env.local`, package/lockfile, file sementara, atau dokumen planner pada index. Bila scope tidak tepat atau gate gagal, berhenti tanpa commit.
+5. Commit dengan pesan `feat: isolate realtime wishes in Firestore`. Laporkan hash lengkap, hasil gate, daftar file dalam commit, dan `git status --short --branch`. Jelaskan bahwa dua dokumen planner tetap uncommitted; jangan menyebut worktree sepenuhnya bersih.
+
+Jangan mengubah fitur, data Firestore, PostgreSQL, Cloudinary, Aiven, atau Vercel. Jangan memulai Stage 10. Berhenti setelah handoff finalisasi.
 ```
 
 ## Stage 10 — Verified Repository Cleanup
