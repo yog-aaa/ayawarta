@@ -1,6 +1,12 @@
 # Stage 10A — Cleanup Gate and Dependency Audit Review
 
-Status: CHANGES REQUIRED — evidence classification only. No cleanup approved.
+Status: ACCEPTED — Stage 10A audit only. No cleanup approved.
+
+## Stage 10A.1 correction acceptance
+
+The revised handoff assigns one status per cleanup gate: eight `PASS`, one `FAIL` (active stale-media references), and two `UNPROVEN` (real browser audio playback and exact Stage 10C deletion approval). It distinguishes current offline checks from previously accepted Stage 5B and Stage 6 evidence and separates command behavior on this seeded machine from a fresh checkout. The original findings below are closed for the audit, not for destructive cleanup.
+
+Stage 10B is authorized to decouple seed and active tooling, but it must not delete the 14 protected candidate files. A separate production-cutover constraint remains: `prisma/seed.ts` and `scripts/verify-seed.ts` call the local-only database target guard. Making seed data portable does not authorize weakening that guard, connecting to Aiven, or claiming the current CLI can seed Aiven. The future remote-target operation needs its own reviewed cutover contract.
 
 The read-only audit correctly identified the 14 tracked candidate files (12 media files plus two legacy data modules), totaling 12,074,741 bytes, and the critical transitive dependency from the seed report reader to the old media manifest. The reported verification leaves the worktree clean. These findings are sufficient to establish that direct deletion is unsafe and Stage 10B decoupling is necessary.
 
