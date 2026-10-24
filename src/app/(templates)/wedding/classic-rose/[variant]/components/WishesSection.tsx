@@ -1,233 +1,461 @@
-// src/components/templates/classic-rose/WishesSection.tsx
 "use client";
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import {
-	collection,
-	addDoc,
-	query,
-	onSnapshot,
-	orderBy,
-	Timestamp,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { defaultFirebaseWishesAdapter } from "@/features/wishes/firebase-adapter";
+import type {
+  Wish,
+  WishesGateway,
+  WishesStatus,
+  WriteAttendance,
+  WishesSnapshot,
+} from "@/features/wishes";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
 import CornerFlower from "./CornerFlower";
 
 const TitleDivider: React.FC<{ src: string }> = ({ src }) => (
-	<div className='relative w-20 h-4'>
-		<Image src={src} alt='Divider' fill className='object-contain' />
-	</div>
+  <div className="relative w-20 h-4">
+    <Image src={src} alt="Divider" fill className="object-contain" />
+  </div>
 );
 
-// Tipe data untuk ucapan, sekarang termasuk status kehadiran
-interface Wish {
-	id: string;
-	name: string;
-	message: string;
-	attendance: "Hadir" | "Tidak Hadir" | "Belum Konfirmasi"; // Status kehadiran
-	timestamp: Date;
+export interface WishesSectionProps {
+  invitationSlug: string;
+  theme: ThemeConfig;
+  gateway?: WishesGateway;
 }
 
-interface WishesSectionProps {
-	invitationSlug: string;
-	theme: ThemeConfig;
+interface FieldErrors {
+  name?: string;
+  message?: string;
+  attendance?: string;
+  submit?: string;
 }
 
 const WishesSection: React.FC<WishesSectionProps> = ({
-	invitationSlug,
-	theme,
+  invitationSlug,
+  theme,
+  gateway,
 }) => {
-	const [wishes, setWishes] = useState<Wish[]>([]);
-	const [name, setName] = useState("");
-	const [message, setMessage] = useState("");
-	const [attendance, setAttendance] = useState<"Hadir" | "Tidak Hadir" | null>(
-		null
-	); // State baru untuk kehadiran
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [error, setError] = useState("");
+  const activeGateway = gateway ?? defaultFirebaseWishesAdapter;
 
-	// Mengambil data ucapan secara real-time dari Firestore
-	useEffect(() => {
-		if (!invitationSlug) return;
+  const [wishes, setWishes] = useState<Wish[]>([]);
+  const [skippedCount, setSkippedCount] = useState(0);
+  const [status, setStatus] = useState<WishesStatus>("loading");
+  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
 
-		const q = query(
-			collection(db, "wishes", invitationSlug, "messages"),
-			orderBy("timestamp", "desc")
-		);
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState("");
+  const [attendance, setAttendance] = useState<WriteAttendance | null>(null);
 
-		const unsubscribe = onSnapshot(q, (querySnapshot) => {
-			const wishesData = querySnapshot.docs.map((doc) => ({
-				id: doc.id,
-				...doc.data(),
-				timestamp: (doc.data().timestamp as Timestamp).toDate(),
-			})) as Wish[];
-			setWishes(wishesData);
-		});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [generation, setGeneration] = useState(0);
+  const [prevSlug, setPrevSlug] = useState(invitationSlug);
 
-		return () => unsubscribe();
-	}, [invitationSlug]);
+  if (prevSlug !== invitationSlug) {
+    setPrevSlug(invitationSlug);
+    setStatus("loading");
+    setSubscriptionError(null);
+  }
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!name.trim() || !message.trim()) {
-			setError("Nama dan ucapan tidak boleh kosong.");
-			return;
-		}
-		if (!attendance) {
-			setError("Mohon pilih konfirmasi kehadiran Anda.");
-			return;
-		}
-		setIsSubmitting(true);
-		setError("");
+  // Subscribe to real-time wishes with generation tracking & stale-callback protection
+  useEffect(() => {
+    if (!invitationSlug) return;
 
-		try {
-			await addDoc(collection(db, "wishes", invitationSlug, "messages"), {
-				name: name,
-				message: message,
-				attendance: attendance, // Simpan status kehadiran
-				timestamp: new Date(),
-			});
-			setName("");
-			setMessage("");
-			setAttendance(null); // Reset pilihan kehadiran
-		} catch (error) {
-			console.error("Error adding document: ", error);
-			setError("Gagal mengirim ucapan. Coba lagi.");
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
+    let isCleanedUp = false;
+    const currentGeneration = generation;
 
-	return (
-		<section className='relative'>
-			<CornerFlower flowerSrc={theme.assets.flower} position='top-right' />
-			<CornerFlower flowerSrc={theme.assets.flower} position='bottom-left' />
-			<div
-				className='relative z-20 container mx-auto px-4 sm:px-8 max-w-md flex flex-col items-center gap-8 text-center py-20 md:py-32'
-				style={{ color: "var(--color-text)" }}>
-				<motion.div
-					initial={{ opacity: 0, y: 50 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true }}
-					transition={{ duration: 0.8 }}>
-					<div className='flex items-center justify-center gap-4'>
-						<TitleDivider src={theme.assets.divider} />
-						<h2 className='text-xl' style={{ fontFamily: "var(--font-body)" }}>
-							Buku Tamu
-						</h2>
-						<div className='transform -scale-x-100'>
-							<TitleDivider src={theme.assets.divider} />
-						</div>
-					</div>
-					<p className='text-sm mt-4 max-w-xs mx-auto'>
-						Kirimkan doa dan ucapan terbaik Anda untuk kedua mempelai.
-					</p>
-				</motion.div>
+    const unsubscribe = activeGateway.subscribe(
+      invitationSlug,
+      (snapshot: WishesSnapshot) => {
+        if (isCleanedUp || currentGeneration !== generation) return;
+        setWishes(snapshot.wishes);
+        setSkippedCount(snapshot.skippedCount);
+        setStatus("ready");
+        setSubscriptionError(null);
+      },
+      () => {
+        if (isCleanedUp || currentGeneration !== generation) return;
+        setStatus("error");
+        setSubscriptionError("Gagal memuat ucapan. Silakan coba lagi.");
+      }
+    );
 
-				<motion.form
-					onSubmit={handleSubmit}
-					className='w-full bg-white/90 backdrop-blur-sm rounded-lg p-4 space-y-3 text-left'
-					initial={{ opacity: 0, y: 50 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true }}
-					transition={{ duration: 0.8, delay: 0.2 }}>
-					<div>
-						<label htmlFor='name' className='text-xs font-semibold'>
-							Nama
-						</label>
-						<input
-							type='text'
-							id='name'
-							value={name}
-							onChange={(e) => setName(e.target.value)}
-							className='w-full p-2 mt-1 rounded border border-gray-300 text-sm text-gray-800'
-							placeholder='Nama Anda'
-						/>
-					</div>
-					<div>
-						<label className='text-xs font-semibold'>Konfirmasi Kehadiran</label>
-						<div className='flex gap-2 mt-1'>
-							<button
-								type='button'
-								onClick={() => setAttendance("Hadir")}
-								className={`flex-1 py-2 text-xs rounded ${
-									attendance === "Hadir"
-										? "bg-[--color-primary] text-white"
-										: "bg-gray-200 text-gray-700"
-								}`}>
-								Hadir
-							</button>
-							<button
-								type='button'
-								onClick={() => setAttendance("Tidak Hadir")}
-								className={`flex-1 py-2 text-xs rounded ${
-									attendance === "Tidak Hadir"
-										? "bg-[--color-primary] text-white"
-										: "bg-gray-200 text-gray-700"
-								}`}>
-								Tidak Hadir
-							</button>
-						</div>
-					</div>
-					<div>
-						<label htmlFor='message' className='text-xs font-semibold'>
-							Ucapan
-						</label>
-						<textarea
-							id='message'
-							value={message}
-							onChange={(e) => setMessage(e.target.value)}
-							rows={4}
-							className='w-full p-2 mt-1 rounded border border-gray-300 text-sm text-gray-800'
-							placeholder='Tulis ucapan Anda...'></textarea>
-					</div>
-					{error && <p className='text-xs text-red-500'>{error}</p>}
-					<button
-						type='submit'
-						disabled={isSubmitting}
-						style={{ backgroundColor: "var(--color-primary)" }}
-						className='w-full text-white py-2 rounded-lg font-semibold transition-opacity disabled:opacity-50'>
-						{isSubmitting ? "Mengirim..." : "Kirim Ucapan"}
-					</button>
-				</motion.form>
+    return () => {
+      isCleanedUp = true;
+      unsubscribe();
+    };
+  }, [invitationSlug, generation, activeGateway]);
 
-				<div className='w-full max-h-96 overflow-y-auto space-y-3 text-left'>
-					{wishes.map((wish) => (
-						<motion.div
-							key={wish.id}
-							className='bg-white/90 backdrop-blur-sm rounded-lg p-3'
-							initial={{ opacity: 0, x: -50 }}
-							animate={{ opacity: 1, x: 0 }}
-							transition={{ duration: 0.5 }}>
-							<div className='flex justify-between items-start'>
-								<p
-									className='font-semibold text-sm'
-									style={{ fontFamily: "var(--font-heading)" }}>
-									{wish.name}
-								</p>
-								{wish.attendance && (
-									<span
-										className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-											wish.attendance === "Hadir"
-												? "bg-green-100 text-green-800"
-												: "bg-red-100 text-red-800"
-										}`}>
-										{wish.attendance}
-									</span>
-								)}
-							</div>
-							<p className='text-xs mt-1'>{wish.message}</p>
-							<p className='text-[10px] text-gray-500 mt-2'>
-								{wish.timestamp.toLocaleString("id-ID")}
-							</p>
-						</motion.div>
-					))}
-				</div>
-			</div>
-		</section>
-	);
+  const handleRetry = useCallback(() => {
+    setStatus("loading");
+    setSubscriptionError(null);
+    setGeneration((prev) => prev + 1);
+  }, []);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+    if (fieldErrors.name) {
+      setFieldErrors((prev) => ({ ...prev, name: undefined }));
+    }
+    if (successMessage) setSuccessMessage(null);
+  };
+
+  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+    if (fieldErrors.message) {
+      setFieldErrors((prev) => ({ ...prev, message: undefined }));
+    }
+    if (successMessage) setSuccessMessage(null);
+  };
+
+  const handleAttendanceChange = (val: WriteAttendance) => {
+    setAttendance(val);
+    if (fieldErrors.attendance) {
+      setFieldErrors((prev) => ({ ...prev, attendance: undefined }));
+    }
+    if (successMessage) setSuccessMessage(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmittingRef.current || isSubmitting) return; // Immediate lock & double submit prevention
+
+    if (successMessage) setSuccessMessage(null);
+    setFieldErrors({});
+
+    const trimmedName = name.trim();
+    const trimmedMessage = message.trim();
+    const newErrors: FieldErrors = {};
+
+    if (!trimmedName && !trimmedMessage) {
+      newErrors.name = "Nama dan ucapan tidak boleh kosong.";
+      newErrors.message = "Nama dan ucapan tidak boleh kosong.";
+    } else {
+      if (!trimmedName) {
+        newErrors.name = "Nama tidak boleh kosong.";
+      }
+      if (!trimmedMessage) {
+        newErrors.message = "Ucapan tidak boleh kosong.";
+      }
+    }
+
+    if (!attendance) {
+      newErrors.attendance = "Mohon pilih konfirmasi kehadiran Anda.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      return;
+    }
+
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+
+    try {
+      await activeGateway.submitWish(invitationSlug, {
+        name: trimmedName,
+        message: trimmedMessage,
+        attendance: attendance!,
+      });
+      // Reset form on success
+      setName("");
+      setMessage("");
+      setAttendance(null);
+      setFieldErrors({});
+      setSuccessMessage("Ucapan berhasil dikirim.");
+    } catch {
+      // Preserve form values on error
+      setFieldErrors({ submit: "Gagal mengirim ucapan. Coba lagi." });
+    } finally {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <section className="relative">
+      <CornerFlower flowerSrc={theme.assets.flower} position="top-right" />
+      <CornerFlower flowerSrc={theme.assets.flower} position="bottom-left" />
+      <div
+        className="relative z-20 container mx-auto px-4 sm:px-8 max-w-md flex flex-col items-center gap-8 text-center py-20 md:py-32"
+        style={{ color: "var(--color-text)" }}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="flex items-center justify-center gap-4">
+            <TitleDivider src={theme.assets.divider} />
+            <h2 className="text-xl" style={{ fontFamily: "var(--font-body)" }}>
+              Buku Tamu
+            </h2>
+            <div className="transform -scale-x-100">
+              <TitleDivider src={theme.assets.divider} />
+            </div>
+          </div>
+          <p className="text-sm mt-4 max-w-xs mx-auto">
+            Kirimkan doa dan ucapan terbaik Anda untuk kedua mempelai.
+          </p>
+        </motion.div>
+
+        <motion.form
+          onSubmit={handleSubmit}
+          className="w-full bg-white/90 backdrop-blur-sm rounded-lg p-4 space-y-3 text-left"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
+          {successMessage && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="p-3 text-xs text-green-800 bg-green-50 border border-green-200 rounded-lg text-center font-medium"
+            >
+              {successMessage}
+            </div>
+          )}
+
+          <div>
+            <label htmlFor="wishes-name" className="text-xs font-semibold block">
+              Nama
+            </label>
+            <input
+              type="text"
+              id="wishes-name"
+              name="name"
+              value={name}
+              onChange={handleNameChange}
+              aria-invalid={fieldErrors.name ? true : undefined}
+              aria-describedby={fieldErrors.name ? "wishes-name-error" : undefined}
+              className="w-full p-2 mt-1 rounded border border-gray-300 text-sm text-gray-800 min-h-[44px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-primary]"
+              placeholder="Nama Anda"
+            />
+            {fieldErrors.name && (
+              <p
+                id="wishes-name-error"
+                role="alert"
+                aria-live="polite"
+                className="text-xs text-red-500 font-medium mt-1"
+              >
+                {fieldErrors.name}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <span id="wishes-attendance-label" className="text-xs font-semibold block">
+              Konfirmasi Kehadiran
+            </span>
+            <div
+              role="radiogroup"
+              aria-labelledby="wishes-attendance-label"
+              aria-invalid={fieldErrors.attendance ? true : undefined}
+              aria-describedby={fieldErrors.attendance ? "wishes-attendance-error" : undefined}
+              className="flex gap-2 mt-1"
+            >
+              <button
+                type="button"
+                role="radio"
+                aria-checked={attendance === "Hadir"}
+                onClick={() => handleAttendanceChange("Hadir")}
+                className={`flex-1 py-2 text-xs rounded min-h-[44px] min-w-[44px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-primary] ${
+                  attendance === "Hadir"
+                    ? "bg-[--color-primary] text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Hadir
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={attendance === "Tidak Hadir"}
+                onClick={() => handleAttendanceChange("Tidak Hadir")}
+                className={`flex-1 py-2 text-xs rounded min-h-[44px] min-w-[44px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-primary] ${
+                  attendance === "Tidak Hadir"
+                    ? "bg-[--color-primary] text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Tidak Hadir
+              </button>
+            </div>
+            {fieldErrors.attendance && (
+              <p
+                id="wishes-attendance-error"
+                role="alert"
+                aria-live="polite"
+                className="text-xs text-red-500 font-medium mt-1"
+              >
+                {fieldErrors.attendance}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="wishes-message" className="text-xs font-semibold block">
+              Ucapan
+            </label>
+            <textarea
+              id="wishes-message"
+              name="message"
+              value={message}
+              onChange={handleMessageChange}
+              rows={4}
+              aria-invalid={fieldErrors.message ? true : undefined}
+              aria-describedby={fieldErrors.message ? "wishes-message-error" : undefined}
+              className="w-full p-2 mt-1 rounded border border-gray-300 text-sm text-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-primary]"
+              placeholder="Tulis ucapan Anda..."
+            />
+            {fieldErrors.message && (
+              <p
+                id="wishes-message-error"
+                role="alert"
+                aria-live="polite"
+                className="text-xs text-red-500 font-medium mt-1"
+              >
+                {fieldErrors.message}
+              </p>
+            )}
+          </div>
+
+          {fieldErrors.submit && (
+            <p
+              id="wishes-submit-feedback"
+              role="alert"
+              aria-live="polite"
+              className="text-xs text-red-500 font-medium text-center"
+            >
+              {fieldErrors.submit}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+            style={{ backgroundColor: "var(--color-primary)" }}
+            className="w-full text-white py-2 rounded-lg font-semibold min-h-[44px] transition-opacity disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-primary]"
+          >
+            {isSubmitting ? "Mengirim..." : "Kirim Ucapan"}
+          </button>
+        </motion.form>
+
+        {/* Wishes List Area */}
+        <div className="w-full space-y-3">
+          {status === "loading" && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="w-full py-10 flex flex-col items-center justify-center gap-3 text-sm text-gray-600"
+            >
+              <div
+                className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin"
+                aria-hidden="true"
+              />
+              <p>Memuat ucapan…</p>
+            </div>
+          )}
+
+          {status === "error" && (
+            <div
+              role="alert"
+              aria-live="polite"
+              className="w-full bg-red-50 border border-red-200 rounded-lg p-4 text-center text-sm space-y-3"
+            >
+              <p className="text-red-700 font-medium">
+                {subscriptionError || "Gagal memuat ucapan. Silakan coba lagi."}
+              </p>
+              <button
+                type="button"
+                onClick={handleRetry}
+                style={{ backgroundColor: "var(--color-primary)" }}
+                className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg text-white min-h-[44px] min-w-[44px] transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-primary]"
+              >
+                Coba Lagi
+              </button>
+            </div>
+          )}
+
+          {status === "ready" && skippedCount > 0 && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="w-full bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-xs text-center font-medium"
+            >
+              Beberapa ucapan tidak dapat ditampilkan karena format data tidak sesuai.
+            </div>
+          )}
+
+          {status === "ready" && wishes.length === 0 && skippedCount === 0 && (
+            <div
+              role="status"
+              className="w-full bg-white/70 backdrop-blur-sm rounded-lg p-6 text-center text-sm"
+              style={{ color: "var(--color-text)" }}
+            >
+              <p className="font-medium">Belum ada ucapan.</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Jadilah yang pertama memberikan doa dan ucapan untuk kedua mempelai.
+              </p>
+            </div>
+          )}
+
+          {status === "ready" && wishes.length > 0 && (
+            <div
+              tabIndex={0}
+              role="region"
+              aria-label="Daftar ucapan dan doa"
+              className="w-full max-h-96 overflow-y-auto space-y-3 text-left rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-primary]"
+            >
+              {wishes.map((wish) => (
+                <motion.div
+                  key={wish.id}
+                  className="bg-white/90 backdrop-blur-sm rounded-lg p-3"
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <div className="flex justify-between items-start gap-2">
+                    <p
+                      className="font-semibold text-sm"
+                      style={{ fontFamily: "var(--font-heading)" }}
+                    >
+                      {wish.name}
+                    </p>
+                    {wish.attendance && (
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                          wish.attendance === "Hadir"
+                            ? "bg-green-100 text-green-800"
+                            : wish.attendance === "Tidak Hadir"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {wish.attendance}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs mt-1">{wish.message}</p>
+                  <p className="text-[10px] text-gray-500 mt-2">
+                    {wish.timestamp.toLocaleString("id-ID")}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
 };
 
 export default WishesSection;
