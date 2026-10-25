@@ -93,6 +93,8 @@ The programmer completes stage-specific items and attaches evidence. The reviewe
 
 ## Automated Verification
 
+For Stage 11, the one-time media migration scripts are retired. Validate the portable canonical catalog in unit tests and use `pnpm media:verify-upload` only where the ignored Stage 5B report is available. `pnpm seed:verify` is local-only.
+
 - [ ] Prisma format.
 - [ ] Prisma validate.
 - [ ] Prisma generate.
@@ -122,6 +124,8 @@ The programmer completes stage-specific items and attaches evidence. The reviewe
 - [ ] Logout removes access.
 
 ## Cleanup Approval
+
+Stage 10C completed the approved deletion of 12 dynamic images and two legacy data modules. The checklist below remains the gate record for any future destructive cleanup; do not interpret it as a request to repeat the deletion.
 
 Local dynamic media and hard-coded invitation sources may be removed only when every item below is checked:
 

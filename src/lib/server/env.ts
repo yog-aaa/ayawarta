@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { validateLocalDatabaseTarget } from "@/features/invitations/db-guard";
 
 export const serverEnvSchema = z.object({
   // Server-only secrets
@@ -20,11 +21,113 @@ export const serverEnvSchema = z.object({
   NEXT_PUBLIC_FIREBASE_APP_ID: z.string().min(1, "NEXT_PUBLIC_FIREBASE_APP_ID is required"),
 
   // Optional keys
+  DATABASE_URL_POOLED: z.string().min(1).optional(),
   NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: z.string().optional(),
   NEXT_DISABLE_LIGHTNINGCSS: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
+
+export type DatabaseConnectionMode = "runtime" | "migration";
+export type DeploymentEnvironment = "production" | "preview" | "development" | "local";
+
+export interface DatabaseConnectionSelection {
+  url: string;
+  isPooled: boolean;
+  sourceKey: "DATABASE_URL_POOLED" | "DATABASE_URL";
+}
+
+/**
+ * Resolves deployment environment using explicit indicators (e.g. VERCEL_ENV or AYAWARTA_DEPLOYMENT_TARGET).
+ * Does NOT rely solely on NODE_ENV.
+ */
+export function resolveDeploymentEnvironment(explicit?: string): DeploymentEnvironment {
+  if (explicit === "production" || explicit === "preview" || explicit === "development" || explicit === "local") {
+    return explicit;
+  }
+  const vercelEnv = process.env.VERCEL_ENV?.trim().toLowerCase();
+  if (vercelEnv === "production") return "production";
+  if (vercelEnv === "preview") return "preview";
+  if (vercelEnv === "development") return "development";
+  if (process.env.AYAWARTA_DEPLOYMENT_TARGET === "production") return "production";
+  return "local";
+}
+
+/**
+ * Selects the database connection URL based on explicit execution mode and deployment environment (NEO-04, NEO-12).
+ * - In "local" or "development" mode: runtime STRICTLY uses direct local DATABASE_URL and rejects remote database URLs.
+ *   The presence of DATABASE_URL_POOLED (e.g. from .env.production) NEVER switches the local runtime to pooled or remote.
+ * - In "production" mode (Vercel Production):
+ *   - "runtime" mode: DATABASE_URL_POOLED is mandatory. If missing or empty, throws Error. Falling back to direct connection is prohibited.
+ *   - "migration" mode: uses direct DATABASE_URL.
+ * - In "preview" mode (Vercel Preview): uses DATABASE_URL_POOLED if present, otherwise direct DATABASE_URL.
+ */
+export function selectDatabaseConnectionUrl(
+  env: { DATABASE_URL: string; DATABASE_URL_POOLED?: string },
+  mode: DatabaseConnectionMode = "runtime",
+  targetEnv?: DeploymentEnvironment
+): DatabaseConnectionSelection {
+  const deploymentEnv = targetEnv ?? resolveDeploymentEnvironment();
+
+  // Local / Development isolation (NEO-12, NEO-15)
+  if (deploymentEnv === "local" || deploymentEnv === "development") {
+    const rawUrl = env.DATABASE_URL?.trim();
+    // Validate target through single consistent local database contract (NEO-15)
+    validateLocalDatabaseTarget(rawUrl);
+    return {
+      url: rawUrl!,
+      isPooled: false,
+      sourceKey: "DATABASE_URL",
+    };
+  }
+
+  if (mode === "migration") {
+    return {
+      url: env.DATABASE_URL,
+      isPooled: false,
+      sourceKey: "DATABASE_URL",
+    };
+  }
+
+  // Vercel Production runtime MUST use pooled connection (NEO-04, NEO-12)
+  if (deploymentEnv === "production") {
+    const pooled = env.DATABASE_URL_POOLED?.trim();
+    if (!pooled || pooled.length === 0) {
+      throw new Error(
+        "DATABASE_URL_POOLED is required for Vercel Production runtime. " +
+        "Falling back to direct connection is prohibited in production to prevent connection exhaustion in serverless environments."
+      );
+    }
+    return {
+      url: pooled,
+      isPooled: true,
+      sourceKey: "DATABASE_URL_POOLED",
+    };
+  }
+
+  // Vercel Preview runtime
+  if (deploymentEnv === "preview") {
+    const pooled = env.DATABASE_URL_POOLED?.trim();
+    if (pooled && pooled.length > 0) {
+      return {
+        url: pooled,
+        isPooled: true,
+        sourceKey: "DATABASE_URL_POOLED",
+      };
+    }
+    return {
+      url: env.DATABASE_URL,
+      isPooled: false,
+      sourceKey: "DATABASE_URL",
+    };
+  }
+
+  return {
+    url: env.DATABASE_URL,
+    isPooled: false,
+    sourceKey: "DATABASE_URL",
+  };
+}
 
 /**
  * Validates the environment variables against the serverEnvSchema.

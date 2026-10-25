@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document explains the current system and the approved target architecture. It is written for agents implementing or reviewing the refactor.
+This document records the implemented architecture and the separately planned production topology.
 
 ## Current Architecture
 
@@ -15,20 +15,20 @@ This document explains the current system and the approved target architecture. 
 
 ### Data
 
-- Invitation records are hard-coded in `src/lib/invitations.ts`.
-- Default preview data is hard-coded in `src/lib/dummy-data/wedding/dummy-wedding.ts`.
-- Wishes and RSVP are stored in Firestore and subscribed to directly from a Client Component.
+- Invitation records, media metadata, and administrators are stored in PostgreSQL and loaded through Prisma.
+- Public invitation pages use a server-only repository and return 404 for an unknown slug.
+- Wishes and attendance remain in Firestore through a client-only gateway and adapter.
 
 ### Media
 
-- Some production media is stored in `public/images/SAMPLE`.
-- Default-preview media is stored in `public/images/dummy-couples`.
-- Other production media points at an older Cloudinary account with unstructured public IDs.
+- All 31 dynamic invitation assets are in Cloudinary cloud `uhwi7xvb`, with metadata in a Git-tracked canonical catalog and PostgreSQL.
+- The legacy `public/images/SAMPLE` and `public/images/dummy-couples` directories were removed after verification.
+- The old Cloudinary account remains untouched as a recovery source.
 - Static UI and theme artwork is stored under `public/images`.
 
 ### Media Ingestion and Image Preparation
 
-Dynamic image uploads from the future admin system pass through a server-only preparation pipeline before Cloudinary upload. Browser code never receives Cloudinary API credentials and never writes upload files into the repository.
+The server-only image preparation primitive was built for the completed migration and a future admin workflow. No admin upload screen or routine upload CLI exists yet. Browser code never receives Cloudinary API credentials.
 
 The preparation pipeline must:
 
@@ -40,13 +40,13 @@ The preparation pipeline must:
 - return output bytes, format, dimensions, byte size, and content digest for upload verification;
 - fail without creating a database media record when preparation, upload, or post-upload verification fails.
 
-Stage 5B may introduce the reusable server-only preparation primitive needed to remediate an oversized migration image. The admin upload UI and its persistence workflow remain separate later-stage work and must reuse that primitive rather than implement a second compressor.
+Stage 5B used the primitive to remediate an oversized JPEG. Oversized PNG and WebP inputs currently fail closed. A future admin upload and persistence workflow should reuse the primitive rather than implement a second compressor.
 
 ### Authentication
 
-There is no admin authentication or protected admin area.
+Auth.js Credentials provides admin-only login. `/admin` is protected; `/admin/login` remains accessible for recovery from stale sessions.
 
-## Target Architecture
+## Implemented Architecture
 
 ```text
 Browser
@@ -57,11 +57,11 @@ Browser
   └─ Admin login / protected admin page
           │
           ▼
-Next.js server on Vercel
+Next.js server (local now; Vercel after cutover)
   ├─ Invitation repository and mapper
   ├─ Auth.js Credentials authorization
   ├─ Prisma Client
-  └─ Cloudinary server utilities and migration scripts
+  └─ Cloudinary server utilities and canonical media catalog
           │
           ├──────── PostgreSQL
           │          ├─ invitations and child content
@@ -104,7 +104,7 @@ Next.js server on Vercel
 
 ## Module Boundaries
 
-Target source organization:
+Current source organization:
 
 ```text
 src/
@@ -118,7 +118,8 @@ src/
 ├── features/
 │   ├── auth/
 │   ├── invitations/
-│   └── media/
+│   ├── media/
+│   └── wishes/
 ├── generated/prisma/
 └── lib/
     ├── server/
@@ -126,7 +127,7 @@ src/
     └── theme-config/
 ```
 
-The exact generated Prisma location may follow the compatible Prisma release, but generated code must not be hand-edited.
+The generated Prisma client is under `src/generated/prisma`; generated code must not be hand-edited.
 
 ## Public Invitation Data Flow
 
@@ -175,12 +176,12 @@ PostgreSQL must not be introduced into this real-time path during the refactor.
 - Cloudinary serves production invitation media.
 - Firestore serves real-time wishes and RSVP.
 
-The initial implementation prepares Aiven/Vercel configuration but does not perform production cutover.
+The production cutover has not been performed. The current seed and seed-verification CLIs explicitly reject remote databases; Aiven needs a separately reviewed production entry point before cutover.
 
 ## Tooling and Dependency Decisions
 
 ### Prisma 7 and `@prisma/adapter-pg`
-- **Rationale:** Prisma 7 (`7.10.1`) is the current stable production release supporting Node.js 24 (`v24.15.0`) and Next.js 16 with native ESM (`"type": "module"`). It decouples connection configuration into `prisma.config.ts`, keeping `prisma/schema.prisma` strictly focused on data models and explicit output locations (`src/generated/prisma`).
+- **Rationale:** The project uses Prisma 7 (`^7.10.1`) with the configured Next.js and native ESM toolchain. It decouples connection configuration into `prisma.config.ts`, keeping `prisma/schema.prisma` focused on data models and explicit output locations (`src/generated/prisma`).
 - **Driver Adapter:** `@prisma/adapter-pg` paired with `pg` (`8.23.1`) provides standard connection pooling compatible with both local PostgreSQL (Laragon) and serverless Vercel execution connecting to Aiven via TLS.
 
 ### Auth.js v5 Prerelease (`next-auth@5.0.0-beta.32`)
@@ -203,5 +204,5 @@ The initial implementation prepares Aiven/Vercel configuration but does not perf
 - Static payment logos remain local paths.
 - Unknown slugs do not show another invitation.
 - Server secrets never cross the server/client boundary.
-- Production seed and media migration are idempotent.
+- The local seed is idempotent; the completed media migration used deterministic public IDs and conflict checks.
 - Old Cloudinary data remains untouched as a rollback source.

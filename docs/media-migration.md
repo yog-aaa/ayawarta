@@ -1,5 +1,7 @@
 # Cloudinary Media Migration Runbook
 
+**Historical record:** Stages 5A–5B migrated and verified 31 assets, and Stage 10C removed the 12 tracked dynamic source images and two hard-coded invitation modules. The migration package scripts are retired. Use [media management](media-management.md) for current checks and future upload constraints. The preflight and cleanup steps below describe the completed migration, not routine operations.
+
 ## Objective
 
 Move all dynamic invitation media to the new Cloudinary account, organize it under stable production paths, verify every resource, and only then remove repository copies and hard-coded source URLs.

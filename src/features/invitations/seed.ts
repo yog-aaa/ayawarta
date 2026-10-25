@@ -42,12 +42,19 @@ export interface SeedFaultInjectionOptions {
   failOnInvitationSlug?: string;
 }
 
+export interface SeedAdminCredentials {
+  email: string;
+  password: string;
+}
+
 export interface SeedOptions {
   reportPath?: string;
   report?: ValidatedCloudinaryUploadReport;
   canonicalMedia?: readonly CanonicalMediaAsset[];
   repoRoot?: string;
   bootstrapAdmin?: boolean;
+  adminCredentials?: SeedAdminCredentials;
+  requireAdminBootstrap?: boolean;
   logger?: Pick<Console, "log" | "warn" | "error">;
   testFaultInjection?: SeedFaultInjectionOptions;
 }
@@ -200,8 +207,22 @@ export async function executeSeed(
     db = prisma;
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  // Resolve admin credentials (NEO-02)
+  // Explicitly supplied credentials take precedence over shell environment and do NOT mutate process.env.
+  const adminEmail =
+    options?.adminCredentials?.email?.trim() ??
+    (options?.requireAdminBootstrap ? undefined : process.env.ADMIN_EMAIL?.trim());
+  const adminPassword =
+    options?.adminCredentials?.password ??
+    (options?.requireAdminBootstrap ? undefined : process.env.ADMIN_PASSWORD);
+
+  if (options?.requireAdminBootstrap) {
+    if (!adminEmail || !adminPassword || adminEmail.length === 0 || adminPassword.length === 0) {
+      throw new SeedExecutionError(
+        "Admin bootstrap is required for this seed operation, but valid admin credentials were not provided."
+      );
+    }
+  }
 
   let mediaAssetsUpserted = 0;
   let invitationsUpserted = 0;
@@ -287,6 +308,10 @@ export async function executeSeed(
         logger.log(
           `[Seed] Admin user ${adminOutcome} in tx: ${bootstrapRes.email}`
         );
+      } else if (options?.requireAdminBootstrap) {
+        throw new SeedExecutionError(
+          "Admin bootstrap was required but could not be completed."
+        );
       } else {
         logger.log(
           "[Seed] Admin bootstrap skipped (no ADMIN_EMAIL/ADMIN_PASSWORD or bootstrapAdmin=false)."
@@ -297,6 +322,12 @@ export async function executeSeed(
       timeout: 30000, // 30s safety timeout for the full interactive transaction
     }
   );
+
+  if (options?.requireAdminBootstrap && !adminBootstrapped) {
+    throw new SeedExecutionError(
+      "Admin bootstrap was required but failed to complete in transaction."
+    );
+  }
 
   logger.log("[Seed] Transaction committed successfully.");
 

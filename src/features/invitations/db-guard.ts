@@ -1,5 +1,3 @@
-import "server-only";
-
 export class DbGuardError extends Error {
   constructor(message: string) {
     super(message);
@@ -23,10 +21,27 @@ const ALLOWED_PORT = 5432;
 const ALLOWED_DATABASE = "ayawarta";
 
 /**
+ * Parameters that could redirect the host, port, database, or connection target
+ * in PostgreSQL drivers / connection poolers (NEO-15).
+ */
+const DISALLOWED_TARGET_REDIRECT_PARAMS = new Set([
+  "host",
+  "hostaddr",
+  "port",
+  "dbname",
+  "database",
+  "server",
+  "endpoint",
+  "target_session_attrs",
+  "options",
+]);
+
+/**
  * Validates that DATABASE_URL strictly points to the authorized local PostgreSQL database.
  * Fails closed on any non-local host, incorrect port, incorrect database name,
- * dangerous query parameters, or malformed connection string.
+ * connection target redirection query parameters, or malformed connection string.
  *
+ * Single consistent validation contract for local runtime and Prisma CLI (NEO-15).
  * NEVER exposes or reflects credentials, usernames, passwords, or raw URLs in error messages.
  */
 export function validateLocalDatabaseTarget(
@@ -34,7 +49,7 @@ export function validateLocalDatabaseTarget(
 ): SanitizedDbTarget {
   if (!rawUrl || typeof rawUrl !== "string" || rawUrl.trim().length === 0) {
     throw new DbGuardError(
-      "DATABASE_URL is not configured or is empty. Local seed requires a valid local connection string."
+      "DATABASE_URL is not configured or is empty for local deployment. Local database requires a valid local connection string."
     );
   }
 
@@ -54,12 +69,13 @@ export function validateLocalDatabaseTarget(
     );
   }
 
-  // 2. Host check (strip IPv6 brackets if present)
+  // 2. Host check (strip IPv6 brackets if present, support loopback domains like *.localhost)
   const rawHostname = parsed.hostname.toLowerCase();
   const hostname = rawHostname.replace(/^\[|\]$/g, "");
-  if (!ALLOWED_HOSTS.has(hostname)) {
+  const isLoopback = ALLOWED_HOSTS.has(hostname) || hostname.endsWith(".localhost");
+  if (!isLoopback) {
     throw new DbGuardError(
-      `Disallowed database host. Only local PostgreSQL ('localhost', '127.0.0.1', '::1') is authorized for local seed.`
+      `Disallowed database host for local deployment. Only local PostgreSQL ('localhost', '127.0.0.1', '::1') is authorized for local database.`
     );
   }
 
@@ -68,7 +84,7 @@ export function validateLocalDatabaseTarget(
   const port = portStr ? Number.parseInt(portStr, 10) : ALLOWED_PORT;
   if (Number.isNaN(port) || port !== ALLOWED_PORT) {
     throw new DbGuardError(
-      `Disallowed port '${portStr}'. Local seed requires port ${ALLOWED_PORT}.`
+      `Disallowed port '${portStr}'. Local database requires port ${ALLOWED_PORT}.`
     );
   }
 
@@ -77,16 +93,18 @@ export function validateLocalDatabaseTarget(
   const rawDb = parsed.pathname.replace(/^\//, "");
   if (rawDb !== ALLOWED_DATABASE) {
     throw new DbGuardError(
-      `Disallowed database name. Local seed must target '${ALLOWED_DATABASE}'.`
+      `Disallowed database name. Local database must target '${ALLOWED_DATABASE}'.`
     );
   }
 
-  // 5. Query parameters check
-  // Disallow suspicious/dangerous parameters such as host overrides
-  if (parsed.searchParams.has("host")) {
-    throw new DbGuardError(
-      "Disallowed 'host' query parameter in DATABASE_URL."
-    );
+  // 5. Query parameters check (NEO-15: close host and connection redirection)
+  for (const paramKey of parsed.searchParams.keys()) {
+    const lowerKey = paramKey.toLowerCase();
+    if (DISALLOWED_TARGET_REDIRECT_PARAMS.has(lowerKey)) {
+      throw new DbGuardError(
+        `Disallowed '${paramKey}' query parameter in DATABASE_URL. Connection target redirection is prohibited.`
+      );
+    }
   }
 
   return {

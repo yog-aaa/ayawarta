@@ -10,7 +10,7 @@ AyaWarta is a Next.js 16 application for digital invitations. It currently conta
 
 The immediate goal is to prepare the project for continued development without redesigning the product. The existing visual identity and page composition remain the source of truth. The refactor should make the code easier to extend, reduce repository size, centralize invitation data in PostgreSQL, migrate dynamic media to a new Cloudinary account, and add an admin-only authentication foundation.
 
-Three active invitations and the default preview are production data. The application is currently deployed to Vercel. Local development uses PostgreSQL from Laragon; production PostgreSQL will use Aiven.
+Three active invitations and the default preview are production data. The application is currently deployed to Vercel. Local development uses PostgreSQL from Laragon; production PostgreSQL uses Neon (direct for migrations/seed, pooled for runtime).
 
 ## Goals
 
@@ -20,8 +20,8 @@ Three active invitations and the default preview are production data. The applic
 4. Replace hard-coded invitation records with a relational PostgreSQL schema accessed through Prisma.
 5. Keep Firestore as the real-time store for guest wishes and attendance confirmations.
 6. Add an admin-only email-and-password login foundation with no public registration.
-7. Provide repeatable, idempotent migration and seed tooling for local PostgreSQL and the future Aiven database.
-8. Document local setup and the Vercel/Aiven production cutover.
+7. Provide repeatable, idempotent migration and seed tooling for local PostgreSQL and the future Neon database.
+8. Document local setup and the Vercel/Neon production cutover.
 
 ## Non-Goals
 
@@ -30,7 +30,7 @@ Three active invitations and the default preview are production data. The applic
 - Adding customer registration or customer-facing authentication.
 - Redesigning the landing page or Classic Rose template.
 - Deleting media from the old Cloudinary account.
-- Provisioning the Aiven database or changing the live Vercel deployment during this implementation.
+- Provisioning the Neon database or changing the live Vercel deployment during this implementation.
 - Moving static presentation assets such as logos, payment marks, social icons, theme ornaments, and landing-page backgrounds out of `public`.
 
 ## System Boundaries
@@ -39,7 +39,7 @@ Three active invitations and the default preview are production data. The applic
 
 PostgreSQL stores invitation content, media metadata, section visibility, ownership, and administrator records. Prisma is the only application data-access layer for these records.
 
-Local development connects to the Laragon database named `ayawarta`. Production will connect to Aiven using a TLS-enabled `DATABASE_URL` configured in Vercel.
+Local development connects to the Laragon database named `ayawarta`. Production connects to Neon using direct (`DATABASE_URL`) and pooled (`DATABASE_URL_POOLED`) connection strings configured in Vercel.
 
 ### Cloudinary
 
@@ -323,7 +323,7 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
 NEXT_PUBLIC_FIREBASE_APP_ID
 ```
 
-For Aiven, `DATABASE_URL` must include the required TLS parameters. Vercel receives production variables through project settings; secrets must never be committed or passed to client components.
+For Neon, `DATABASE_URL` (direct) and `DATABASE_URL_POOLED` (pooled) must include `sslmode=require`. Vercel receives production variables through project settings; secrets must never be committed or passed to client components.
 
 ## Error Handling
 
@@ -372,14 +372,14 @@ For Aiven, `DATABASE_URL` must include the required TLS parameters. Vercel recei
 
 ## Production Cutover
 
-This implementation prepares the production path but does not provision Aiven or mutate Vercel settings.
+This implementation prepares the production path but does not provision Neon or mutate Vercel settings.
 
-When Aiven is ready:
+When Neon is ready:
 
 1. Add its TLS-enabled `DATABASE_URL` to a controlled migration environment.
 2. Apply committed Prisma migrations.
 3. Run the idempotent production seed.
-4. Verify production invitation queries against Aiven.
+4. Verify production invitation queries against Neon.
 5. Configure Vercel environment variables.
 6. Deploy and smoke-test all production slugs.
 7. Retain old Cloudinary assets and the previous deployment until the new deployment is confirmed healthy.
@@ -390,7 +390,7 @@ When Aiven is ready:
 - `.env.example` without secrets.
 - Commands for Prisma migration, generation, seed, and administrator bootstrap.
 - Cloudinary folder convention and migration instructions.
-- Aiven/Vercel deployment checklist.
+- Neon/Vercel deployment checklist.
 - Notes explaining why Firestore remains in use for real-time wishes and RSVP.
 
 ## Acceptance Criteria
@@ -406,4 +406,4 @@ The work is complete when:
 7. An administrator can log in, access a protected page, and log out; non-admin users cannot access protected routes.
 8. Migrations and seeds are repeatable without duplicate records.
 9. Type checking, linting, tests, and the production build pass.
-10. Setup, migration, and future Aiven/Vercel cutover steps are documented.
+10. Setup, migration, and future Neon/Vercel cutover steps are documented.

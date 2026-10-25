@@ -41,6 +41,7 @@ There is no registration route.
 - Plaintext passwords appear only transiently during bootstrap or login.
 - Never log password input or password hashes.
 - Bootstrap reads `ADMIN_PASSWORD` from the environment.
+- Bootstrap requires at least eight characters and at most 72 UTF-8 bytes for bcrypt.
 - Hashing uses a maintained algorithm/library that works reliably on Vercel.
 - Password comparison must resist timing leaks through the library API.
 - No plaintext fallback is permitted.
@@ -84,6 +85,8 @@ The admin bootstrap script:
 7. reports only the normalized email and outcome.
 
 The owner enters bootstrap values directly in `.env.local`, not in chat or committed files.
+
+For a local password change, set a new `ADMIN_PASSWORD` in the ignored environment file and rerun `pnpm admin:bootstrap`; the same email is updated and the lockout is cleared. `pnpm prisma:seed` also updates that administrator when the two admin variables are set. Do not run the bootstrap against Neon without a separately approved production procedure. See [deployment operations](deployment-aiven-vercel.md).
 
 ## Deferred Features
 

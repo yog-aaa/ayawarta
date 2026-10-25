@@ -132,5 +132,36 @@ describe("Local Database Target Guard (SEED-02)", () => {
         /Disallowed 'host' query parameter/
       );
     });
+
+    it("rejects case-variant and alternate connection target redirection parameters (NEO-15)", () => {
+      const redirectParams = [
+        "HOST=remote.example",
+        "Host=remote.example",
+        "hostaddr=10.0.0.1",
+        "port=5433",
+        "PORT=5433",
+        "dbname=otherdb",
+        "database=otherdb",
+        "server=evil.com",
+        "endpoint=ep-cool-fog-123456",
+        "target_session_attrs=read-write",
+        "options=-c%20statement_timeout=1000",
+      ];
+
+      for (const param of redirectParams) {
+        const url = `postgresql://${secretUser}:${secretPass}@localhost:5432/ayawarta?${param}`;
+        expect(() => validateLocalDatabaseTarget(url)).toThrowError(
+          /Disallowed '.*' query parameter in DATABASE_URL. Connection target redirection is prohibited./
+        );
+      }
+    });
+
+    it("accepts benign local query parameters that do not redirect connection target", () => {
+      const benignUrl = `postgresql://${secretUser}:${secretPass}@localhost:5432/ayawarta?schema=public&sslmode=disable&application_name=ayawarta_test`;
+      const target = validateLocalDatabaseTarget(benignUrl);
+      expect(target.host).toBe("localhost");
+      expect(target.port).toBe(5432);
+      expect(target.database).toBe("ayawarta");
+    });
   });
 });

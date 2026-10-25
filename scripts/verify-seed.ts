@@ -7,18 +7,9 @@ dotenv.config();
 import { APPROVED_INVITATION_SLUGS } from "@/features/media/public-id";
 import type { PrismaClient } from "@/generated/prisma/client";
 import type { InvitationRepository } from "@/features/invitations/repository";
+import { EXPECTED_SEED_COUNTS } from "@/features/invitations/seed-constants";
 
-export const EXPECTED_COUNTS = {
-  user: 1,
-  mediaAsset: 31,
-  invitation: 4,
-  invitationSections: 4,
-  partner: 8,
-  event: 6,
-  galleryItem: 21,
-  loveStory: 6,
-  giftAccount: 5,
-} as const;
+export const EXPECTED_COUNTS = EXPECTED_SEED_COUNTS;
 
 export interface VerifySeedDependencies {
   databaseUrl?: string;

@@ -46,19 +46,19 @@ If documents conflict, the approved specification controls product behavior, the
 - Static UI assets remain in `public`.
 - `rika-fauzi`, `shidqi-mita`, `dudi-aini`, and `default-preview` are production data.
 - All current invitation media belongs under `ayawarta/production/invitations/{slug}/...` in the new Cloudinary account.
-- The application is deployed on Vercel. Production PostgreSQL will use Aiven.
+- The application is deployed on Vercel. Production PostgreSQL uses Neon (direct connection for migrations and seed, pooled connection for application runtime).
 - Authentication is admin-only email/password. There is no public registration.
 - Unknown invitation slugs return 404 and must not fall back to preview data.
 
 ## Security and Data Safety
 
 - Never print, log, commit, or expose credential values.
-- `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `DATABASE_URL`, `AUTH_SECRET`, and `ADMIN_PASSWORD` are server-only.
+- `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `DATABASE_URL`, `DATABASE_URL_POOLED`, `AUTH_SECRET`, and `ADMIN_PASSWORD` are server-only.
 - Only `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` may be public.
 - Do not import Prisma, Cloudinary admin APIs, password utilities, or server environment modules into Client Components.
 - Never delete assets from the old Cloudinary account.
 - Never delete local dynamic media until the explicit cleanup stage and all gates in `docs/media-migration.md` pass.
-- Never run production migrations, production seeds, or modify Vercel/Aiven configuration without a separately assigned production-cutover stage.
+- Never run production migrations, production seeds, or modify Vercel/Neon configuration without a separately assigned production-cutover stage.
 - Migration and seed scripts must be idempotent.
 - Use transactions for relational seed operations that must succeed together.
 

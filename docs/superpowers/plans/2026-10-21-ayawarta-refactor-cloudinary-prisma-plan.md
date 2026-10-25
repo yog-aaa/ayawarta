@@ -406,7 +406,7 @@ The deleted repository files remain recoverable from Git history. Old Cloudinary
 2. Document local Laragon setup and migration commands.
 3. Document administrator bootstrap and password-change procedure.
 4. Document Cloudinary folder conventions and safe migration reruns.
-5. Document Aiven TLS connection requirements without including credentials.
+5. Document Neon connection requirements (direct for migrations, pooled for runtime) without including credentials.
 6. Document Vercel variable setup, migration order, seed, deployment, verification, and rollback.
 
 ## Final Verification Sequence

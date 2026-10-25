@@ -24,7 +24,10 @@
     "prisma:studio": "prisma studio",
     "media:verify-audio": "tsx --conditions=react-server scripts/verify-local-audio.ts",
     "media:verify-upload": "tsx --conditions=react-server scripts/verify-cloudinary-upload.ts",
-    "admin:bootstrap": "tsx --conditions=react-server scripts/bootstrap-admin.ts"
+    "admin:bootstrap": "tsx --conditions=react-server scripts/bootstrap-admin.ts",
+    "prod:migrate": "tsx --conditions=react-server scripts/production/migrate.ts",
+    "prod:seed": "tsx --conditions=react-server scripts/production/seed.ts",
+    "prod:verify": "tsx --conditions=react-server scripts/production/verify.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",

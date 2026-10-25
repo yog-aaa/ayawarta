@@ -14,7 +14,9 @@ This directory index is the entry point for programmer agents and reviewers.
 | `docs/database-schema.md` | Target Prisma entities, relationships, constraints, and seed rules. |
 | `docs/media-migration.md` | Cloudinary paths, manifest contract, safety gates, and rollback. |
 | `docs/authentication.md` | Admin-only authentication and authorization contract. |
-| `docs/deployment.md` | Local, Vercel, and future Aiven operational model. |
+| `docs/deployment.md` | Local, Vercel, and future Neon operational model. |
+| `docs/deployment-aiven-vercel.md` | Current local commands and the separately authorized Neon/Vercel production cutover sequence. |
+| `docs/media-management.md` | Current Cloudinary catalog, verification commands, and future upload boundaries. |
 | `docs/agent-workflow.md` | Stage assignment, exit criteria, and prompts for Antigravity. |
 | `docs/agent/prompts.md` | Complete copy-ready prompts for implementation, correction, commit, and review. |
 | `docs/agent/skills.md` | Routes installed Antigravity skills to the stages where they are allowed or required. |
