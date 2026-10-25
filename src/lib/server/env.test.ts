@@ -241,6 +241,39 @@ describe("Environment Validation Contract", () => {
       ).toThrow("DATABASE_URL_POOLED is required for Vercel Production runtime");
     });
 
+    it("rejects driver-level target overrides and TLS downgrades in Vercel Production runtime", () => {
+      const base = {
+        DATABASE_URL: remoteNeonDirectUrl,
+        DATABASE_URL_POOLED: remoteNeonPooledUrl,
+      };
+
+      for (const override of ["user=other_role", "password=other_password", "port=9999"]) {
+        expect(() =>
+          selectDatabaseConnectionUrl(
+            { ...base, DATABASE_URL_POOLED: `${remoteNeonPooledUrl}&${override}` },
+            "runtime",
+            "production"
+          )
+        ).toThrow("Disallowed query parameter in pooled DATABASE_URL_POOLED");
+      }
+
+      expect(() =>
+        selectDatabaseConnectionUrl(
+          { ...base, DATABASE_URL_POOLED: `${remoteNeonPooledUrl}&sslmode=disable` },
+          "runtime",
+          "production"
+        )
+      ).toThrow("Duplicate 'sslmode' query parameter");
+
+      expect(() =>
+        selectDatabaseConnectionUrl(
+          { ...base, DATABASE_URL: `${remoteNeonDirectUrl}&user=other_role` },
+          "runtime",
+          "production"
+        )
+      ).toThrow("Disallowed query parameter in direct DATABASE_URL");
+    });
+
     it("uses pooled connection on Vercel Preview runtime if available, falling back to direct if omitted", () => {
       const withPooled = selectDatabaseConnectionUrl(
         { DATABASE_URL: remoteNeonDirectUrl, DATABASE_URL_POOLED: remoteNeonPooledUrl },

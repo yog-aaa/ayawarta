@@ -27,3 +27,9 @@ The Stage 11 documentation was finalized with this preparation. Its earlier “8
 ## Production gate
 
 Neon connectivity, database emptiness, migrations, seed, Vercel settings, and deployment remain **unverified and unexecuted**. The owner must approve the exact Neon endpoint/database/role target and separately authorize the live cutover. Until then, the target approval gate remains `UNPROVEN`.
+
+## Post-final-review correction (NEO-17)
+
+A later review demonstrated two query parsing mismatches using synthetic connection URLs. A query-level `user` and `password` could replace the role checked in the URL authority, and a second `sslmode=disable` could override an earlier `sslmode=require` in the PostgreSQL driver. The guard now permits only one `sslmode`, optional `channel_binding=require`, and optional `schema=public` per URL. It rejects other query keys, duplicates, and explicit ports other than `5432` before production commands or the Vercel Production runtime can connect.
+
+The corrected guard and runtime selection passed 113 focused tests and the full 654-test suite; TypeScript, ESLint, Prisma schema validation, and the Next.js production build also passed. The two production URLs currently stored in the ignored operator environment use allowed, unique query keys. No production operation, migration, seed, or database connection was performed during this correction. The correction was accepted for repository finalization; live cutover remains separately gated.

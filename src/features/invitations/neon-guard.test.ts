@@ -224,23 +224,107 @@ describe("Neon Production Database Target Guard & Connection Selection", () => {
           directUrl: directDowngrade,
           pooledUrl: validPooled,
         })
-      ).toThrow("disallowed SSL downgrade parameter");
+      ).toThrow("Disallowed query parameter in direct DATABASE_URL");
     });
 
-    it("rejects dangerous query parameters (host, options, target_session_attrs, sslrootcert)", () => {
+    it("rejects connection target override parameters on both URLs", () => {
+      const overrides = [
+        "host=evil.example",
+        "HOST=evil.example",
+        "hostaddr=127.0.0.1",
+        "user=other_role",
+        "password=other_password",
+        "port=9999",
+        "dbname=other_db",
+        "options=-c%20search_path%3Dother",
+        "target_session_attrs=read-write",
+        "sslrootcert=other.pem",
+      ];
+
+      for (const override of overrides) {
+        expect(() =>
+          validateNeonDatabaseTargets({
+            directUrl: `${validDirect}&${override}`,
+            pooledUrl: validPooled,
+            approvedTarget: "ep-cool-fog-123456:ayawarta_prod:ayawarta_owner",
+            requireApprovedTarget: true,
+          })
+        ).toThrow("Disallowed query parameter in direct DATABASE_URL");
+
+        expect(() =>
+          validateNeonDatabaseTargets({
+            directUrl: validDirect,
+            pooledUrl: `${validPooled}&${override}`,
+            approvedTarget: "ep-cool-fog-123456:ayawarta_prod:ayawarta_owner",
+            requireApprovedTarget: true,
+          })
+        ).toThrow("Disallowed query parameter in pooled DATABASE_URL_POOLED");
+      }
+    });
+
+    it("rejects duplicate sslmode before the driver can apply a later TLS downgrade", () => {
+      for (const [directUrl, pooledUrl] of [
+        [`${validDirect}&sslmode=disable`, validPooled],
+        [validDirect, `${validPooled}&sslmode=disable`],
+      ]) {
+        expect(() =>
+          validateNeonDatabaseTargets({
+            directUrl,
+            pooledUrl,
+            approvedTarget: "ep-cool-fog-123456:ayawarta_prod:ayawarta_owner",
+            requireApprovedTarget: true,
+          })
+        ).toThrow("Duplicate 'sslmode' query parameter");
+      }
+    });
+
+    it("accepts the production query contract and rejects duplicate or weakened options", () => {
+      const approvedTarget = "ep-cool-fog-123456:ayawarta_prod:ayawarta_owner";
+      expect(
+        validateNeonDatabaseTargets({
+          directUrl: `${validDirect}&channel_binding=require&schema=public`,
+          pooledUrl: `${validPooled}&channel_binding=require&schema=public`,
+          approvedTarget,
+          requireApprovedTarget: true,
+        }).targetApprovalStatus
+      ).toBe("verified");
+
       expect(() =>
         validateNeonDatabaseTargets({
-          directUrl: `${validDirect}&host=evil.com`,
+          directUrl: `${validDirect}&channel_binding=require&channel_binding=require`,
           pooledUrl: validPooled,
         })
-      ).toThrow("Disallowed query parameter 'host'");
+      ).toThrow("Duplicate 'channel_binding' query parameter");
+
+      expect(() =>
+        validateNeonDatabaseTargets({
+          directUrl: `${validDirect}&channel_binding=disable`,
+          pooledUrl: validPooled,
+        })
+      ).toThrow("must require channel binding");
 
       expect(() =>
         validateNeonDatabaseTargets({
           directUrl: validDirect,
-          pooledUrl: `${validPooled}&options=-c%20default_transaction_read_only=off`,
+          pooledUrl: `${validPooled}&schema=other`,
         })
-      ).toThrow("Disallowed query parameter 'options'");
+      ).toThrow("may only target the public schema");
+    });
+
+    it("rejects explicit nonstandard ports in either URL", () => {
+      expect(() =>
+        validateNeonDatabaseTargets({
+          directUrl: validDirect.replace(".neon.tech/", ".neon.tech:9999/"),
+          pooledUrl: validPooled,
+        })
+      ).toThrow("may only use PostgreSQL port 5432");
+
+      expect(() =>
+        validateNeonDatabaseTargets({
+          directUrl: validDirect,
+          pooledUrl: validPooled.replace(".neon.tech/", ".neon.tech:9999/"),
+        })
+      ).toThrow("may only use PostgreSQL port 5432");
     });
 
     it("verifies approved target identity when matching approvedTarget tuple is supplied", () => {

@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { validateLocalDatabaseTarget } from "@/features/invitations/db-guard";
+import { validateNeonDatabaseTargets } from "@/features/invitations/neon-guard";
 
 export const serverEnvSchema = z.object({
   // Server-only secrets
@@ -98,6 +99,8 @@ export function selectDatabaseConnectionUrl(
         "Falling back to direct connection is prohibited in production to prevent connection exhaustion in serverless environments."
       );
     }
+    // Runtime uses the same Neon URL contract as production CLI preflight.
+    validateNeonDatabaseTargets({ directUrl: env.DATABASE_URL, pooledUrl: pooled });
     return {
       url: pooled,
       isPooled: true,

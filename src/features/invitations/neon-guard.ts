@@ -88,7 +88,30 @@ const ALLOWED_PROTOCOLS = new Set(["postgresql:", "postgres:"]);
 const NEON_DOMAIN_SUFFIX = ".neon.tech";
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 const VALID_SSL_MODES = new Set(["require", "verify-ca", "verify-full"]);
-const DANGEROUS_PARAMS = ["host", "options", "target_session_attrs", "sslrootcert"];
+const ALLOWED_CONNECTION_PARAMS = new Set(["sslmode", "channel_binding", "schema"]);
+
+function validateConnectionParameters(parsed: URL, label: string): void {
+  const seen = new Set<string>();
+
+  for (const [key, value] of parsed.searchParams) {
+    // pg-connection-string applies query overrides after URL authority fields.
+    // Reject unknown keys and duplicates so the validated target is the connected target.
+    if (!ALLOWED_CONNECTION_PARAMS.has(key)) {
+      throw new NeonTargetGuardError(`Disallowed query parameter in ${label}.`);
+    }
+    if (seen.has(key)) {
+      throw new NeonTargetGuardError(`Duplicate '${key}' query parameter in ${label}.`);
+    }
+    seen.add(key);
+
+    if (key === "channel_binding" && value !== "require") {
+      throw new NeonTargetGuardError(`${label} must require channel binding when configured.`);
+    }
+    if (key === "schema" && value !== "public") {
+      throw new NeonTargetGuardError(`${label} may only target the public schema.`);
+    }
+  }
+}
 
 /**
  * Masks a Neon endpoint prefix (e.g. "ep-cool-fog-123456" -> "ep-***").
@@ -126,7 +149,7 @@ function maskNeonHost(host: string, isPooled: boolean): string {
  * 7. Both endpoints match the exact same Neon project and region.
  * 8. Both URLs target the exact same database name.
  * 9. Both URLs use the exact same database user/role.
- * 10. Disallows dangerous query parameters (host, options, target_session_attrs, sslrootcert).
+ * 10. Allows only unambiguous sslmode, required channel binding, and public schema query parameters.
  * 11. Requires TLS enforcement (sslmode=require, verify-ca, verify-full) on both URLs.
  * 12. Validates approved target identity binding without leaking raw endpoint IDs.
  *
@@ -159,6 +182,9 @@ export function validateNeonDatabaseTargets(inputs: NeonTargetInputs): Sanitized
   } catch {
     throw new NeonTargetGuardError("Pooled DATABASE_URL_POOLED is malformed and could not be parsed as a URL.");
   }
+
+  validateConnectionParameters(parsedDirect, "direct DATABASE_URL");
+  validateConnectionParameters(parsedPooled, "pooled DATABASE_URL_POOLED");
 
   // 1. Protocol check
   if (!ALLOWED_PROTOCOLS.has(parsedDirect.protocol)) {
@@ -262,11 +288,12 @@ export function validateNeonDatabaseTargets(inputs: NeonTargetInputs): Sanitized
     throw new NeonTargetGuardError("Target mismatch: direct and pooled connections use different database roles.");
   }
 
-  // 8. Disallowed query parameters (NEO-05)
-  for (const param of DANGEROUS_PARAMS) {
-    if (parsedDirect.searchParams.has(param) || parsedPooled.searchParams.has(param)) {
-      throw new NeonTargetGuardError(`Disallowed query parameter '${param}' in connection URL.`);
-    }
+  // 8. The approved Neon socket uses the default PostgreSQL port.
+  if (
+    (parsedDirect.port && parsedDirect.port !== "5432") ||
+    (parsedPooled.port && parsedPooled.port !== "5432")
+  ) {
+    throw new NeonTargetGuardError("Neon connection URLs may only use PostgreSQL port 5432.");
   }
 
   // 9. TLS enforcement check (NEO-05)
@@ -283,20 +310,6 @@ export function validateNeonDatabaseTargets(inputs: NeonTargetInputs): Sanitized
     throw new NeonTargetGuardError(
       "Pooled DATABASE_URL_POOLED must enforce TLS with 'sslmode=require' (or verify-ca/verify-full). Missing or disallowed sslmode."
     );
-  }
-
-  if (
-    parsedDirect.searchParams.get("ssl") === "false" ||
-    parsedDirect.searchParams.get("sslmode") === "disable"
-  ) {
-    throw new NeonTargetGuardError("Direct DATABASE_URL has disallowed SSL downgrade parameter.");
-  }
-
-  if (
-    parsedPooled.searchParams.get("ssl") === "false" ||
-    parsedPooled.searchParams.get("sslmode") === "disable"
-  ) {
-    throw new NeonTargetGuardError("Pooled DATABASE_URL_POOLED has disallowed SSL downgrade parameter.");
   }
 
   // 10. Approved target identity binding (NEO-05, NEO-08, NEO-14)
