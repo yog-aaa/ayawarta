@@ -6,13 +6,11 @@ import { Container } from "@/components/ui/Container";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { AnimateIn } from "@/components/ui/AnimateIn";
 
-const BG_BLUE_PRICING = "/images/landing/bg-blue-pricing.png";
-
 export default function PricingSection() {
   return (
     <section
       id="harga"
-      className="bg-white py-20 lg:py-32 scroll-mt-20 lg:scroll-mt-24"
+      className="bg-[#f5f9ff] py-20 lg:py-28 scroll-mt-20 lg:scroll-mt-24"
     >
       <Container>
         <AnimateIn direction="up">
@@ -22,50 +20,43 @@ export default function PricingSection() {
           />
         </AnimateIn>
 
-        {/* Pricing Cards Container with Blue Artwork Background */}
-        <div className="relative">
-          <Image
-            src={BG_BLUE_PRICING}
-            alt=""
-            fill
-            aria-hidden="true"
-            className="rounded-[50px] object-cover"
-          />
-
-          <div className="relative z-10 grid w-full grid-cols-1 gap-8 p-8 md:p-12 lg:grid-cols-3">
+        <div className="rounded-[2rem] border border-[#dce9f9] bg-white/70 p-4 shadow-subtle sm:p-6 lg:p-8">
+          <div className="grid w-full grid-cols-1 items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
             {PRICING_PLANS.map((plan, index) => (
               <AnimateIn
                 key={plan.name}
                 direction="up"
-                delay={index * 0.15}
-                className={`relative flex flex-col rounded-3xl bg-white p-8 shadow-lg ${
+                delay={index * 0.1}
+                className={`flex h-full min-w-0 flex-col rounded-[1.5rem] border bg-white p-6 shadow-[0_8px_24px_rgba(13,40,91,0.045)] lg:p-7 ${
                   plan.isPopular
-                    ? "scale-105 border-2 border-blue-400"
-                    : "border border-gray-200"
+                    ? "border-brand-primary shadow-[0_12px_34px_rgba(2,100,255,0.12)]"
+                    : "border-[#e2eaf6]"
                 }`}
               >
-                {plan.isPopular && (
-                  <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500 px-4 py-1 text-sm font-bold text-white shadow-sm">
-                    Paling Populer
-                  </div>
-                )}
+                <div className="mb-5 flex h-7 items-center">
+                  {plan.isPopular && (
+                    <span className="rounded-full bg-brand-secondary px-3 py-1 text-xs font-bold tracking-wide text-white">
+                      Paling Populer
+                    </span>
+                  )}
+                </div>
 
-                <h3 className="mb-4 text-xl font-bold text-blue-600">
+                <h3 className="mb-3 text-xl font-bold text-brand-secondary">
                   {plan.name}
                 </h3>
-                <div className="mb-6">
-                  <span className="text-4xl font-extrabold text-gray-800">
+                <div className="mb-6 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <span className="whitespace-nowrap text-3xl font-extrabold leading-none tracking-tight text-brand-secondary xl:text-4xl">
                     Rp {plan.price}
                   </span>
-                  <span className="font-medium text-gray-500">
+                  <span className="whitespace-nowrap text-sm font-medium leading-none text-slate-500">
                     {plan.period}
                   </span>
                 </div>
 
-                <ul className="mb-8 flex-grow space-y-4 text-gray-600">
+                <ul className="mb-8 flex-grow space-y-3 border-t border-[#e8eef8] pt-6 text-sm leading-relaxed text-slate-600">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start">
-                      <Check className="mr-3 mt-1 h-5 w-5 shrink-0 text-blue-500" />
+                      <Check className="mr-3 mt-0.5 h-4 w-4 shrink-0 text-brand-primary" aria-hidden="true" />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -73,10 +64,10 @@ export default function PricingSection() {
 
                 <Link
                   href="#tentang"
-                  className={`flex items-center justify-center w-full rounded-lg py-3 text-lg font-bold min-h-[44px] transition-[background-color,transform] duration-200 hover:scale-105 focus-ring cursor-pointer ${
+                  className={`focus-ring flex min-h-[44px] w-full items-center justify-center rounded-xl px-4 py-3 text-base font-bold transition-colors duration-200 ${
                     plan.isPopular
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                      ? "bg-brand-primary text-white hover:bg-brand-primary-hover"
+                      : "bg-[#edf4ff] text-brand-secondary hover:bg-[#dfeaff]"
                   }`}
                   aria-label={`${plan.buttonText} untuk paket ${plan.name}`}
                 >
@@ -87,25 +78,27 @@ export default function PricingSection() {
           </div>
         </div>
 
-        {/* Payment Methods Section Placed Outside/Below Blue Artwork */}
-        <div className="mt-20 text-center">
-          <h3 className="mb-6 text-xl font-bold text-gray-700">
+        <div className="mt-12 text-center lg:mt-14">
+          <h3 className="mb-5 text-base font-semibold text-brand-secondary">
             Mendukung Pembayaran
           </h3>
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 md:gap-x-10">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
             {PAYMENT_METHODS.map((method, index) => (
               <AnimateIn
                 key={method.name}
                 direction="up"
-                delay={index * 0.05}
-                className="relative h-8 w-16 md:h-10 md:w-20"
+                delay={index * 0.03}
+                className="flex h-14 w-[88px] items-center justify-center rounded-xl border border-[#e1eaf6] bg-white px-3 shadow-[0_3px_10px_rgba(13,40,91,0.035)] sm:w-24"
               >
-                <Image
-                  src={method.path}
-                  alt={`Metode pembayaran ${method.name}`}
-                  fill
-                  className="object-contain"
-                />
+                <div className="relative h-8 w-full">
+                  <Image
+                    src={method.path}
+                    alt={`Metode pembayaran ${method.name}`}
+                    fill
+                    sizes="96px"
+                    className="object-contain"
+                  />
+                </div>
               </AnimateIn>
             ))}
           </div>

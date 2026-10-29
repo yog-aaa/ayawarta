@@ -119,8 +119,8 @@ export const PRICING_PLANS: readonly PricingPlan[] = [
   },
   {
     name: "Standar",
-    price: "39",
-    period: ".999 /Bulan",
+    price: "39.999",
+    period: "/Bulan",
     features: [
       "20+ Pilihan Template Premium",
       "Semua fitur di paket Basic",
@@ -134,8 +134,8 @@ export const PRICING_PLANS: readonly PricingPlan[] = [
   },
   {
     name: "Premium",
-    price: "79",
-    period: ".999 /Bulan",
+    price: "79.999",
+    period: "/Bulan",
     features: [
       "Semua Tema Eksklusif",
       "Semua fitur di paket Standard",
@@ -181,25 +181,38 @@ export const THEME_CATEGORIES = [
 export type ThemeCategory = (typeof THEME_CATEGORIES)[number];
 
 export interface ThemeItem {
-  id: number;
-  imageSrc: string;
+  id: string;
+  backgroundSrc: string;
+  flowerSrc: string;
   title: string;
+  colorName: string;
   code: string;
   category: ThemeCategory;
+  href: string;
+  accent: string;
 }
 
-export const DUMMY_THEMES: readonly ThemeItem[] = Array.from(
-  { length: 50 },
-  (_, index) => {
-    const category = THEME_CATEGORIES[(index % 7) + 1];
-    return {
-      id: index + 1,
-      imageSrc: `/images/landing/dummy/themes/contoh tema ${(index % 8) + 1}.jpeg`,
-      title: `${category} - #${index + 1}`,
-      code: `${123456 + index}`,
-      category,
-    };
-  }
+const CLASSIC_ROSE_VARIANTS = [
+  { id: "red", colorName: "Merah", accent: "#630718" },
+  { id: "green", colorName: "Hijau", accent: "#7B9557" },
+  { id: "blue", colorName: "Biru", accent: "#5D84B0" },
+  { id: "orange", colorName: "Terakota", accent: "#C86F30" },
+  { id: "black", colorName: "Hitam", accent: "#70501B" },
+  { id: "white", colorName: "Ivory", accent: "#A57C4E" },
+] as const;
+
+export const SHOWCASE_THEMES: readonly ThemeItem[] = CLASSIC_ROSE_VARIANTS.map(
+  ({ id, colorName, accent }, index) => ({
+    id,
+    backgroundSrc: `/images/themes/classic-rose/${id}/bg.png`,
+    flowerSrc: `/images/themes/classic-rose/${id}/bunga.png`,
+    title: "Classic Rose",
+    colorName,
+    code: `CR-${String(index + 1).padStart(2, "0")}`,
+    category: "Pernikahan",
+    href: `/wedding/classic-rose/${id}`,
+    accent,
+  })
 );
 
 export interface TestimonialItem {
@@ -207,7 +220,6 @@ export interface TestimonialItem {
   category: string;
   rating: number;
   text: string;
-  imageSrc: string;
 }
 
 export const TESTIMONIALS_DATA: readonly TestimonialItem[] = [
@@ -216,21 +228,18 @@ export const TESTIMONIALS_DATA: readonly TestimonialItem[] = [
     category: "Pernikahan",
     rating: 5,
     text: "Jujur, urusan undangan ini hampir bikin kami berantem, haha. Stres banget bolak-balik percetakan. Pas nemu platform ini, wah... rasanya kayak nemu harta karun. Gak ada lagi drama revisi. Paling seneng pas liat ucapan dari teman-teman di buku tamu digitalnya, jadi bisa dibaca-baca ulang sambil senyum-senyum sendiri. Sumpah, worth it banget.",
-    imageSrc: "/images/landing/dummy/testimony/contoh testimoni 1.jpeg",
   },
   {
     name: "Hendra",
     category: "Khitanan",
     rating: 5,
     text: "Saya bukan orang yang ngerti-ngerti banget teknologi, tapi buat acara syukuran khitanan anak, saya mau yang praktis. Ternyata pakai ini gampang banget. Tinggal klik-klik, isi info, sebar link ke grup keluarga, selesai. Gak ada lagi pertanyaan 'Acaranya di mana?' atau 'Jam berapa?' berulang-ulang di WhatsApp. Bikin kepala adem.",
-    imageSrc: "/images/landing/dummy/testimony/contoh testimoni 2.jpeg",
   },
   {
     name: "Citra",
     category: "Wisuda",
     rating: 4,
     text: "Mau wisuda, pengen undang temen-temen tapi budget pas-pasan, hehe. Iseng nyoba yang paket standar di sini, kaget banget! Desainnya kekinian, gak kelihatan murahan sama sekali. Temen-temenku pada muji undangannya, dikira aku jago desain. Padahal tinggal chat miminya sama isi formulir doang.",
-    imageSrc: "/images/landing/dummy/testimony/contoh testimoni 3.jpeg",
   },
 ] as const;
 

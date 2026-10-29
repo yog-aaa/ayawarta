@@ -1,65 +1,74 @@
 import Image from "next/image";
-import { MapPin, Phone, Mail } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { FOOTER_CONFIG, SOCIAL_LINKS } from "@/config/landing";
+import { Container } from "@/components/ui/Container";
 
 export default function Footer() {
   return (
-    <footer id="tentang" className="relative bg-gray-50 scroll-mt-20 lg:scroll-mt-24" aria-label="Informasi Tentang AyaWarta">
-      <div className="absolute inset-0 h-full w-full pointer-events-none">
-        <Image
-          src="/images/landing/BG footer.svg"
-          alt=""
-          aria-hidden="true"
-          fill
-          className="object-cover"
-        />
-      </div>
+    <footer
+      id="tentang"
+      className="relative scroll-mt-20 lg:scroll-mt-24 overflow-hidden bg-brand-secondary text-white"
+      aria-label="Informasi Tentang AyaWarta"
+    >
+      <div
+        className="pointer-events-none absolute -right-48 -top-52 h-[650px] w-[650px] rounded-full border border-white/10"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -right-20 -top-28 h-[420px] w-[420px] rounded-full border border-white/10"
+        aria-hidden="true"
+      />
 
-      <div className="relative z-10 container mx-auto px-6 sm:px-8 pb-16 pt-48 text-white">
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3">
-          <div className="md:col-span-2 lg:col-span-1">
-            <h2 className="text-3xl font-bold">{FOOTER_CONFIG.brandName}</h2>
-            <p className="mt-1 text-white/80">{FOOTER_CONFIG.tagline}</p>
-            <h3 className="mb-4 mt-10 text-xl font-bold">{FOOTER_CONFIG.aboutHeading}</h3>
-            {FOOTER_CONFIG.aboutParagraphs.map((paragraph, index) => (
-              <p
-                key={index}
-                className={`text-sm leading-relaxed text-white/80 ${
-                  index > 0 ? "mt-4" : ""
-                }`}
-              >
-                {paragraph}
-              </p>
-            ))}
+      <Container className="relative z-10 py-16 lg:py-20">
+        <div className="flex flex-col gap-5 border-b border-white/20 pb-12 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="mb-4 text-xs font-bold uppercase tracking-[0.28em] text-blue-200">
+              Mari bagikan kabar baik
+            </p>
+            <h2 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl">
+              {FOOTER_CONFIG.brandName}
+            </h2>
+          </div>
+          <p className="max-w-md text-lg leading-7 text-white/80 lg:text-right">
+            {FOOTER_CONFIG.tagline}
+          </p>
+        </div>
+
+        <div className="grid gap-12 py-12 md:grid-cols-2 lg:grid-cols-[1.45fr_1fr_0.7fr] lg:gap-16 lg:py-16">
+          <div className="max-w-lg">
+            <h3 className="mb-5 text-base font-bold text-white">
+              {FOOTER_CONFIG.aboutHeading}
+            </h3>
+            <div className="space-y-4">
+              {FOOTER_CONFIG.aboutParagraphs.map((paragraph) => (
+                <p key={paragraph} className="text-sm leading-7 text-white/70">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
           </div>
 
-          <div className="lg:pl-8">
-            <h3 className="mb-6 text-xl font-bold">Kontak</h3>
-            <ul className="space-y-4" aria-label="Informasi kontak">
-              <li className="flex items-start gap-4">
-                <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center text-white/80" aria-hidden="true">
-                  <MapPin className="h-5 w-5" />
-                </span>
-                <span className="text-sm text-white/80">{FOOTER_CONFIG.contact.address}</span>
+          <div>
+            <h3 className="mb-5 text-base font-bold text-white">Kontak</h3>
+            <ul className="space-y-5" aria-label="Informasi kontak">
+              <li className="flex items-start gap-3 text-sm leading-6 text-white/75">
+                <MapPin size={18} className="mt-1 shrink-0 text-blue-200" aria-hidden="true" />
+                <span>{FOOTER_CONFIG.contact.address}</span>
               </li>
-              <li className="flex items-start gap-4">
-                <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center text-white/80" aria-hidden="true">
-                  <Phone className="h-5 w-5" />
-                </span>
+              <li className="flex items-start gap-3 text-sm text-white/75">
+                <Phone size={18} className="shrink-0 text-blue-200" aria-hidden="true" />
                 <a
                   href={`tel:${FOOTER_CONFIG.contact.phone.replace(/\s+/g, "")}`}
-                  className="text-sm text-white/80 hover:text-white transition-colors focus-ring rounded"
+                  className="focus-ring rounded hover:text-white"
                 >
                   {FOOTER_CONFIG.contact.phone}
                 </a>
               </li>
-              <li className="flex items-start gap-4">
-                <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center text-white/80" aria-hidden="true">
-                  <Mail className="h-5 w-5" />
-                </span>
+              <li className="flex items-start gap-3 text-sm text-white/75">
+                <Mail size={18} className="shrink-0 text-blue-200" aria-hidden="true" />
                 <a
                   href={`mailto:${FOOTER_CONFIG.contact.email}`}
-                  className="text-sm text-white/80 hover:text-white transition-colors focus-ring rounded"
+                  className="focus-ring rounded hover:text-white"
                 >
                   {FOOTER_CONFIG.contact.email}
                 </a>
@@ -68,36 +77,36 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-6 text-xl font-bold">Ikuti Kami</h3>
-            <div className="flex items-center gap-3">
+            <h3 className="mb-5 text-base font-bold text-white">Ikuti Kami</h3>
+            <div className="flex flex-wrap gap-3">
               {SOCIAL_LINKS.map((social) => (
                 <a
                   key={social.name}
                   href={social.href}
                   aria-label={`Ikuti kami di ${social.name}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#0D285B] transition-[background-color,transform] duration-300 hover:scale-110 hover:bg-gray-200 focus-ring"
+                  target={social.href.startsWith("http") ? "_blank" : undefined}
+                  rel={social.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                  className="focus-ring flex h-11 w-11 items-center justify-center rounded-full bg-white text-brand-secondary shadow-subtle transition-transform duration-300 hover:-translate-y-1"
                 >
-                  <div className="relative h-6 w-6">
+                  <span className="relative h-5 w-5">
                     <Image
                       src={social.icon}
                       alt=""
-                      aria-hidden="true"
                       fill
                       className="object-contain"
                     />
-                  </div>
+                  </span>
                 </a>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="mt-12 border-t border-white/20 pt-8 text-center text-xs text-white/60">
+        <div className="flex flex-col gap-3 border-t border-white/20 pt-6 text-xs text-white/55 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} AyaWarta. All rights reserved.</p>
+          <p>Undangan digital untuk setiap cerita.</p>
         </div>
-      </div>
+      </Container>
     </footer>
   );
 }

@@ -19,7 +19,7 @@ import {
   PRICING_PLANS,
   PAYMENT_METHODS,
   THEME_CATEGORIES,
-  DUMMY_THEMES,
+  SHOWCASE_THEMES,
   TESTIMONIALS_DATA,
   SOCIAL_LINKS,
   FOOTER_CONFIG,
@@ -171,15 +171,18 @@ describe("Stage 8 & 8.1 — UI and Tailwind Design-System Refactor", () => {
       expect(PAYMENT_METHODS.length).toBeGreaterThan(0);
     });
 
-    it("defines theme catalog categories and dummy theme entries", () => {
+    it("defines real Classic Rose showcase variants and destinations", () => {
       expect(THEME_CATEGORIES.length).toBeGreaterThanOrEqual(4);
       expect(THEME_CATEGORIES[0]).toBe("Semua");
-      expect(DUMMY_THEMES.length).toBe(50);
-      DUMMY_THEMES.forEach((theme) => {
+      expect(SHOWCASE_THEMES.length).toBe(6);
+      expect(new Set(SHOWCASE_THEMES.map((theme) => theme.href)).size).toBe(6);
+      SHOWCASE_THEMES.forEach((theme) => {
         expect(theme.id).toBeTruthy();
         expect(theme.title).toBeTruthy();
-        expect(theme.category).toBeTruthy();
-        expect(theme.imageSrc).toBeTruthy();
+        expect(theme.category).toBe("Pernikahan");
+        expect(theme.backgroundSrc).toContain(`/classic-rose/${theme.id}/bg.png`);
+        expect(theme.flowerSrc).toContain(`/classic-rose/${theme.id}/bunga.png`);
+        expect(theme.href).toBe(`/wedding/classic-rose/${theme.id}`);
         expect(theme.code).toBeTruthy();
       });
     });
@@ -348,15 +351,13 @@ describe("Stage 8 & 8.1 — UI and Tailwind Design-System Refactor", () => {
       expect(content).toContain("toggleButtonRef.current?.focus()");
     });
 
-    it("ThemeSection: keeps card actions always visible and marks bookmark disabled truthfully (UI-05)", () => {
+    it("ThemeSection: keeps search and preview actions accessible (UI-05)", () => {
       const themePath = path.join(
         rootDir,
         "src/app/components/landing/ThemeSection.tsx"
       );
       const content = fs.readFileSync(themePath, "utf8");
 
-      expect(content).toContain("aria-disabled=\"true\"");
-      expect(content).toContain("Fitur simpan tema segera hadir");
       expect(content).toContain("Preview");
       expect(content).toContain('htmlFor="theme-search"');
       expect(content).toContain('name="search"');

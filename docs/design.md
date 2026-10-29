@@ -2,7 +2,7 @@
 
 ## Intent
 
-The implementation is a structural refactor with targeted quality fixes. The current AyaWarta interface is the approved visual baseline. Agents must preserve its identity rather than reinterpret it.
+The current AyaWarta interface is the visual baseline. The landing page may be polished within its established identity when the owner explicitly requests it; invitation templates retain their own visual systems.
 
 ## Visual Direction
 
@@ -20,12 +20,22 @@ The memorable elements that must remain recognizable are:
 ## Preserve
 
 - Landing-page section order.
-- Existing written content unless a clear typo is fixed.
+- Existing product information and section purpose. Editorial copy may be refined for clarity during an explicitly requested landing-page polish.
 - Header information architecture and anchor destinations.
 - Hero artwork and primary calls to action. The hero ends without a wave or user-count band.
 - Feature, pricing, theme, testimonial, and footer concepts.
 - Classic Rose frames, backgrounds, flowers, dividers, typography, colors, and section order.
 - Existing animation intent: gentle entrances, carousel transitions, and invitation opening.
+
+## Landing-page section direction
+
+The section order remains hero, features, pricing, themes, testimonials, then footer. The post-hero presentation follows the hero's navy headings, soft blue and white surfaces, restrained brand-blue accents, rounded invitation framing, fine borders, and light shadows.
+
+- Features: the existing invitation phone stays inside a responsive visual stage beside six readable feature cards.
+- Pricing: the three plans remain, with equal-height cards and one stable blue emphasis on the popular plan. Payment marks appear in consistent light chips.
+- Themes: the visible showcase uses the six real Classic Rose color variants and their corresponding preview routes. Preview cards combine each variant's existing background and flower assets; they are style previews, not screenshots of completed invitations. Other category filters show an explicit empty state until matching templates exist. Search filters the available showcase.
+- Testimonials: the current sample stories use text-led cards and are labeled as illustrative. Unrelated cartoon portraits are not displayed as customer photographs.
+- Footer: a deep navy closing section carries the existing about, contact, and social information without a large decorative wave.
 
 ## Allowed Visual Changes
 

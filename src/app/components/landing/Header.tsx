@@ -67,6 +67,7 @@ export default function Header({ logoUrl = "/images/logo.png" }: HeaderProps) {
               src={logoUrl}
               alt="Logo AyaWarta"
               fill
+              sizes="(min-width: 640px) 144px, 128px"
               className="object-contain"
               priority
             />

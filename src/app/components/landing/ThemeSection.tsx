@@ -1,287 +1,174 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  Bookmark,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
-  Eye,
-  Search,
-} from "lucide-react";
-import { THEME_CATEGORIES, DUMMY_THEMES, type ThemeCategory } from "@/config/landing";
-import { FramedImage } from "@/components/ui/FramedImage";
-
-const COLOR_OPTIONS = [
-  "#FF5733",
-  "#33FF57",
-  "#3357FF",
-  "#FF33A1",
-  "#A133FF",
-  "#33FFA1",
-  "#FFC300",
-  "#C70039",
-] as const;
-
-const ITEMS_PER_PAGE = 8;
-
-type PaginationProps = {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-};
-
-const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
-  if (totalPages <= 1) return null;
-
-  return (
-    <div className="mt-12 flex items-center justify-center gap-2">
-      <button
-        title="Halaman Sebelumnya"
-        aria-label="Halaman Sebelumnya"
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="flex h-11 w-11 items-center justify-center rounded-md bg-white p-2 shadow-sm transition-[background-color,opacity] disabled:opacity-50 focus-ring cursor-pointer disabled:cursor-not-allowed"
-      >
-        <ChevronLeft size={20} />
-      </button>
-      <span className="font-medium text-gray-600 px-2">
-        Halaman {currentPage} dari {totalPages}
-      </span>
-      <button
-        title="Halaman Berikutnya"
-        aria-label="Halaman Berikutnya"
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="flex h-11 w-11 items-center justify-center rounded-md bg-white p-2 shadow-sm transition-[background-color,opacity] disabled:opacity-50 focus-ring cursor-pointer disabled:cursor-not-allowed"
-      >
-        <ChevronRight size={20} />
-      </button>
-    </div>
-  );
-};
+import { ArrowUpRight, Search } from "lucide-react";
+import { SHOWCASE_THEMES, THEME_CATEGORIES, type ThemeCategory } from "@/config/landing";
+import { AnimateIn } from "@/components/ui/AnimateIn";
+import { Container } from "@/components/ui/Container";
 
 export default function ThemeSection() {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [activeCategory, setActiveCategory] = useState<ThemeCategory>("Semua");
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const handleCategoryChange = (category: ThemeCategory) => {
-    setActiveCategory(category);
-    setCurrentPage(1);
-  };
-
-  const handleSearchChange = (val: string) => {
-    setSearchTerm(val);
-    setCurrentPage(1);
-  };
 
   const filteredThemes = useMemo(() => {
-    const normalizedSearch = searchTerm.toLowerCase();
+    const query = searchTerm.trim().toLocaleLowerCase("id-ID");
 
-    return DUMMY_THEMES.filter((theme) => {
+    return SHOWCASE_THEMES.filter((theme) => {
       const matchesCategory =
         activeCategory === "Semua" || theme.category === activeCategory;
       const matchesSearch =
-        theme.title.toLowerCase().includes(normalizedSearch) ||
-        theme.code.includes(normalizedSearch);
+        !query ||
+        [theme.title, theme.colorName, theme.code]
+          .join(" ")
+          .toLocaleLowerCase("id-ID")
+          .includes(query);
 
       return matchesCategory && matchesSearch;
     });
   }, [activeCategory, searchTerm]);
 
-  const totalPages = Math.ceil(filteredThemes.length / ITEMS_PER_PAGE);
-
-  const paginatedThemes = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredThemes.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredThemes, currentPage]);
-
   return (
     <section
       id="tema"
-      className="bg-gray-50 py-20 lg:py-32 scroll-mt-20 lg:scroll-mt-24"
+      className="scroll-mt-20 lg:scroll-mt-24 bg-brand-soft py-20 lg:py-28"
     >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          className="mb-12 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h2 className="text-3xl font-extrabold text-gray-800 lg:text-4xl">
-            {isExpanded ? (
-              "Pilih Tema Yang Kamu Mau"
-            ) : (
-              <>
-                Berbagai Jenis <span className="text-blue-600">Tema</span>
-              </>
-            )}
-          </h2>
-          <p className="mx-auto mt-4 max-w-3xl text-lg text-gray-500">
-            {!isExpanded &&
-              "Setiap momen memiliki jiwa dan ceritanya sendiri. Oleh karena itu, kami menghadirkan koleksi desain yang beragam untuk mewakili setiap gaya."}
+      <Container>
+        <AnimateIn className="mx-auto mb-10 max-w-3xl text-center lg:mb-14">
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.28em] text-brand-primary">
+            Koleksi AyaWarta
           </p>
-        </motion.div>
+          <h2 className="text-3xl font-extrabold tracking-tight text-brand-secondary sm:text-4xl lg:text-5xl">
+            Berbagai Jenis <span className="font-heading font-normal italic">Tema</span>
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
+            Setiap momen memiliki jiwa dan ceritanya sendiri. Jelajahi warna
+            Classic Rose yang sudah tersedia dan lihat langsung undangannya.
+          </p>
+        </AnimateIn>
 
-        {/* Categories Chips: Always Visible */}
-        <div className="mb-12 flex flex-wrap justify-center gap-2 md:gap-3">
-          {THEME_CATEGORIES.map((category) => (
-            <button
-              key={category}
-              onClick={() => handleCategoryChange(category)}
-              className={`rounded-full px-4 py-2 text-sm font-semibold min-h-[44px] transition-[background-color,color] duration-300 md:text-base focus-ring cursor-pointer ${
-                activeCategory === category
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "bg-white text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+        <div className="mb-8 rounded-[1.75rem] border border-brand-secondary/10 bg-white p-4 shadow-subtle sm:p-5">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Kategori tema">
+              {THEME_CATEGORIES.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setActiveCategory(category)}
+                  aria-pressed={activeCategory === category}
+                  className={`focus-ring min-h-11 rounded-full px-4 py-2 text-sm font-semibold transition-[background-color,color,box-shadow] ${
+                    activeCategory === category
+                      ? "bg-brand-secondary text-white shadow-card"
+                      : "bg-brand-soft text-brand-secondary hover:bg-blue-100"
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative w-full shrink-0 lg:w-64">
+              <label htmlFor="theme-search" className="sr-only">
+                Cari template undangan
+              </label>
+              <Search
+                size={18}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-brand-secondary/50"
+                aria-hidden="true"
+              />
+              <input
+                id="theme-search"
+                name="search"
+                type="search"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="Cari warna atau kode tema"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="focus-ring min-h-11 w-full rounded-full border border-brand-secondary/15 bg-brand-soft py-2 pl-11 pr-4 text-sm text-brand-secondary placeholder:text-muted-foreground"
+              />
+            </div>
+          </div>
         </div>
 
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.div
-              className="mx-auto mb-12 max-w-2xl"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
-            >
-              <div className="relative mb-4">
-                <label htmlFor="theme-search" className="sr-only">
-                  Cari template undangan
-                </label>
-                <input
-                  type="search"
-                  name="search"
-                  id="theme-search"
-                  autoComplete="off"
-                  spellCheck={false}
-                  placeholder="Cari tema (contoh: Aquatic atau 123456)"
-                  value={searchTerm}
-                  onChange={(event) => handleSearchChange(event.target.value)}
-                  className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-4 min-h-[44px] transition-[border-color,box-shadow] focus:border-blue-500 focus-ring"
-                />
-                <Search
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={20}
-                  aria-hidden="true"
-                />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <p className="text-sm font-semibold text-gray-600">
-                  Pilih Warna Yang Kamu Suka:
-                </p>
-                <div className="flex flex-wrap gap-1 sm:gap-2">
-                  {COLOR_OPTIONS.map((color) => (
-                    <button
-                      key={color}
-                      disabled
-                      aria-disabled="true"
-                      title="Filter warna segera hadir"
-                      aria-label="Filter warna segera hadir"
-                      className="flex h-11 w-11 items-center justify-center p-2 rounded-full focus-ring opacity-70 cursor-not-allowed"
-                    >
-                      <span
-                        style={{ backgroundColor: color }}
-                        className="h-6 w-6 rounded-full border-2 border-white shadow-sm"
-                        aria-hidden="true"
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Themes Grid: 2 cols on mobile, 3 on md (768px), 4 on lg (1024px+) */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-8 lg:grid-cols-4">
-          {paginatedThemes.map((theme, index) => (
-            <motion.div
-              key={theme.id}
-              className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-lg"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.5, delay: index * 0.05 }}
-            >
-              <div className="relative aspect-[3/4] w-full overflow-hidden">
-                <FramedImage
-                  src={theme.imageSrc}
-                  alt={`Pratinjau tema ${theme.title}`}
-                  fill={true}
-                  aspectRatio="portrait"
-                  rounded="none"
-                  imageClassName="transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-              <div className="flex flex-grow flex-col p-3">
-                <div className="mb-3 flex items-center justify-between gap-2">
-                  <p className="text-xs font-semibold text-gray-700">
-                    {theme.title} ({theme.code})
-                  </p>
-                  <a
-                    href="/wedding/classic-rose/red"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={`Buka pratinjau tema ${theme.title} di tab baru`}
-                    aria-label={`Buka pratinjau tema ${theme.title} di tab baru`}
-                    className="shrink-0 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center focus-ring rounded"
-                  >
-                    <ExternalLink className="h-4 w-4 text-gray-400 hover:text-blue-600" />
-                  </a>
-                </div>
-                {/* Always-visible baseline action controls */}
-                <div className="mt-auto flex items-center gap-2">
+        {filteredThemes.length > 0 ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-7">
+            {filteredThemes.map((theme, index) => (
+              <AnimateIn key={theme.id} delay={Math.min(index * 0.06, 0.24)}>
+                <article className="group overflow-hidden rounded-[1.6rem] border border-brand-secondary/10 bg-white shadow-card transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-floating">
                   <Link
-                    href="/wedding/classic-rose/red"
-                    className="flex flex-grow items-center justify-center gap-1 rounded-full bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-800 min-h-[44px] transition-[background-color,color] hover:bg-gray-200 focus-ring cursor-pointer"
-                    aria-label={`Lihat pratinjau tema ${theme.title}`}
+                    href={theme.href}
+                    className="focus-ring relative block aspect-[4/4.4] overflow-hidden bg-white"
+                    aria-label={`Lihat pratinjau tema ${theme.title} ${theme.colorName}`}
                   >
-                    <Eye className="h-4 w-4" aria-hidden="true" />
-                    <span>Preview</span>
+                    <Image
+                      src={theme.backgroundSrc}
+                      alt=""
+                      fill
+                      sizes="(min-width: 1024px) 390px, (min-width: 640px) 50vw, 100vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                    <div className="absolute inset-x-7 top-7 h-[52%]">
+                      <Image
+                        src={theme.flowerSrc}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1024px) 320px, (min-width: 640px) 40vw, 80vw"
+                        className="object-contain object-top"
+                      />
+                    </div>
+                    <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/70 bg-white/85 px-4 py-4 text-center shadow-card backdrop-blur-md sm:inset-x-6 sm:bottom-6">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-secondary/65">
+                        Undangan pernikahan
+                      </p>
+                      <p
+                        className="mt-1 font-heading text-2xl italic sm:text-3xl"
+                        style={{ color: theme.accent }}
+                      >
+                        Classic Rose
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-brand-secondary/70">
+                        Varian {theme.colorName}
+                      </p>
+                    </div>
                   </Link>
-                  <button
-                    disabled
-                    aria-disabled="true"
-                    className="shrink-0 rounded-full bg-blue-100 p-2 text-blue-600 min-h-[44px] min-w-[44px] flex items-center justify-center opacity-60 cursor-not-allowed focus-ring"
-                    title="Fitur simpan tema segera hadir"
-                    aria-label="Simpan tema (segera hadir)"
-                  >
-                    <Bookmark className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
 
-        {isExpanded ? (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
+                  <div className="flex items-center justify-between gap-3 px-5 py-4 sm:px-6">
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-bold text-brand-secondary">
+                        {theme.title} · {theme.colorName}
+                      </p>
+                      <p className="mt-1 text-xs font-medium tracking-[0.12em] text-muted-foreground">
+                        {theme.code}
+                      </p>
+                    </div>
+                    <Link
+                      href={theme.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="focus-ring flex min-h-11 shrink-0 items-center gap-1 rounded-full bg-brand-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-primary-hover"
+                      aria-label={`Buka pratinjau tema ${theme.title} ${theme.colorName} di tab baru`}
+                    >
+                      Preview <ArrowUpRight size={16} aria-hidden="true" />
+                    </Link>
+                  </div>
+                </article>
+              </AnimateIn>
+            ))}
+          </div>
         ) : (
-          <div className="mt-16 text-center">
-            <button
-              onClick={() => setIsExpanded(true)}
-              className="rounded-lg bg-blue-600 px-8 py-3.5 text-lg font-bold text-white min-h-[48px] shadow-lg transition-[background-color,transform] duration-200 hover:scale-105 hover:bg-blue-700 focus-ring cursor-pointer"
-            >
-              Tampilkan Tema Lainnya
-            </button>
+          <div className="rounded-[1.75rem] border border-dashed border-brand-secondary/20 bg-white px-6 py-14 text-center">
+            <p className="font-heading text-2xl italic text-brand-secondary">
+              Cerita berikutnya sedang disiapkan.
+            </p>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              Belum ada tema yang cocok dengan pilihanmu. Coba kategori lain
+              atau cari warna Classic Rose.
+            </p>
           </div>
         )}
-      </div>
+      </Container>
     </section>
   );
 }

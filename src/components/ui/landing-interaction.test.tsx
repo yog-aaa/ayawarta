@@ -295,88 +295,51 @@ describe("Landing Interactive Behavior & Rendered State Tests (UI-10, UI-11, UI-
     });
   });
 
-  describe("Theme Section Actions & Swatches (UI-10, UI-12)", () => {
-    it("renders every preview action as semantic link to /wedding/classic-rose/red and every external link with new-tab target", async () => {
+  describe("Theme Section Preview and Filtering (UI-10, UI-12)", () => {
+    it("links every Classic Rose card to its own live variant", async () => {
       await act(async () => {
         root.render(<ThemeSection />);
       });
 
-      // Representative card test: Card 1
       const previewLinks = container.querySelectorAll(
         'a[aria-label^="Lihat pratinjau tema"]'
       );
       const externalLinks = container.querySelectorAll(
         'a[aria-label^="Buka pratinjau tema"][aria-label$="di tab baru"]'
       );
-      const bookmarkButtons = container.querySelectorAll(
-        'button[aria-label="Simpan tema (segera hadir)"]'
-      );
 
-      // Assert that exactly 8 cards are rendered initially
-      expect(previewLinks.length).toBe(8);
-      expect(externalLinks.length).toBe(8);
-      expect(bookmarkButtons.length).toBe(8);
+      expect(previewLinks.length).toBe(6);
+      expect(externalLinks.length).toBe(6);
+      const variants = ["red", "green", "blue", "orange", "black", "white"];
 
-      // Representative assertion on Card 1
-      const firstPreview = previewLinks[0] as HTMLAnchorElement;
-      expect(firstPreview.getAttribute("href")).toBe("/wedding/classic-rose/red");
-      expect(firstPreview.hasAttribute("target")).toBe(false); // same tab
-
-      const firstExternal = externalLinks[0] as HTMLAnchorElement;
-      expect(firstExternal.getAttribute("href")).toBe("/wedding/classic-rose/red");
-      expect(firstExternal.getAttribute("target")).toBe("_blank"); // new tab
-      expect(firstExternal.getAttribute("rel")).toBe("noopener noreferrer");
-
-      const firstBookmark = bookmarkButtons[0] as HTMLButtonElement;
-      expect(firstBookmark.hasAttribute("disabled")).toBe(true);
-      expect(firstBookmark.getAttribute("aria-disabled")).toBe("true");
-      expect(firstBookmark.getAttribute("title")).toBe("Fitur simpan tema segera hadir");
-
-      // Universal contract assertion: ALL 8 cards strictly follow this valid contract
-      previewLinks.forEach((link) => {
-        expect(link.getAttribute("href")).toBe("/wedding/classic-rose/red");
+      previewLinks.forEach((link, index) => {
+        expect(link.getAttribute("href")).toBe(`/wedding/classic-rose/${variants[index]}`);
+        expect(link.hasAttribute("target")).toBe(false);
       });
-
-      externalLinks.forEach((link) => {
-        expect(link.getAttribute("href")).toBe("/wedding/classic-rose/red");
+      externalLinks.forEach((link, index) => {
+        expect(link.getAttribute("href")).toBe(`/wedding/classic-rose/${variants[index]}`);
         expect(link.getAttribute("target")).toBe("_blank");
         expect(link.getAttribute("rel")).toBe("noopener noreferrer");
       });
-
-      bookmarkButtons.forEach((btn) => {
-        expect(btn.hasAttribute("disabled")).toBe(true);
-        expect(btn.getAttribute("aria-disabled")).toBe("true");
-      });
     });
 
-    it("renders color swatches as honestly disabled controls with 44x44px touch targets when expanded", async () => {
+    it("shows an honest empty state for categories without available templates", async () => {
       await act(async () => {
         root.render(<ThemeSection />);
       });
 
-      // Expand theme section
-      const expandBtn = container.querySelector(
-        "button.rounded-lg.bg-blue-600"
+      const birthdayButton = Array.from(container.querySelectorAll("button")).find(
+        (button) => button.textContent === "Ulang Tahun"
       ) as HTMLButtonElement;
-      expect(expandBtn).toBeTruthy();
+      expect(birthdayButton).toBeTruthy();
 
       await act(async () => {
-        expandBtn.click();
+        birthdayButton.click();
       });
 
-      // Swatches are now visible
-      const swatches = container.querySelectorAll(
-        'button[aria-label="Filter warna segera hadir"]'
-      );
-      expect(swatches.length).toBe(8);
-
-      swatches.forEach((swatch) => {
-        expect(swatch.hasAttribute("disabled")).toBe(true);
-        expect(swatch.getAttribute("aria-disabled")).toBe("true");
-        expect(swatch.getAttribute("title")).toBe("Filter warna segera hadir");
-        // Minimum 44x44px touch target class
-        expect(swatch.className).toContain("h-11 w-11");
-      });
+      expect(birthdayButton.getAttribute("aria-pressed")).toBe("true");
+      expect(container.querySelectorAll('a[aria-label^="Lihat pratinjau tema"]').length).toBe(0);
+      expect(container.textContent).toContain("Belum ada tema yang cocok");
     });
   });
 
