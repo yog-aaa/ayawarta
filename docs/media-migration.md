@@ -152,7 +152,7 @@ After a future production cutover:
 
 - redeploy the previous Vercel build if necessary;
 - keep old Cloudinary resources available;
-- do not destroy Aiven data during application rollback.
+- do not destroy Neon data during application rollback.
 
 ## Review Evidence
 

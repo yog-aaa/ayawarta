@@ -2,7 +2,44 @@
 
 ## Purpose
 
-Use this document to assign work to Antigravity one stage at a time. Each stage ends with evidence and a mandatory stop for review.
+Use one approved stage at a time. The current Codex workflow below governs new work; the stage assignments later in this file and the copy-ready prompts in `docs/agent/prompts.md` preserve the completed Antigravity implementation history. They do not authorize a new stage, a production action, or a commit.
+
+## Current Codex orchestration
+
+The root agent owns scope, decisions, file ownership, integration contracts, final verification, and the user handoff. It first confirms the exact Git root, reads `AGENTS.md` and its required documents, records `git status --short`, and preserves all existing changes. It classifies the request, inventories relevant skills progressively, and uses the smallest set of reusable agents. Documentation maintenance may be handled by root when trivial.
+
+| Role | Stable ownership | Write permission |
+| --- | --- | --- |
+| `repo_architect` | Read-only execution-path and architecture audit when scope is unclear | None |
+| `frontend_engineer` | UI, design tokens, client state, accessibility, and frontend tests | Assigned frontend files |
+| `backend_engineer` | Server actions/routes, auth, validation, domain services, and backend tests | Assigned backend files |
+| `data_engineer` | Prisma schema, migrations, persistence queries, seed, and data tests | Assigned data files |
+| `qa_reviewer` | Independent review of correctness, boundaries, regressions, and scope | None |
+| `release_engineer` | Production scripts, deployment preparation, and operational documentation | Assigned release files; no live mutation without separate approval |
+| `documenter` | Existing project and agent documentation plus handoff | Assigned documentation files only |
+
+Only root may spawn or steer agents. Use at most one instance of each role in a workflow, reuse it for corrections, and run no more than three sub-agents concurrently. Do not create page-, route-, component-, or feature-specific roles. A new stable role requires an explicit owner decision after the capability gap and alternatives are explained. Do not create agent definitions or copy source skills merely because a single task exists.
+
+### Selection and ownership
+
+1. Classify work as documentation, frontend, backend, authentication, data, integration, release, fullstack, bug fix, or refactor. A small one-domain task needs one implementer; a risky or multi-file task can add independent QA. Add data or release roles only when those domains actually change.
+2. Before each delegation, check whether the role already exists in the workflow. Reuse it if so. State the selected and skipped roles with reasons.
+3. Assign actual paths before writing. Two agents must never edit the same file concurrently. A cross-domain file has one owner; other agents send a handoff.
+4. Keep documentation in existing purpose-matched files. Approved specification, implementation plan, and review records are historical evidence; correct them only for an explicit narrowly scoped reason.
+
+### Fullstack contract and handoff
+
+Before frontend and backend work in parallel, root fixes the user flow and a shared contract: input and output shapes, validation source, authentication and authorization, stable errors, loading/empty/success/error states, persistence impact, and test boundaries. Frontend must not infer an API contract; backend must announce any agreed change; schema changes must be handed to backend before dependent implementation. The root records contract ID, owners, and affected paths in the task handoff.
+
+Agents report a short result with changed files, source references, checks as `pass`/`fail`/`blocked`/`not_run`, and remaining risks. The root inspects the diff and sends concrete findings to the original owner. An independent reviewer does not repair its own findings. Documentation is synchronized after implementation stabilizes. The final gate checks scope, user changes, contracts, auth and server/client boundaries, secrets, database target safety, accessibility where relevant, tests, and documentation. End with a proposed commit message; do not stage, commit, or push unless the owner separately authorizes that operation for the exact scope.
+
+### Production and database safety
+
+Production migrations, seed, deployment, Vercel/Neon changes, Cloudinary mutations, and Firebase writes require explicit authorization for the exact operation and target. Script preparation is not permission to execute it. Before `pnpm test:db`, run the repository's local database-target preflight described in `README.md`; an available database or ignored media report must not be assumed. Preserve the previous deployment and old Cloudinary assets for recovery.
+
+## Historical stage assignments
+
+The assignments below preserve their original stage scope. References to Aiven in old prompts or reviews record an earlier hosting plan; the approved current production target is Neon, as documented in `docs/deployment.md`. Do not execute a historical prompt verbatim for a new task.
 
 ## Universal Prompt Prefix
 

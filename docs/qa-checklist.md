@@ -14,6 +14,8 @@ The programmer completes stage-specific items and attaches evidence. The reviewe
 - [ ] New failures are distinguished from baseline failures.
 - [ ] The agent stopped before the next stage.
 
+For documentation-only work, compare factual claims with the current source, check local links and command names, mark runtime checks `not_run` when no code changed, and preserve historical review/specification records. Do not use the old stage prompts as current commit authorization.
+
 ## Code Quality
 
 - [ ] Server-only modules cannot enter client bundles.
@@ -147,4 +149,4 @@ The final report must include:
 - repository-size change;
 - known risks;
 - deferred work;
-- exact Aiven/Vercel cutover steps still requiring owner authorization.
+- exact Neon/Vercel cutover steps still requiring owner authorization.

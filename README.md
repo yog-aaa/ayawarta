@@ -50,10 +50,15 @@ The one-time media migration commands were retired after the verified upload and
 
 ## Operations and boundaries
 
-- [Local operations and Neon/Vercel cutover](docs/deployment-aiven-vercel.md)
-- [Cloudinary media management](docs/media-management.md)
-- [Architecture](docs/architecture.md)
-- [Authentication](docs/authentication.md)
-- [QA checklist](docs/qa-checklist.md)
+| Topic | Document |
+| --- | --- |
+| Runtime architecture and data flow | [Architecture](docs/architecture.md) |
+| Landing tokens, shared UI, and Classic Rose design rules | [Design system](docs/design.md) |
+| Prisma entities, relations, and seed contract | [Database schema](docs/database-schema.md) |
+| Admin sign-in and authorization | [Authentication](docs/authentication.md) |
+| Cloudinary catalog and future media operations | [Media management](docs/media-management.md) |
+| Local operations and Neon/Vercel cutover | [Deployment operations](docs/deployment-aiven-vercel.md) |
+| Verification and manual review | [QA checklist](docs/qa-checklist.md) |
+| Current agent workflow and historical stage records | [Agent documentation index](docs/agent/index.md) |
 
 Production Neon migration, seed, Vercel configuration, and deployment require a separately approved cutover. The current local `prisma:seed` and `seed:verify` commands deliberately reject remote database targets, while `prod:migrate`, `prod:seed`, and `prod:verify` require explicit `--execute` flags and validate direct and pooled Neon targets before connecting. The default Prisma configuration also guards `prisma:migrate`; run the documented preflight immediately before `admin:bootstrap` and `test:db`, which do not have a suite-wide local-target guard.

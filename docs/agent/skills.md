@@ -1,8 +1,8 @@
-# Antigravity Skill Routing
+# Skill Routing and Historical Stages
 
 ## Context
 
-The skills from the `AGENT-SKILLS` repository are installed in Antigravity. Programmer agents should use relevant skills as execution guidance, but skill availability does not expand an assigned stage.
+The `AGENT-SKILLS` repository is a skill source. For current Codex work, inventory skill metadata, read only the complete `SKILL.md` files selected for the approved task, and report their effect. The routing table below records the completed Antigravity stages; it is not a request to repeat them. Skill availability does not expand an assigned stage.
 
 ## Rules
 

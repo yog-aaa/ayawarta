@@ -4,6 +4,8 @@
 
 PostgreSQL stores invitation content, media metadata, and administrators. Firestore wishes and RSVP are outside this schema.
 
+The implemented source of truth is `prisma/schema.prisma`, with four forward migrations under `prisma/migrations/`. This document explains the application contract rather than replacing the migration history or authorizing a new migration.
+
 ## Relationship Overview
 
 ```text
@@ -43,6 +45,8 @@ Because `Invitation` has both hero and music relations to `MediaAsset`, both Pri
 | timestamps | Created and updated timestamps. |
 
 Index `slug` and `heroAssetId`; use explicit foreign-key delete policies. Deleting an owner must not delete production invitations. A hero asset referenced by an invitation must use `RESTRICT` and must not be inferred from the first gallery item.
+
+In the implemented schema, `slug` is unique; `heroAssetId`, `musicAssetId`, and `ownerId` are indexed. Deleting an owner sets `ownerId` to null. Deleting a referenced hero or music asset is restricted. Deleting an invitation cascades to its sections, partners, events, gallery items, stories, and gift accounts; deleting media used by a partner or gallery item is restricted.
 
 `galleryVideoUrl` preserves the existing `InvitationData.gallery.videoUrl` contract. It is an external content pointer, currently a YouTube watch URL for `default-preview`, not a managed Cloudinary asset. The mapper returns an empty string when the nullable database field is absent but an enabled gallery is mapped.
 

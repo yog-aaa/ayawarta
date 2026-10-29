@@ -12,6 +12,8 @@ AyaWarta has administrator authentication only. Customers and invitation guests 
 - Prisma-backed administrator lookup and state.
 - Server-side validation and password verification.
 
+The implementation is in `src/auth.ts`, `src/auth.config.ts`, `src/proxy.ts`, and `src/features/auth/`. `src/features/auth/service.ts` is server-only; client forms do not import Prisma or password utilities.
+
 ## Routes
 
 | Route | Access |
@@ -48,12 +50,9 @@ There is no registration route.
 
 ## Lockout Contract
 
-The implementation must define constants for:
+`src/features/auth/types.ts` defines five maximum consecutive failures and a 15-minute lock duration. `recordFailedLoginAttempt` uses database increments; an expired lock starts a new failure sequence. Tests use these constants rather than duplicate numbers.
 
-- maximum consecutive failures;
-- lock duration.
-
-Tests must use these constants rather than hard-coded duplicate values. Public errors remain generic. The successful-login path resets both `failedLoginCount` and `lockedUntil`.
+Public errors remain generic. The successful-login path resets both `failedLoginCount` and `lockedUntil`.
 
 ## Session Contract
 
@@ -70,7 +69,7 @@ It does not expose `passwordHash`, lockout counters, or secrets.
 
 Authentication proves identity; authorization checks an active admin role. A valid session without an allowed role must not access admin pages or admin actions.
 
-Every future admin mutation must perform authorization on the server. Hiding navigation in the UI is not sufficient.
+`src/proxy.ts` matches `/admin/:path*` and `src/auth.config.ts` handles login versus protected-route redirects. Protected server pages also call `requireAdminSession`, which reloads the current user and rejects deleted, inactive, locked, or role-revoked accounts. Every future admin mutation must perform authorization on the server. Hiding navigation in the UI is not sufficient.
 
 ## Bootstrap
 
@@ -83,6 +82,8 @@ The admin bootstrap script:
 5. never prints the password or hash;
 6. is safe to rerun;
 7. reports only the normalized email and outcome.
+
+The current CLI creates or updates a `SUPER_ADMIN` account and resets `isActive`, failed-login count, and lock state while replacing its password hash. Treat rerunning it as an administrator credential change, even when the email already exists.
 
 The owner enters bootstrap values directly in `.env.local`, not in chat or committed files.
 

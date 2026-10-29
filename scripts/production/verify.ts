@@ -1,6 +1,7 @@
 import "server-only";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { inspectReleaseState, type ReleaseStateClient } from "./release-state";
 import { loadProductionConfig, type ProductionConfig } from "@/features/invitations/production-env";
 import {
   assertNeonDatabaseTargets,
@@ -56,6 +57,7 @@ export interface ProductionVerifyOptions {
   approvedTarget?: ApprovedTargetInput;
   approvedTargetId?: string;
   checkEmptyOnly?: boolean;
+  releaseStateOnly?: boolean;
   mockClient?: DatabaseMetadataClient;
 }
 
@@ -312,6 +314,11 @@ export async function runProductionVerification(
 
   const isCheckEmptyOnly =
     options?.checkEmptyOnly ?? process.argv.includes("--check-empty");
+  const isReleaseStateOnly =
+    options?.releaseStateOnly ?? process.argv.includes("--release-state");
+  if (isCheckEmptyOnly && isReleaseStateOnly) {
+    throw new Error("[Prod Verify] Conflicting verification modes.");
+  }
 
   console.log("=== AyaWarta Production Database Verification Preflight ===");
 
@@ -338,6 +345,11 @@ export async function runProductionVerification(
   const prisma = options?.mockClient ?? new PrismaClient({ adapter });
 
   try {
+    if (isReleaseStateOnly) {
+      const state = await inspectReleaseState(prisma as unknown as ReleaseStateClient);
+      console.log(`[Prod Verify] Release state: ${state}`);
+      return { executed: true, message: "Release state inspected.", databaseState: state === "seed-ready" ? "tables_exist_empty" : state === "seeded" ? "has_data" : "uninitialized" };
+    }
     if (isCheckEmptyOnly) {
       console.log("[Prod Verify] Inspecting Neon production database state before migration...");
       const inspection = await inspectProductionDatabaseState(prisma);

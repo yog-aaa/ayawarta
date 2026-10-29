@@ -54,7 +54,7 @@ Agents must explain every material visual change in the stage handoff.
 
 ## Tailwind CSS 4 Tokens
 
-Define semantic CSS-first tokens in `globals.css`. Token names describe purpose, not a single component.
+Semantic CSS-first tokens are implemented in `src/app/globals.css`. Token names describe purpose, not a single component.
 
 Required categories:
 
@@ -69,6 +69,18 @@ Required categories:
 - standard easing curves.
 
 Classic Rose continues to use theme-specific CSS variables supplied by its theme configuration. Do not force landing tokens onto invitation theme colors.
+
+### Implemented token map
+
+| Group | Current tokens and values | Source |
+| --- | --- | --- |
+| Brand | `brand-primary` `#0264ff`, hover `#014cc4`, secondary `#0d285b`, accent `#2563eb` | `src/app/globals.css` |
+| Surface and text | `background` and `surface` `#ffffff`, `foreground` `#111827`, `muted` `#6b7280`, plus subtle and muted surfaces | `src/app/globals.css` |
+| Feedback | `success` `#16a34a`, `warning` `#f59e0b`, `destructive` `#dc2626`, `ring` `#0264ff` | `src/app/globals.css` |
+| Shape and depth | `radius-sm` through `radius-3xl`, `radius-pill`; `shadow-subtle`, `shadow-card`, `shadow-floating`, `shadow-brand` | `src/app/globals.css` |
+| Layout and timing | Narrow/default widths `48rem`/`80rem`; section spacing `4rem`/`5rem`/`8rem`; durations `150ms`/`300ms`/`600ms` | `src/app/globals.css` |
+
+Landing typography uses Noto Sans Thai by default, with Manrope available through `.font-body-alt`. Classic Rose uses Playfair Display, Alice, and Alex Brush. Font variables are loaded in `src/app/layout.tsx`. The `red`, `green`, `blue`, `orange`, `black`, and `white` Classic Rose variants and their static artwork paths are defined in `src/lib/theme-config/classic-rose.ts`; theme assets remain in `public/images/themes/classic-rose/`.
 
 ## Shared Component Criteria
 
@@ -85,6 +97,8 @@ Approved initial primitives:
 - `Button`
 - `IconButton`
 - invitation framed-image primitive
+
+These are implemented in `src/components/ui/`. `Container` offers `default`, `narrow`, and `fluid` widths and an `as` element override. `SectionHeader` renders a section `h2` with optional subtitle and left/center alignment. `Button` supports `primary`, `secondary`, `outline`, and `ghost` variants, `sm`/`md`/`lg` sizes, and either a native button or a Next.js link through `href`. `IconButton` requires `aria-label`; its default `md` size is 44 by 44 CSS pixels. `FramedImage` supports square, portrait, video, and custom aspect ratios and requires alternative text. Use the shared components where their contract fits; local artwork layouts may still need local markup.
 
 Do not create wrappers that merely rename one HTML element without adding a reusable contract.
 
@@ -107,7 +121,7 @@ Do not create wrappers that merely rename one HTML element without adding a reus
 
 ## Motion
 
-- Centralize repeated entrance duration and easing values.
+- Repeated entrance duration, easing, and reduced-motion variants are centralized in `src/lib/motion.ts`.
 - Keep high-impact motion purposeful and avoid adding decorative motion during the refactor.
 - Honor `prefers-reduced-motion` for nonessential animation.
 - Autoplay carousels must keep manual controls.

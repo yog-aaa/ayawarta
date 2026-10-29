@@ -1,6 +1,6 @@
 # AyaWarta Agent Documentation Index
 
-This directory index is the entry point for programmer agents and reviewers.
+This directory index is the entry point for programmer agents and reviewers. For current Codex work, start with `AGENTS.md` and the current orchestration section of `docs/agent-workflow.md`. The dated specification, plan, prompts, and stage reviews record the completed refactor; they do not authorize another implementation stage or production cutover.
 
 ## Source of Truth
 
@@ -17,9 +17,9 @@ This directory index is the entry point for programmer agents and reviewers.
 | `docs/deployment.md` | Local, Vercel, and future Neon operational model. |
 | `docs/deployment-aiven-vercel.md` | Current local commands and the separately authorized Neon/Vercel production cutover sequence. |
 | `docs/media-management.md` | Current Cloudinary catalog, verification commands, and future upload boundaries. |
-| `docs/agent-workflow.md` | Stage assignment, exit criteria, and prompts for Antigravity. |
-| `docs/agent/prompts.md` | Complete copy-ready prompts for implementation, correction, commit, and review. |
-| `docs/agent/skills.md` | Routes installed Antigravity skills to the stages where they are allowed or required. |
+| `docs/agent-workflow.md` | Current fixed-role Codex orchestration and historical stage assignments. |
+| `docs/agent/prompts.md` | Historical Antigravity copy-ready prompts; not standing instructions. |
+| `docs/agent/skills.md` | Skill-selection rules and historical stage routing. |
 | `docs/qa-checklist.md` | Evidence required for review and final acceptance. |
 | `docs/reviews/STAGE-REVIEW-TEMPLATE.md` | Persistent review record for each implementation stage. |
 
@@ -36,11 +36,13 @@ This directory index is the entry point for programmer agents and reviewers.
 ```text
 Owner assigns one stage
         ↓
-Programmer implements and verifies
+Root selects the minimum reusable roles and assigns file ownership
         ↓
-Programmer stops with evidence
+Owner agent implements and verifies
         ↓
-Planner/reviewer inspects diff and results
+Root reviews the diff and an independent reviewer checks risky work
+        ↓
+Root stops with evidence
         ↓
 Fixes requested or stage accepted
         ↓

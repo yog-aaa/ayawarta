@@ -85,6 +85,49 @@ The authorized cutover sequence:
 6. **Configure Vercel Production variables**: Configure `DATABASE_URL_POOLED`, `DATABASE_URL`, `AUTH_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, Cloudinary keys, and Firebase keys in Vercel. Scope them strictly to Production (Preview deployments must not target production Neon). Keep server-only variables free of `NEXT_PUBLIC_`.
 7. **Deploy and smoke-test**: Deploy the reviewed commit on Vercel using the committed `pnpm-lock.yaml`. Smoke-test landing, all four invitations (including `dudi-aini` audio), invite links, unknown-slug 404, admin login/logout, and Firestore wishes.
 
+### Reusable release wrapper (Windows PowerShell)
+
+`scripts/production/release.ps1` checks an explicitly approved full commit, a clean local `main`, the approved GitHub remote, the pinned pnpm version, and project quality gates before touching Neon. Run it only after committing and reviewing the intended release. Its default invocation is a dry run:
+
+```powershell
+./scripts/production/release.ps1 -Mode Bootstrap -ApprovedCommit '<40-character-reviewed-commit>'
+```
+
+The dry run prints the plan and runs no external commands. Every live invocation also requires the owner's separate production authorization. Before `-Execute`, ensure the reviewed commit contains this wrapper and the verifier, is on a clean local `main`, and is ahead of `origin/main`.
+
+| Read-only release state | `Bootstrap` | `Bootstrap -ResumeBootstrap` | `Update` |
+| --- | --- | --- | --- |
+| `uninitialized`: no public tables or residual enum/view/sequence | Migrate, seed once, exact baseline verification, push | Stop | Stop |
+| `seed-ready`: all committed migrations applied; exactly the nine AyaWarta tables plus migration ledger; all application tables empty | Stop | Seed once, exact baseline verification, push | Stop |
+| `seeded`: approved invitation slugs, canonical media IDs, admin, sections, and partner roles exist | Stop | Stop | Migrate pending changes, skip seed, push |
+| Partial data, missing table, failed/unknown migration, or ambiguous state | Stop | Stop | Stop |
+
+For a new database, the separately authorized live command is:
+
+```powershell
+./scripts/production/release.ps1 -Mode Bootstrap -ApprovedCommit '<40-character-reviewed-commit>' -Execute
+```
+
+If migration succeeded but seed failed, **stop before push**. Inspect the failure and the read-only release state; do not roll back automatically. After fixing the cause in a reviewed commit, use the recovery dry run and, only when the verifier proves `seed-ready`, the separately authorized live recovery command:
+
+```powershell
+./scripts/production/release.ps1 -Mode Bootstrap -ResumeBootstrap -ApprovedCommit '<new-40-character-reviewed-commit>'
+./scripts/production/release.ps1 -Mode Bootstrap -ResumeBootstrap -ApprovedCommit '<new-40-character-reviewed-commit>' -Execute
+```
+
+Recovery skips migration. Any partial rows, unknown table, or incomplete migration history blocks it and requires a reviewed corrective procedure. If the initial seed and exact verification already succeeded but push failed, do **not** rerun Bootstrap or seed; review the state and use the `Update` path with a new approved commit if appropriate.
+
+For later releases:
+
+```powershell
+./scripts/production/release.ps1 -Mode Update -ApprovedCommit '<new-40-character-reviewed-commit>'
+./scripts/production/release.ps1 -Mode Update -ApprovedCommit '<new-40-character-reviewed-commit>' -Execute
+```
+
+`Update` requires evidence of a prior bootstrap without enforcing exactly 86 rows. New application tables and records are permitted when the migration ledger is coherent. It never repeats the seed: doing so would replace invitation child collections and might overwrite admin-managed content. All three live paths stop before mutation unless the operator verifies that the linked Vercel project's **Production** `DATABASE_URL` is direct Neon and `DATABASE_URL_POOLED` is the matching pooled Neon connection, both matching the approved local target, and confirms the Production Git branch is `main`. The wrapper asks for an exact SHA-bound attestation; it does not read Vercel variable values. If either value is marked Secret and cannot be independently checked against the approved secret source, stop rather than attest. Do not paste either URL into a command, chat, log, or report. Vercel documents that `env ls` lists variable names, while `env pull` writes values to a file and unreadable Secret values become placeholders; the wrapper intentionally uses neither for parity claims ([Vercel CLI environment variables](https://vercel.com/docs/cli/env)).
+
+After push, the wrapper confirms only that `origin/main` points to the reviewed SHA. It reports the Vercel trigger and Ready state as **unverified**. In the linked Vercel project's Production deployments, confirm a deployment with that exact SHA was created and reached Ready; then run the post-deploy smoke checklist. A prior production URL responding successfully proves neither fact. An operator with an already authenticated, linked Vercel CLI may locate a deployment by `githubCommitSha` metadata, but this wrapper does not require new Vercel credentials or claim automated Ready verification ([Vercel deployment list](https://vercel.com/docs/cli/list)). If no deployment appears, or it is not Ready, stop and investigate without rerunning seed or assuming database rollback. If the Git integration does not deploy from `main`, stop and review the release process.
+
 No Neon database write, migration, seed, or Vercel production deployment is performed during this preparation stage.
 
 ## Rollback and Database Recovery

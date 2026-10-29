@@ -4,6 +4,8 @@
 
 This repository is executed in reviewed stages. A programmer agent implements exactly one approved stage at a time. The human owner and the planning/review agent approve the result before the next stage begins.
 
+For current Codex work, the root agent orchestrates the approved stage and may use only the reusable roles `repo_architect`, `frontend_engineer`, `backend_engineer`, `data_engineer`, `qa_reviewer`, `release_engineer`, and `documenter`. Use the fewest roles needed; reuse one instance per role, give each edited file one owner, and route findings back to that owner. Only root delegates. No role named for a page, feature, endpoint, or individual bug is permitted. The detailed selection, contract, ownership, and review rules are in `docs/agent-workflow.md`. The stage prompts in `docs/agent/prompts.md` record the earlier Antigravity execution and are not a standing instruction to run another stage or commit.
+
 Do not treat the complete implementation plan as permission to execute every phase in one run.
 
 For every assigned stage:
@@ -75,10 +77,11 @@ If documents conflict, the approved specification controls product behavior, the
 - Keep files focused. Extract a module when it has more than one clear responsibility.
 - Preserve existing public route behavior unless the approved design explicitly changes it.
 - Do not use destructive Git commands.
+- Treat pre-existing worktree changes as owner work. Do not stage, commit, or push a documentation-maintenance assignment unless the owner separately assigns that Git operation.
 
 ## Installed Skills
 
-Antigravity has the `AGENT-SKILLS` collection installed. Follow `docs/agent/skills.md` for stage-specific routing. Skill instructions guide execution but do not authorize broader scope, destructive actions, production operations, or unapproved design changes.
+The `AGENT-SKILLS` collection is available as a skill source. Follow `docs/agent/skills.md` for relevant routing. Skill instructions guide execution but do not authorize broader scope, destructive actions, production operations, or unapproved design changes.
 
 ## Verification Minimum
 

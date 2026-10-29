@@ -4,6 +4,8 @@
 
 This document records the implemented architecture and the separately planned production topology.
 
+The approved refactor specification and implementation plan in `docs/superpowers/` record why the architecture was chosen. This page describes the current source tree; [deployment operations](deployment.md) describes the still separate production cutover.
+
 ## Current Architecture
 
 ### Application
@@ -53,11 +55,12 @@ Browser
   ├─ Public landing page
   ├─ Invitation pages
   │    ├─ Server Component loads invitation through repository
-  │    └─ Client islands handle opening, motion, audio, and Firestore wishes
+  │    └─ Client islands handle opening, motion, audio, and Firestore wishes ── Firestore
+  ├─ Cloudinary delivery URLs for invitation media ── Cloudinary
   └─ Admin login / protected admin page
           │
           ▼
-Next.js server (local now; Vercel after cutover)
+Next.js server (local development or existing Vercel deployment)
   ├─ Invitation repository and mapper
   ├─ Auth.js Credentials authorization
   ├─ Prisma Client
@@ -68,11 +71,7 @@ Next.js server (local now; Vercel after cutover)
           │          ├─ media metadata
           │          └─ admin users
           │
-          ├──────── Cloudinary
-          │          └─ dynamic invitation media
-          │
-          └──────── Firestore
-                     └─ wishes and RSVP only
+          └──────── Cloudinary administrative utilities (server-only)
 ```
 
 ## Runtime Boundaries
@@ -129,6 +128,16 @@ src/
 
 The generated Prisma client is under `src/generated/prisma`; generated code must not be hand-edited.
 
+| Boundary | Entry points | Responsibility |
+| --- | --- | --- |
+| Public routes | `src/app/page.tsx`, `src/app/[slug]/page.tsx`, `src/app/[slug]/invite/page.tsx` | Render landing content or load one exact invitation slug. |
+| Theme preview | `src/app/(templates)/wedding/classic-rose/[variant]/page.tsx` | Validate the requested variant and load the explicit `slug` query parameter, defaulting to the `default-preview` record. |
+| Invitation domain | `src/features/invitations/repository.ts`, `query.ts`, `mapper.ts`, `types.ts` | Keep Prisma payloads on the server and map them to template data. |
+| Authentication | `src/auth.ts`, `src/proxy.ts`, `src/features/auth/` | Credentials sign-in, route protection, current-admin validation, and lockout state. |
+| Real-time wishes | `src/features/wishes/` and `src/lib/firebase.ts` | Browser-only Firestore subscription, validation, and submission. |
+| Media | `src/features/media/` | Canonical catalog, preparation and verification primitives, and server-only Cloudinary access. |
+| Database | `prisma/schema.prisma`, `prisma/migrations/`, `src/lib/server/db.ts` | Relational schema, migrations, and Prisma Client through `@prisma/adapter-pg`. |
+
 ## Public Invitation Data Flow
 
 1. `[slug]/page.tsx` receives the slug.
@@ -141,10 +150,10 @@ The generated Prisma client is under `src/generated/prisma`; generated code must
 
 ## Wishes and RSVP Data Flow
 
-1. The invitation slug identifies the Firestore message collection.
-2. The wishes client subscribes in real time.
-3. Submission writes name, message, attendance, and timestamp.
-4. Unsubscription occurs on cleanup.
+1. The validated invitation slug identifies `wishes/{slug}/messages` in Firestore.
+2. The client adapter subscribes in real time, ordered by `timestamp` descending, and filters malformed documents.
+3. Submission validates nonempty name and message plus `Hadir` or `Tidak Hadir`, then writes those fields and a timestamp.
+4. The component unsubscribes on cleanup. Existing records may also read `Belum Konfirmasi`.
 
 PostgreSQL must not be introduced into this real-time path during the refactor.
 
@@ -169,20 +178,20 @@ PostgreSQL must not be introduced into this real-time path during the refactor.
 - Dynamic production media uses the new Cloudinary account.
 - Firestore remains connected to the existing project.
 
-### Production target
+### Production database target
 
-- Next.js runs on Vercel.
-- PostgreSQL runs on Aiven with TLS.
+- The application is already deployed on Vercel.
+- The planned PostgreSQL cutover uses Neon with TLS. Migrations and seed use the direct `DATABASE_URL`; the Neon-backed Vercel Production runtime requires `DATABASE_URL_POOLED`.
 - Cloudinary serves production invitation media.
 - Firestore serves real-time wishes and RSVP.
 
-The production cutover has not been performed. The current seed and seed-verification CLIs explicitly reject remote databases; Aiven needs a separately reviewed production entry point before cutover.
+The Neon database cutover has not been performed. Local seed and seed verification reject remote targets. Separate `prod:migrate`, `prod:seed`, and `prod:verify` entry points have Neon target guards and require an explicitly approved target plus `--execute`; these scripts are preparation, not evidence of a completed cutover. See [deployment operations](deployment.md).
 
 ## Tooling and Dependency Decisions
 
 ### Prisma 7 and `@prisma/adapter-pg`
 - **Rationale:** The project uses Prisma 7 (`^7.10.1`) with the configured Next.js and native ESM toolchain. It decouples connection configuration into `prisma.config.ts`, keeping `prisma/schema.prisma` focused on data models and explicit output locations (`src/generated/prisma`).
-- **Driver Adapter:** `@prisma/adapter-pg` paired with `pg` (`8.23.1`) provides standard connection pooling compatible with both local PostgreSQL (Laragon) and serverless Vercel execution connecting to Aiven via TLS.
+- **Driver Adapter:** `@prisma/adapter-pg` paired with `pg` (`8.23.1`) provides the PostgreSQL connection layer for local Laragon and the guarded Neon target. Runtime URL selection is in `src/lib/server/env.ts`; production requires the pooled URL.
 
 ### Auth.js v5 Prerelease (`next-auth@5.0.0-beta.32`)
 - **Rationale:** Auth.js v5 is specifically architected for Next.js App Router and React 19 Server Components/Actions. Its official peer dependencies explicitly support Next.js `^16.0.0` and React `^19.0.0`. NextAuth v4 is tied to legacy Pages Router middleware architectures and does not natively support React 19 Server Components.
