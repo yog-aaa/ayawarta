@@ -138,8 +138,10 @@ describe("Stage 8 & 8.1 — UI and Tailwind Design-System Refactor", () => {
     });
 
     it("configures hero content with complete metadata and image carousel", () => {
-      expect(HERO_CONFIG.undanganTextImg).toBeTruthy();
-      expect(HERO_CONFIG.digitalTextImg).toBeTruthy();
+      expect(HERO_CONFIG.brandName).toBe("AyaWarta");
+      expect(HERO_CONFIG.headlineLead).toBeTruthy();
+      expect(HERO_CONFIG.headlineEmphasis).toBeTruthy();
+      expect(HERO_CONFIG.headlineStory).toBeTruthy();
       expect(HERO_CONFIG.sliderImages.length).toBe(3);
       HERO_CONFIG.sliderImages.forEach((img) => {
         expect(img).toMatch(/^\/images\//);

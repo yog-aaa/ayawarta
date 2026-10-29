@@ -12,7 +12,7 @@ The memorable elements that must remain recognizable are:
 
 - the AyaWarta blue palette;
 - the existing logo and landing artwork;
-- image-based “Undangan Digital” hero typography;
+- text-based AyaWarta hero headline using the established “Undangan Digital, Semudah Bercerita” tagline;
 - phone/invitation demonstrations;
 - rounded cards and friendly motion;
 - the ornamental Classic Rose invitation composition.

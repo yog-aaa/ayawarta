@@ -97,6 +97,36 @@ describe("Landing Interactive Behavior & Rendered State Tests (UI-10, UI-11, UI-
   });
 
   describe("Hero Carousel Autoplay, Pause/Resume & Reduced Motion (UI-11, UI-12)", () => {
+    it("keeps each changing invitation preview inside the phone screen", async () => {
+      await act(async () => {
+        root.render(<HomeSection />);
+      });
+
+      const heading = container.querySelector("h1");
+      expect(heading?.textContent).toContain("AyaWarta");
+      expect(heading?.textContent).toContain("Undangan digital,");
+      expect(heading?.textContent).toContain("semudah bercerita.");
+      expect(heading?.querySelector("img")).toBeNull();
+
+      const phone = container.querySelector('[data-testid="hero-phone-frame"]');
+      const screen = container.querySelector('[data-testid="hero-phone-screen"]');
+      const nextBtn = container.querySelector(
+        'button[aria-label="Slide berikutnya"]'
+      ) as HTMLButtonElement;
+
+      expect(phone).toBeTruthy();
+      expect(screen).toBeTruthy();
+      expect(phone?.contains(screen)).toBe(true);
+      expect(screen?.querySelector("img[alt='Contoh desain template undangan 1']")).toBeTruthy();
+
+      await act(async () => {
+        nextBtn.click();
+      });
+
+      expect(screen?.querySelector("img[alt='Contoh desain template undangan 2']")).toBeTruthy();
+      expect(container.querySelectorAll("img[alt*='Contoh desain template']").length).toBe(1);
+    });
+
     it("proves ordinary autoplay advances slide every 5 seconds using fake timers", async () => {
       vi.useFakeTimers();
 

@@ -13,10 +13,13 @@ export const NAV_LINKS: readonly NavLink[] = [
   { name: "Tentang Kami", href: "#tentang", id: "tentang" },
 ] as const;
 
+const BRAND_NAME = "AyaWarta";
+
 export interface HeroConfig {
-  undanganTextImg: string;
-  digitalTextImg: string;
-  handPhoneImg: string;
+  brandName: string;
+  headlineLead: string;
+  headlineEmphasis: string;
+  headlineStory: string;
   description: string;
   primaryCtaText: string;
   secondaryCtaText: string;
@@ -29,9 +32,10 @@ export interface HeroConfig {
 }
 
 export const HERO_CONFIG: HeroConfig = {
-  undanganTextImg: "/images/landing/Undangan.png",
-  digitalTextImg: "/images/landing/Digital.png",
-  handPhoneImg: "/images/landing/Holding handphone.png",
+  brandName: BRAND_NAME,
+  headlineLead: "Undangan digital,",
+  headlineEmphasis: "semudah",
+  headlineStory: "bercerita.",
   description:
     "Bagikan kabar bahagia mu melalui undangan digital yang didesain untuk menyentuh hati dan memukau setiap tamu.",
   primaryCtaText: "Selengkapnya",
@@ -258,7 +262,7 @@ export const SOCIAL_LINKS: readonly SocialLink[] = [
 ] as const;
 
 export const FOOTER_CONFIG = {
-  brandName: "AyaWarta",
+  brandName: BRAND_NAME,
   tagline: "Undangan Digital, Semudah Bercerita",
   aboutHeading: "Tentang Kami",
   aboutParagraphs: [
