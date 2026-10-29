@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="id">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Siger Priangan — desktop concept flow</title>
+<style>
+  :root{--ivory:#f6f1e8;--green:#243b35;--gold:#b58b53;--blush:#c8a69a;--line:#d8c7a7}
+  *{box-sizing:border-box}body{margin:0;background:#e8e4dc;color:var(--green);font-family:Arial,sans-serif}
+  .board{width:1380px;padding:50px 50px 70px;margin:auto}.eyebrow{font-size:12px;letter-spacing:.23em;text-transform:uppercase;color:#776c5b}
+  h1,h2,h3,p{margin:0}.board-title{font:48px Georgia,serif;margin:8px 0 6px}.board-sub{font-size:15px;color:#786f64}
+  .label{font-size:12px;letter-spacing:.2em;text-transform:uppercase;margin:36px 0 13px;color:#6d6254}
+  .canvas{width:1280px;overflow:hidden;background:var(--ivory);box-shadow:0 16px 44px #20332b30;position:relative}
+  .cover-canvas{height:740px;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#fffaf0 0,#f6f1e8 56%,#e7dcc8 100%)}
+  .cover-canvas:before,.cover-canvas:after{content:"";position:absolute;top:0;bottom:0;width:300px;background:repeating-linear-gradient(145deg,transparent 0 48px,#b58b5310 49px 50px,transparent 51px 80px);pointer-events:none}
+  .cover-canvas:before{left:0}.cover-canvas:after{right:0}
+  .cover-paper{position:relative;width:448px;height:672px;box-shadow:0 20px 50px #5b463735;border:1px solid #d0bfa3;overflow:hidden}
+  .cover-paper img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .cover-text{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;height:100%;padding:40px 24px 30px;text-align:center;text-shadow:0 1px 2px #fff8}
+  .tiny{font-size:11px;letter-spacing:.23em;text-transform:uppercase;color:#856b4c}.cover-portrait{width:180px;height:180px;margin-top:168px;border-radius:50%;border:1px dashed #907f64;background:#e9e0d1a8;display:grid;place-items:center;color:#675c4e;font-size:12px}
+  .cover-names{font:42px/1.05 Georgia,serif;margin-top:38px}.cover-date{font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin-top:10px}.guest{margin-top:auto;font-size:12px;line-height:1.6}.guest strong{display:block;font-size:16px}
+  .btn{border:0;font-family:Arial,sans-serif;cursor:pointer;display:inline-grid;place-items:center;min-height:46px;padding:0 27px;background:var(--green);color:#fff;border-radius:100px;font-size:13px;font-weight:700;letter-spacing:.03em;box-shadow:0 8px 20px #243b3526;margin-top:14px}
+  .side-caption{position:absolute;top:45%;width:230px;font:22px/1.35 Georgia,serif;color:#52655b;z-index:2}.side-caption.left{left:70px;text-align:right}.side-caption.right{right:70px}.side-caption span{display:block;margin-top:14px;font:11px/1.6 Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#927c5e}
+  .flow{padding:0 0 90px;background:linear-gradient(90deg,#eee6d8 0 19%,#f6f1e8 19% 81%,#eee6d8 81% 100%)}
+  .reading{position:relative;width:720px;margin:auto}.flow .side-ornament{position:absolute;width:255px;opacity:.28;pointer-events:none}.flow .side-ornament.left{left:-285px;top:420px}.flow .side-ornament.right{right:-285px;top:1320px;transform:scaleX(-1)}
+  section{padding:66px 28px;border-bottom:1px solid var(--line);position:relative}.center{text-align:center}.section-title{font:38px/1.08 Georgia,serif;margin:8px 0 17px}.body{font-size:15px;line-height:1.65}.muted{color:#69766b}.rule{width:50px;height:1px;background:var(--gold);margin:22px auto}.seal{width:72px;height:72px;border:1px solid var(--gold);border-radius:50%;display:grid;place-items:center;margin:0 auto 24px;font:28px Georgia,serif;color:var(--gold);box-shadow:0 0 0 7px #b58b5314}
+  .hero-name{font:62px/1 Georgia,serif;margin:14px 0}.hero-date{font-size:13px;letter-spacing:.13em;text-transform:uppercase}
+  .profiles{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:25px}.profile{background:#fffaf2;border:1px solid var(--line);border-radius:20px;padding:24px;text-align:center;box-shadow:0 8px 22px #243b350b}.avatar{width:110px;height:110px;border-radius:50%;background:linear-gradient(145deg,#d9c9ad,#a1b2a5);border:4px solid #fff;box-shadow:0 0 0 1px var(--gold);display:grid;place-items:center;font-size:11px;margin:auto auto 15px}.profile h3{font:27px Georgia,serif}.profile p{font-size:12px;line-height:1.6;color:#627167;margin-top:7px}
+  .text-box{background:#fdfaf4;border-left:2px solid var(--gold);padding:20px 24px;border-radius:0 14px 14px 0;margin-top:24px}
+  .events{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:24px}.event{background:#fffaf2;border:1px solid var(--line);border-radius:20px;padding:28px 20px;text-align:center;box-shadow:0 8px 22px #243b350b}.event h3{font:27px Georgia,serif}.date-large{font:52px Georgia,serif;margin:9px 0}.event p{font-size:13px;line-height:1.5}.link{font-size:13px;text-decoration:underline;text-underline-offset:3px;display:inline-block;margin-top:15px}
+  .story-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:23px}.story{border-top:1px solid var(--gold);padding-top:16px}.story-index{color:var(--gold);font:18px Georgia,serif}.story h3{font:24px Georgia,serif;margin:8px 0}.story p{font-size:13px;line-height:1.6}
+  .gallery{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:12px;margin-top:24px}.photo{height:200px;border-radius:14px;background:linear-gradient(145deg,#c9c1b1,#9eae9d);display:grid;place-items:center;color:#394a40;font-size:12px}.photo:first-child{height:200px}
+  .gift{background:#fffaf2;border:1px solid var(--line);border-radius:16px;padding:22px 27px;margin:22px auto 0;max-width:370px}.gift strong{display:block;font-size:15px}.gift p{font-size:13px;margin-top:7px}.gift .btn{background:transparent;color:var(--green);border:1px solid var(--green);box-shadow:none;min-height:42px}
+  .form{max-width:470px;margin:23px auto 0}.field{height:47px;border:1px solid #c5c5b7;border-radius:9px;background:#fffdf8;padding:14px;color:#7a7d76;font-size:13px;margin-top:10px}.field.long{height:92px}.form .btn{width:100%}
+  .note{font-size:13px;line-height:1.5;color:#756d62;margin-top:13px}
+</style>
+<main class="board">
+  <p class="eyebrow">AyaWarta / original concept study / 29 Oktober 2026</p><h1 class="board-title">Siger Priangan Atelier</h1><p class="board-sub">Desktop guest flow · 1280 px artboards · reading column 720 px · static reduced-motion state</p>
+  <p class="label">01 / Sampul sebelum dibuka</p><div class="canvas cover-canvas">
+    <p class="side-caption left">Sebuah undangan yang terasa seperti kenang-kenangan.<span>Ruang samping untuk atmosfer</span></p>
+    <div class="cover-paper"><img src="cover-material-study.png" alt=""><div class="cover-text"><p class="tiny">Undangan Pernikahan</p><div class="cover-portrait">Foto asli pasangan</div><h2 class="cover-names">Nadia &amp; Raka</h2><p class="cover-date">Sabtu · 14 November 2026</p><div class="guest">Kepada Yth.<strong>Nama Tamu</strong></div><button type="button" class="btn">Buka Undangan</button></div></div>
+    <p class="side-caption right">Detail dibuat dari kertas, tekstil, dan cahaya.<span>Semua tulisan tetap teks HTML</span></p>
+  </div>
+  <p class="label">02 / Undangan terbuka, dari kisah sampai respons</p><div class="canvas flow"><div class="reading">
+    <img class="side-ornament left" src="ornament-layer-study.png" alt=""><img class="side-ornament right" src="ornament-layer-study.png" alt="">
+    <section class="center"><div class="seal">N·R</div><p class="tiny">Siger Priangan</p><h2 class="hero-name">Nadia &amp; Raka</h2><p class="hero-date">14 November 2026 · Bandung</p><div class="rule"></div><p class="body">Dengan hangat kami mengundang Anda untuk merayakan hari pernikahan kami.</p></section>
+    <section><p class="tiny center">Dua cerita, satu perjalanan</p><h2 class="section-title center">Mempelai</h2><div class="profiles"><div class="profile"><div class="avatar">Foto Nadia</div><h3>Nadia</h3><p>Putri dari Bapak dan Ibu Nama Orang Tua</p></div><div class="profile"><div class="avatar">Foto Raka</div><h3>Raka</h3><p>Putra dari Bapak dan Ibu Nama Orang Tua</p></div></div><div class="text-box body">Teks sambutan dari pasangan dapat ditulis di sini. Doa bersifat pilihan dan tidak memiliki teks agama bawaan.</div></section>
+    <section><p class="tiny center">Hari bahagia</p><h2 class="section-title center">Rangkaian Acara</h2><div class="events"><div class="event"><h3>Upacara Pernikahan</h3><div class="date-large">14</div><p>Sabtu, November 2026 · 09.00 WIB<br>Gedung Contoh, Bandung</p><a class="link" href="#" aria-label="Pratinjau tautan lokasi">Lihat lokasi ↗</a></div><div class="event"><h3>Resepsi</h3><div class="date-large">14</div><p>Sabtu, November 2026 · 11.00 WIB<br>Gedung Contoh, Bandung</p><a class="link" href="#" aria-label="Pratinjau tautan lokasi">Lihat lokasi ↗</a></div></div><p class="body center muted" style="margin-top:18px">Alamat lengkap dan hitung mundur tampil di bawah kartu bila tersedia.</p></section>
+    <section><p class="tiny center">Jejak yang kami simpan</p><h2 class="section-title center">Kisah Kami</h2><div class="story-grid"><div class="story"><span class="story-index">01</span><h3>Pertemuan</h3><p>Cerita singkat yang dapat diperluas tanpa mengubah komposisi.</p></div><div class="story"><span class="story-index">02</span><h3>Menjadi Kita</h3><p>Bab berikutnya tersusun dalam ritme editorial yang tenang.</p></div></div></section>
+    <section><p class="tiny center">Album pasangan</p><h2 class="section-title center">Galeri</h2><div class="gallery"><div class="photo">Foto asli pasangan · 1</div><div class="photo">Foto 2</div><div class="photo">Foto 3</div></div><p class="body muted center" style="margin-top:15px">Caption opsional; alt text dari media tersimpan.</p></section>
+    <section class="center"><p class="tiny">Tanda kasih</p><h2 class="section-title">Hadiah</h2><p class="body">Kehadiran Anda adalah hadiah terbaik. Bila berkenan, Anda juga dapat mengirim tanda kasih.</p><div class="gift"><strong>Bank Contoh · Nadia</strong><p>123 456 7890</p><button type="button" class="btn">Salin nomor</button></div></section>
+    <section class="center"><p class="tiny">Kami menantikan Anda</p><h2 class="section-title">Konfirmasi &amp; Ucapan</h2><div class="form"><div class="field" style="text-align:left">Nama tamu</div><div class="field" style="text-align:left">Status kehadiran</div><div class="field long" style="text-align:left">Tulis ucapan...</div><button type="button" class="btn">Kirim konfirmasi</button></div><p class="body muted" style="margin-top:12px">Pratinjau contoh: formulir tidak mengirim data.</p></section>
+    <section class="center" style="padding:92px 28px 95px;border-bottom:0"><div class="seal">N·R</div><p class="tiny">Terima kasih</p><h2 class="section-title">Sampai bertemu</h2><p class="body">Doa baik Anda berarti banyak bagi kami.</p><div class="rule"></div><p style="font:27px Georgia,serif">Nadia &amp; Raka</p></section>
+  </div></div>
+  <p class="note">Ornamen di bidang samping hanya menjadi lapisan dekoratif. Kolom utama tetap terbaca saat animasi mati; efek kedalaman nantinya menggerakkan kertas dan relief, bukan urutan baca atau scroll halaman.</p>
+</main>
+</html>

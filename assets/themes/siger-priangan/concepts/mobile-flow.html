@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="id">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Siger Priangan — mobile concept flow</title>
+<style>
+  :root{--ivory:#f6f1e8;--green:#243b35;--gold:#b58b53;--blush:#c8a69a;--line:#d8c7a7}
+  *{box-sizing:border-box}body{margin:0;background:#e8e4dc;color:var(--green);font-family:Arial,sans-serif}
+  .board{width:1390px;min-height:2590px;padding:54px 54px 70px;margin:auto}
+  .eyebrow{font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:#776c5b}
+  h1,h2,h3,p{margin:0}.board-title{font:48px Georgia,serif;margin:8px 0 6px}.board-sub{font-size:15px;color:#786f64}
+  .lanes{display:grid;grid-template-columns:390px 390px 390px;gap:36px;margin-top:34px;align-items:start}
+  .label{font-size:12px;letter-spacing:.2em;text-transform:uppercase;margin:0 0 14px;color:#6d6254}
+  .phone{width:390px;overflow:hidden;border:8px solid #25312e;border-radius:42px;background:var(--ivory);box-shadow:0 16px 44px #20332b30}
+  .cover{height:844px;position:relative;text-align:center;overflow:hidden;background:var(--ivory)}
+  .cover>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.96}
+  .cover .cover-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;height:100%;padding:45px 26px 42px;text-shadow:0 1px 2px #fff8}
+  .cover-kicker{font-size:10px;letter-spacing:.25em;text-transform:uppercase}
+  .cover-portrait{margin-top:177px;width:178px;height:180px;border-radius:50%;display:grid;place-items:center;color:#685f51;font-size:12px;letter-spacing:.08em;background:#e9e0d1a8;border:1px dashed #907f64}
+  .cover-names{font:39px/1.03 Georgia,serif;margin-top:65px;color:var(--green)}
+  .cover-date{margin-top:12px;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+  .cover-to{margin-top:auto;font-size:11px;line-height:1.6}
+  .cover-to strong{display:block;font-size:14px}
+  .btn{border:0;font-family:Arial,sans-serif;cursor:pointer;display:inline-grid;place-items:center;min-height:46px;padding:0 24px;background:var(--green);color:#fff;border-radius:100px;font-size:13px;font-weight:700;letter-spacing:.03em;box-shadow:0 8px 20px #243b3526}
+  .cover .btn{margin-top:16px}
+  .inside{padding:0 22px 28px}.inside section{position:relative;padding:52px 10px 44px;border-bottom:1px solid var(--line)}
+  .inside section:last-child{border-bottom:0}.tiny{font-size:10px;text-transform:uppercase;letter-spacing:.22em;color:#876b47}
+  .serif{font-family:Georgia,serif;font-weight:400}.center{text-align:center}.section-title{font:30px/1.1 Georgia,serif;margin:8px 0 16px}
+  .body{font-size:13px;line-height:1.65}.muted{color:#6a756d}.rule{width:42px;height:1px;background:var(--gold);margin:18px auto}
+  .seal{width:64px;height:64px;border:1px solid var(--gold);border-radius:50%;display:grid;place-items:center;margin:0 auto 18px;font:26px Georgia,serif;color:var(--gold);box-shadow:0 0 0 6px #b58b5314}
+  .hero-name{font:38px/1 Georgia,serif;margin:10px 0 14px}.hero-date{font-size:12px;letter-spacing:.13em;text-transform:uppercase}
+  .profile{padding:18px;background:#fffaf2;border:1px solid var(--line);border-radius:18px;margin-top:14px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 18px #243b3509}
+  .avatar{width:72px;height:72px;flex:none;border-radius:50%;background:linear-gradient(145deg,#d9c9ad,#a1b2a5);border:3px solid #fff;box-shadow:0 0 0 1px var(--gold);display:grid;place-items:center;font-size:9px;color:#273c35;text-align:center}
+  .profile h3{font:22px Georgia,serif}.profile p{font-size:11px;line-height:1.55;margin-top:5px;color:#58665d}
+  .text-box{background:#fdfaf4;border-left:2px solid var(--gold);padding:16px 17px;border-radius:0 12px 12px 0;margin-top:21px}
+  .event{background:#fffaf2;border:1px solid var(--line);border-radius:18px;margin-top:14px;padding:22px 18px;text-align:center;box-shadow:0 8px 22px #243b350b}
+  .event h3{font:23px Georgia,serif}.date-large{font:42px Georgia,serif;margin:9px 0}.event p{font-size:12px;line-height:1.55}.link{font-size:12px;text-decoration:underline;text-underline-offset:3px;color:var(--green);display:inline-block;margin-top:12px}
+  .story{display:grid;grid-template-columns:28px 1fr;gap:10px;margin-top:18px}.story-index{font:18px Georgia,serif;color:var(--gold)}.story h3{font:20px Georgia,serif}.story p{font-size:12px;line-height:1.55;margin-top:5px}
+  .gallery{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:19px}.photo{border-radius:12px;background:linear-gradient(145deg,#c9c1b1,#9eae9d);display:grid;place-items:center;color:#394a40;font-size:11px;min-height:117px}.photo:first-child{grid-column:span 2;height:174px}
+  .gift{background:#fffaf2;border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}.gift strong{display:block;font-size:13px}.gift p{font-size:12px;margin-top:6px}.gift .btn{margin-top:13px;background:transparent;color:var(--green);border:1px solid var(--green);box-shadow:none;min-height:42px}
+  .field{height:44px;border:1px solid #c5c5b7;border-radius:9px;background:#fffdf8;padding:12px;color:#7a7d76;font-size:12px;margin-top:10px}.field.long{height:88px}.inside .ornament{position:absolute;width:170px;opacity:.16;pointer-events:none}.ornament.left{left:-66px;top:32px}.ornament.right{right:-80px;bottom:4px;transform:scaleX(-1)}
+  .flow-note{font-size:12px;color:#756d62;line-height:1.5;margin-top:14px;padding:0 8px}
+</style>
+<main class="board">
+  <div class="eyebrow">AyaWarta / original concept study / 29 Oktober 2026</div>
+  <h1 class="board-title">Siger Priangan Atelier</h1>
+  <p class="board-sub">Mobile-first guest flow · 390 px artboards · illustrative names and dates · static reduced-motion state</p>
+  <div class="lanes">
+    <div><div class="label">01 / Sampul sebelum dibuka</div><div class="phone cover">
+      <img src="cover-material-study.png" alt="">
+      <div class="cover-content"><p class="cover-kicker">Undangan Pernikahan</p><div class="cover-portrait">Foto asli<br>pasangan</div><h2 class="cover-names">Nadia<br>&amp; Raka</h2><p class="cover-date">Sabtu · 14 November 2026</p><div class="cover-to">Kepada Yth.<strong>Nama Tamu</strong></div><button type="button" class="btn">Buka Undangan</button></div>
+    </div><p class="flow-note">Sampul adalah lapisan tersendiri. Semua nama, tanggal, tamu, dan tombol dibuat sebagai teks antarmuka; karya AI di belakangnya hanya studi material.</p></div>
+    <div><div class="label">02 / Cerita dan informasi acara</div><div class="phone inside">
+      <section class="center"><div class="seal">N·R</div><p class="tiny">Siger Priangan</p><h2 class="hero-name">Nadia &amp; Raka</h2><p class="hero-date">14 November 2026 · Bandung</p><div class="rule"></div><p class="body">Dengan hangat kami mengundang Anda untuk merayakan hari pernikahan kami.</p></section>
+      <section><img class="ornament left" src="ornament-layer-study.png" alt=""><p class="tiny center">Dua cerita, satu perjalanan</p><h2 class="section-title center">Mempelai</h2><div class="profile"><div class="avatar">Foto<br>Nadia</div><div><h3>Nadia</h3><p>Putri dari Bapak dan Ibu<br>Nama Orang Tua</p></div></div><div class="profile"><div class="avatar">Foto<br>Raka</div><div><h3>Raka</h3><p>Putra dari Bapak dan Ibu<br>Nama Orang Tua</p></div></div><div class="text-box body">Teks sambutan dari pasangan dapat ditulis di sini. Doa bersifat pilihan dan tidak memiliki teks agama bawaan.</div></section>
+      <section><p class="tiny center">Hari bahagia</p><h2 class="section-title center">Rangkaian Acara</h2><div class="event"><h3>Upacara Pernikahan</h3><div class="date-large">14</div><p>Sabtu, November 2026 · 09.00 WIB</p><p>Gedung Contoh, Bandung<br>Jalan Contoh No. 1</p><a class="link" href="#" aria-label="Pratinjau tautan lokasi">Lihat lokasi ↗</a></div><div class="event"><h3>Resepsi</h3><div class="date-large">14</div><p>Sabtu, November 2026 · 11.00 WIB</p><p>Gedung Contoh, Bandung<br>Jalan Contoh No. 1</p><a class="link" href="#" aria-label="Pratinjau tautan lokasi">Lihat lokasi ↗</a></div><p class="body center muted" style="margin-top:16px">Hitung mundur dapat tampil di sini bila tanggal tersedia.</p></section>
+      <section><p class="tiny center">Jejak yang kami simpan</p><h2 class="section-title center">Kisah Kami</h2><div class="story"><span class="story-index">01</span><div><h3>Pertemuan</h3><p>Cerita singkat yang dapat diperluas tanpa mengubah komposisi.</p></div></div><div class="story"><span class="story-index">02</span><div><h3>Menjadi Kita</h3><p>Bab berikutnya tersusun dalam ritme editorial yang tenang.</p></div></div></section>
+    </div><p class="flow-note">Konten berada di kolom tunggal. Ornamen hanya di pinggir; nama, tanggal, alamat, dan tautan selalu dapat dibaca serta dipilih.</p></div>
+    <div><div class="label">03 / Kenangan dan respons tamu</div><div class="phone inside">
+      <section><p class="tiny center">Album pasangan</p><h2 class="section-title center">Galeri</h2><div class="gallery"><div class="photo">Foto asli pasangan · 1</div><div class="photo">Foto 2</div><div class="photo">Foto 3</div></div><p class="body muted" style="margin-top:12px">Caption opsional. Alt text mengikuti media yang disimpan pemilik.</p></section>
+      <section><img class="ornament right" src="ornament-layer-study.png" alt=""><p class="tiny center">Tanda kasih</p><h2 class="section-title center">Hadiah</h2><p class="body center">Kehadiran Anda adalah hadiah terbaik. Bila berkenan, Anda juga dapat mengirim tanda kasih.</p><div class="gift"><strong>Bank Contoh · Nadia</strong><p>123 456 7890</p><button type="button" class="btn">Salin nomor</button></div></section>
+      <section><p class="tiny center">Kami menantikan Anda</p><h2 class="section-title center">Konfirmasi &amp; Ucapan</h2><div class="field">Nama tamu</div><div class="field">Status kehadiran</div><div class="field long">Tulis ucapan...</div><button type="button" class="btn" style="margin-top:14px;width:100%">Kirim konfirmasi</button><p class="body muted" style="margin-top:10px">Pratinjau contoh: formulir tidak mengirim data.</p></section>
+      <section class="center" style="padding-top:78px;padding-bottom:80px"><div class="seal">N·R</div><p class="tiny">Terima kasih</p><h2 class="section-title">Sampai bertemu</h2><p class="body">Doa baik Anda berarti banyak bagi kami.</p><div class="rule"></div><p class="serif" style="font-size:24px">Nadia &amp; Raka</p></section>
+    </div><p class="flow-note">Galeri menggunakan foto milik pasangan; bagian hadiah dan ucapan hanya muncul saat diaktifkan. State ini adalah fallback statis ketika gerak dikurangi.</p></div>
+  </div>
+</main>
+</html>
