@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { ClassicRoseThemeConfig } from "@/lib/theme-config/classic-rose";
 import type { InvitationData } from "@/features/invitations/types";
+import { withDefaultPreviewAssets } from "@/features/invitations/default-preview-assets";
 
 import OpeningSection from "./OpeningSection";
 import HeroSection from "./HeroSection";
@@ -42,8 +43,11 @@ function InvitationView({
 		"--font-heading": themeConfig.fonts.heading,
 		"--font-body": themeConfig.fonts.body,
 		"--font-script": themeConfig.fonts.script,
-		"--bg-mobile-url": `url(${themeConfig.assets.background})`,
-		"--bg-desktop-url": `url(${themeConfig.assets.backgroundDesktop})`,
+		"--background-tile": `url(${themeConfig.assets.background})`,
+		"--canvas-color": themeConfig.colors.canvas,
+		"--surface-color": themeConfig.colors.surface,
+		"--surface-text-color": themeConfig.colors.surfaceText,
+		"--on-primary-color": themeConfig.colors.onPrimary,
 	} as React.CSSProperties;
 
 	const sections = data.sections || {
@@ -56,7 +60,7 @@ function InvitationView({
 	};
 
 	return (
-		<div style={themeStyle} className='font-[--font-body]'>
+		<div style={themeStyle} className='classic-rose-background min-h-[100svh] font-[--font-body]'>
 			<AnimatePresence>
 				{!isOpened ? (
 					<motion.div
@@ -69,6 +73,7 @@ function InvitationView({
 							onOpen={handleOpenInvitation}
 							theme={themeConfig}
 							heroImage={data.couple.heroImage}
+								isPreview={invitationSlug === "default-preview"}
 						/>
 					</motion.div>
 				) : (
@@ -136,7 +141,7 @@ export default function ClassicRoseClientView({
 			<InvitationView
 				invitationSlug={invitationSlug}
 				themeConfig={themeConfig}
-				data={data}
+				data={withDefaultPreviewAssets(invitationSlug, data)}
 			/>
 		</Suspense>
 	);

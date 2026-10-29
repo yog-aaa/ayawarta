@@ -208,8 +208,8 @@ const CLASSIC_ROSE_VARIANTS = [
 export const SHOWCASE_THEMES: readonly ThemeItem[] = CLASSIC_ROSE_VARIANTS.map(
   ({ id, colorName, accent }, index) => ({
     id,
-    backgroundSrc: `/images/themes/classic-rose/${id}/bg.png`,
-    flowerSrc: `/images/themes/classic-rose/${id}/bunga.png`,
+    backgroundSrc: `/images/themes/classic-rose/${id}/preview.webp`,
+    flowerSrc: `/images/themes/classic-rose/${id}/bunga.webp`,
     title: "Classic Rose",
     colorName,
     code: `CR-${String(index + 1).padStart(2, "0")}`,

@@ -1,16 +1,17 @@
 export interface ClassicRoseVariantConfig {
     assets: {
         background: string;
-        backgroundDesktop: string;
         flower: string;
         photoFrame: string;
         bismillah: string;
-        divider: string;
-        eventFrame: string;
     };
     colors: {
         primary: string;
         text: string;
+        canvas: string;
+        surface: string;
+        surfaceText: string;
+        onPrimary: string;
     };
 }
 
@@ -28,12 +29,12 @@ export interface ClassicRoseThemeConfig extends ClassicRoseVariantConfig {
 
 // Daftar varian warna yang valid dan palet warnanya
 const validVariants = {
-    red: { primary: '#630718', text: '#630718' },
-    green: { primary: '#7B9557', text: '#7B9557' },
-    blue: { primary: '#5D84B0', text: '#5D84B0' },
-    orange: { primary: '#C86F30', text: '#C86F30' },
-    black: { primary: '#D9AD65', text: '#D9AD65' },
-    white: { primary: '#A57C4E', text: '#A57C4E' },
+    red: { primary: '#630718', text: '#630718', canvas: '#f5ebec', surface: 'rgba(255,255,255,.91)', surfaceText: '#4e1620', onPrimary: '#ffffff' },
+    green: { primary: '#4c6537', text: '#31452d', canvas: '#edf1e9', surface: 'rgba(255,255,255,.91)', surfaceText: '#31452d', onPrimary: '#ffffff' },
+    blue: { primary: '#315b8b', text: '#28466a', canvas: '#edf2f7', surface: 'rgba(255,255,255,.91)', surfaceText: '#28466a', onPrimary: '#ffffff' },
+    orange: { primary: '#9b4f23', text: '#713d27', canvas: '#f6ede5', surface: 'rgba(255,255,255,.91)', surfaceText: '#713d27', onPrimary: '#ffffff' },
+    black: { primary: '#e4bd79', text: '#e9d5ad', canvas: '#202024', surface: 'rgba(27,27,30,.88)', surfaceText: '#f1e5cc', onPrimary: '#241b11' },
+    white: { primary: '#8c6839', text: '#665039', canvas: '#f8f4ea', surface: 'rgba(255,255,255,.9)', surfaceText: '#665039', onPrimary: '#ffffff' },
 };
 
 /**
@@ -48,13 +49,10 @@ export function getClassicRoseThemeConfig(variant: string): ClassicRoseThemeConf
     // Konfigurasi spesifik untuk setiap varian
     const variantConfig: ClassicRoseVariantConfig = {
         assets: {
-            background: `/images/themes/classic-rose/${variantKey}/bg.png`,
-            backgroundDesktop: `/images/themes/classic-rose/${variantKey}/bg-desktop.png`,
-            flower: `/images/themes/classic-rose/${variantKey}/bunga.png`,
-            photoFrame: `/images/themes/classic-rose/${variantKey}/border-foto.png`,
-            bismillah: `/images/themes/classic-rose/${variantKey}/bismillah.png`,
-            divider: `/images/themes/classic-rose/${variantKey}/divider.png`,
-            eventFrame: `/images/themes/classic-rose/${variantKey}/event-frame.png`,
+            background: `/images/themes/classic-rose/${variantKey}/texture.webp`,
+            flower: `/images/themes/classic-rose/${variantKey}/bunga.webp`,
+            photoFrame: `/images/themes/classic-rose/${variantKey}/border-foto.webp`,
+            bismillah: `/images/themes/classic-rose/${variantKey}/bismillah.webp`,
         },
         colors: colors,
     };

@@ -143,7 +143,7 @@ describe("Public Route Cutover — Hermetic Unit Tests", () => {
 
       expect(invitationRepository.findBySlug).toHaveBeenCalledWith("shidqi-mita");
       expect(pageElement.props.invitationSlug).toBe("shidqi-mita");
-      expect(pageElement.props.themeConfig.colors.primary).toBe("#7B9557"); // green primary
+      expect(pageElement.props.themeConfig.colors.primary).toBe("#4c6537"); // green primary
     });
 
     it("renders explicit default-preview record without hidden fallbacks", async () => {
@@ -212,7 +212,7 @@ describe("Public Route Cutover — Hermetic Unit Tests", () => {
 
       expect(invitationRepository.findBySlug).toHaveBeenCalledWith("default-preview");
       expect(pageElement.props.invitationSlug).toBe("default-preview");
-      expect(pageElement.props.themeConfig.colors.primary).toBe("#7B9557");
+      expect(pageElement.props.themeConfig.colors.primary).toBe("#4c6537");
     });
 
     it("renders explicit target slug when searchParams.slug is provided", async () => {
@@ -227,7 +227,7 @@ describe("Public Route Cutover — Hermetic Unit Tests", () => {
 
       expect(invitationRepository.findBySlug).toHaveBeenCalledWith("dudi-aini");
       expect(pageElement.props.invitationSlug).toBe("dudi-aini");
-      expect(pageElement.props.themeConfig.colors.primary).toBe("#5D84B0");
+      expect(pageElement.props.themeConfig.colors.primary).toBe("#315b8b");
     });
 
     it("calls notFound() for invalid variant name", async () => {

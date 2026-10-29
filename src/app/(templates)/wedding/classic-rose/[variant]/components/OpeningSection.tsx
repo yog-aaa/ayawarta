@@ -24,7 +24,8 @@ interface OpeningProps {
 	guestName?: string | null;
 	onOpen: () => void;
 	theme: ThemeConfig;
-	heroImage: string; // Tambahkan heroImage sebagai properti
+	heroImage: string;
+	isPreview?: boolean;
 }
 
 const OpeningSection: React.FC<OpeningProps> = ({
@@ -32,45 +33,49 @@ const OpeningSection: React.FC<OpeningProps> = ({
 	guestName,
 	onOpen,
 	theme,
-	heroImage, // Ambil heroImage dari props
+	heroImage,
+	isPreview = false,
 }) => {
 	return (
 		<div
-			className='relative min-h-screen w-full flex items-center justify-center overflow-hidden font-[--font-body]'
-			style={{
-				// Background ini khusus untuk opening section yang fixed
-				backgroundImage: `url(${theme.assets.backgroundDesktop})`,
-				backgroundSize: "cover",
-				backgroundPosition: "center",
-				backgroundAttachment: "fixed",
-				color: "var(--color-text)",
-			}}>
+			className='relative min-h-[100svh] w-full flex items-center justify-center overflow-hidden font-[--font-body]'
+			style={{ color: "var(--color-text)" }}>
 			<motion.div
-				className='relative z-10 flex flex-col items-center text-center p-8 w-full max-w-md md:max-w-xl'
+				className='relative z-10 flex flex-col items-center text-center px-5 py-12 w-full max-w-md md:max-w-xl'
 				initial={{ opacity: 0, scale: 0.9 }}
 				animate={{ opacity: 1, scale: 1 }}
 				transition={{ duration: 1, delay: 0.5 }}>
+				{isPreview && (
+					<p className='mb-5 rounded-full border border-current/40 px-4 py-1 text-xs tracking-widest'>
+						PRATINJAU · FOTO ILUSTRASI
+					</p>
+				)}
 				<p className='text-[25px] md:text-[32px]'>We Are Getting Married</p>
-				<div className='relative w-[290px] h-[290px] md:w-[456px] md:h-[456px] my-4'>
+				<div className='relative my-4 aspect-square w-[min(72vw,290px)] md:w-[min(42vw,420px)]'>
 					<Image
 						src={theme.assets.photoFrame}
-						alt='Bingkai Foto'
+						alt=''
 						fill
+						sizes='(max-width: 767px) 72vw, 420px'
+						priority
 						className='object-contain z-10'
 					/>
 					<div className='absolute inset-0 p-[14.8%]'>
 						<div className='relative w-full h-full rounded-full overflow-hidden'>
 							<Image
-								src={heroImage} // Gunakan heroImage dari props
-								alt='Foto Pasangan'
+								src={heroImage}
+								alt={`Foto ${coupleNames}`}
 								fill
+								sizes='(max-width: 767px) 52vw, 300px'
+							priority
+							quality={78}
 								className='object-cover'
 							/>
 						</div>
 					</div>
 				</div>
 				<h1
-					className='text-[36px] leading-[45px] md:text-[48px] md:leading-[60px]'
+					className='max-w-full text-[clamp(2rem,8vw,3rem)] leading-tight text-balance'
 					style={{
 						fontFamily: "var(--font-script)",
 						color: "var(--color-primary)",
@@ -89,8 +94,9 @@ const OpeningSection: React.FC<OpeningProps> = ({
 				</p>
 				<button
 					onClick={onOpen}
-					style={{ backgroundColor: "var(--color-primary)" }}
-					className='mt-8 text-white rounded-md flex items-center justify-center gap-2 px-8 py-3 md:px-12 md:py-4 hover:bg-opacity-90 transition-all shadow-lg'>
+				className='classic-rose-primary-action mt-8 rounded-md flex min-h-12 items-center justify-center gap-2 px-8 py-3 md:px-12 md:py-4 hover:opacity-90 transition-opacity shadow-lg'
+					aria-label='Buka undangan'
+					data-invitation-open='true'>
 					<MailOpenIcon className='w-4 h-4 md:w-6 md:h-6' />
 					<span className='font-semibold text-sm md:text-xl'>Buka Undangan</span>
 				</button>

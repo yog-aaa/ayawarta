@@ -224,12 +224,12 @@ const MusicPlayer = ({ videoUrl }: MusicPlayerProps) => {
   return (
     <>
       <div id="youtube-player" className="absolute -top-96" />
-      <audio ref={audioRef} className="hidden" preload="auto" />
+      <audio ref={audioRef} className="hidden" preload="none" />
 
       <motion.button
         onClick={toggleMusic}
-        style={{ backgroundColor: "var(--color-primary)" }}
-        className="fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg"
+        aria-label={isPlaying ? "Jeda musik" : "Putar musik"}
+        className="classic-rose-primary-action fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full shadow-lg"
         initial={{ scale: 0, rotate: -180 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}

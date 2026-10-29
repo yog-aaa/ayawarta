@@ -24,7 +24,7 @@ The memorable elements that must remain recognizable are:
 - Header information architecture and anchor destinations.
 - Hero artwork and primary calls to action. The hero ends without a wave or user-count band.
 - Feature, pricing, theme, testimonial, and footer concepts.
-- Classic Rose frames, backgrounds, flowers, dividers, typography, colors, and section order.
+- Classic Rose floral identity, backgrounds, typography, color variants, and section order.
 - Existing animation intent: gentle entrances, carousel transitions, and invitation opening.
 
 ## Landing-page section direction
@@ -33,7 +33,7 @@ The section order remains hero, features, pricing, themes, testimonials, then fo
 
 - Features: the existing invitation phone stays inside a responsive visual stage beside six readable feature cards.
 - Pricing: Kabar (Rp49.000), Cerita (Rp99.000), and Istimewa (Rp149.000) are one-time, per-event offers prepared by the AyaWarta team. The cards stay equal height, with one stable blue emphasis on Cerita. Guest photo gallery and QR check-in are shown only as planned, separate extensions. Payment marks appear in consistent light chips. See [pricing product contract](pricing.md).
-- Themes: the visible showcase uses the six real Classic Rose color variants and their corresponding preview routes. Preview cards combine each variant's existing background and flower assets; they are style previews, not screenshots of completed invitations. Other category filters show an explicit empty state until matching templates exist. Search filters the available showcase.
+- Themes: the visible showcase uses the six real Classic Rose color variants and their corresponding preview routes. Preview cards combine each variant's optimized WebP background and flower assets; they are style previews, not screenshots of completed invitations. Other category filters show an explicit empty state until matching templates exist. Search filters the available showcase.
 - Testimonials: the current sample stories use text-led cards and are labeled as illustrative. Unrelated cartoon portraits are not displayed as customer photographs.
 - Footer: a deep navy closing section carries the existing about, contact, and social information without a large decorative wave.
 
@@ -79,6 +79,12 @@ Required categories:
 - standard easing curves.
 
 Classic Rose continues to use theme-specific CSS variables supplied by its theme configuration. Do not force landing tokens onto invitation theme colors.
+
+### Classic Rose invitation presentation
+
+The invitation uses one continuous canvas across opening and content, with a seamless WebP texture tile per color variant. The tile repeats in both directions without the visible horizontal join from the former full-page PNG. Floral art belongs to the framed portraits and the theme showcase; repeated floating corner bouquets were removed from content sections. Event cards use a thin inset corner rule and small diamond in the variant's own primary color, replacing the same red bitmap corner formerly used for every variant. Dark variants use a dark translucent card surface and readable gold text, while light variants use a pale surface with dark text. The opening photo receives loading priority; below-the-fold photos use responsive `sizes` and lazy loading.
+
+The `default-preview` slug displays clearly labeled fictional sample photography stored under `public/images/themes/classic-rose/sample/`. Customer invitation photographs are not replaced. Its three-photo gallery is a compact example; production galleries can render every supplied photo in a responsive grid. The map is reached through each event's location link rather than a permanently embedded, hard-coded map.
 
 ### Implemented token map
 

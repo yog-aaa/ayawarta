@@ -4,7 +4,6 @@ import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
-import CornerFlower from "./CornerFlower";
 import type { InvitationData } from "@/features/invitations/types";
 
 // --- SVG Icons ---
@@ -45,22 +44,24 @@ interface ProfileCardProps {
 
 const ProfileCard: React.FC<ProfileCardProps> = ({ person, align, theme }) => {
 	const isGroom = align === "left";
-	const order = isGroom ? "" : "order-last";
-	const itemAlign = isGroom ? "items-end" : "items-start";
-	const textAlign = isGroom ? "text-right" : "text-left";
+	const photoOrder = isGroom ? "" : "sm:order-2";
+	const textOrder = isGroom ? "" : "sm:order-1";
+	const itemAlign = isGroom ? "sm:items-end" : "sm:items-start";
+	const textAlign = isGroom ? "sm:text-right" : "sm:text-left";
 
 	return (
 		<motion.div
-			className='grid grid-cols-2 items-center gap-2 md:gap-4 w-full'
+			className='flex w-full flex-col items-center gap-4 sm:grid sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-6'
 			initial={{ opacity: 0, x: isGroom ? -50 : 50 }}
 			whileInView={{ opacity: 1, x: 0 }}
 			viewport={{ once: true }}
 			transition={{ duration: 0.8 }}>
-			<div className={`relative w-[180px] h-[180px] justify-self-center ${order}`}>
+			<div className={`relative aspect-square w-40 shrink-0 sm:w-44 ${photoOrder}`}>
 				<Image
 					src={theme.assets.photoFrame}
-					alt='Bingkai Foto'
+					alt=''
 					fill
+					sizes='(max-width: 639px) 160px, 176px'
 					className='z-10 object-contain'
 				/>
 				<div className='absolute inset-0 p-[20px]'>
@@ -69,14 +70,16 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ person, align, theme }) => {
 							src={person.photo}
 							alt={person.name}
 							fill
+							sizes='(max-width: 639px) 120px, 136px'
+							quality={75}
 							className='object-cover'
 						/>
 					</div>
 				</div>
 			</div>
-			<div className={`flex flex-col ${itemAlign} ${textAlign}`}>
+			<div className={`flex min-w-0 flex-col items-center text-center ${itemAlign} ${textAlign} ${textOrder}`}>
 				<h3
-					className='text-[32px] leading-tight'
+					className='max-w-full text-[clamp(1.75rem,6vw,2.25rem)] leading-tight break-words'
 					style={{
 						fontFamily: "var(--font-script)",
 						color: "var(--color-primary)",
@@ -84,7 +87,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ person, align, theme }) => {
 					{person.name}
 				</h3>
 				<p
-					className='font-[--font-body] text-sm mt-2 max-w-[200px]'
+					className='font-[--font-body] text-sm mt-2 max-w-[260px]'
 					style={{ color: "var(--color-text)" }}>
 					{person.parents}
 				</p>
@@ -92,8 +95,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ person, align, theme }) => {
 					href={`https://instagram.com/${person.instagram}`}
 					target='_blank'
 					rel='noopener noreferrer'
-					style={{ backgroundColor: "var(--color-primary)" }}
-					className='mt-3 inline-flex items-center gap-2 text-white text-xs px-3 py-1 rounded-md hover:bg-opacity-90 transition-colors'>
+					className='classic-rose-primary-action mt-3 inline-flex min-h-11 items-center gap-2 text-xs px-3 py-2 rounded-md hover:opacity-90 transition-opacity'>
 					<InstagramIcon className='w-3.5 h-3.5' />
 					<span>@{person.instagram}</span>
 				</a>
@@ -110,10 +112,8 @@ interface CoupleSectionProps {
 const CoupleSection: React.FC<CoupleSectionProps> = ({ data, theme }) => {
 	return (
 		<section className='relative'>
-			<CornerFlower flowerSrc={theme.assets.flower} position='top-right' />
-			<CornerFlower flowerSrc={theme.assets.flower} position='bottom-left' />
 			<div
-				className='relative z-20 container mx-auto px-4 sm:px-8 max-w-2xl flex flex-col items-center gap-8 text-center py-20 md:py-32'
+				className='relative z-20 container mx-auto px-4 sm:px-8 max-w-2xl flex flex-col items-center gap-8 text-center pt-20 pb-16 md:pt-28 md:pb-20'
 				style={{ color: "var(--color-text)" }}>
 				<motion.div
 					className='relative w-[300px] h-[70px]'
@@ -121,11 +121,20 @@ const CoupleSection: React.FC<CoupleSectionProps> = ({ data, theme }) => {
 					whileInView={{ opacity: 1, y: 0 }}
 					viewport={{ once: true }}
 					transition={{ duration: 0.8 }}>
-					<Image
-						src={theme.assets.bismillah}
-						alt='Bismillah'
-						fill
-						className='object-contain'
+					<div
+						role='img'
+						aria-label='Bismillah'
+						className='h-full w-full bg-[var(--color-primary)]'
+						style={{
+							maskImage: `url(${theme.assets.bismillah})`,
+							WebkitMaskImage: `url(${theme.assets.bismillah})`,
+							maskSize: 'contain',
+							WebkitMaskSize: 'contain',
+							maskRepeat: 'no-repeat',
+							WebkitMaskRepeat: 'no-repeat',
+							maskPosition: 'center',
+							WebkitMaskPosition: 'center',
+						}}
 					/>
 				</motion.div>
 				<motion.p
@@ -145,7 +154,7 @@ const CoupleSection: React.FC<CoupleSectionProps> = ({ data, theme }) => {
 					<ProfileCard person={data.bride} align='right' theme={theme} />
 				</div>
 				<motion.div
-					className='mt-12 p-6 rounded-2xl bg-white/90 backdrop-blur-sm max-w-md'
+					className='classic-rose-surface mt-12 max-w-md rounded-2xl p-6'
 					initial={{ opacity: 0, y: 50 }}
 					whileInView={{ opacity: 1, y: 0 }}
 					viewport={{ once: true }}

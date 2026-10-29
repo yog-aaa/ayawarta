@@ -1,21 +1,78 @@
 /* src/app/templates/wedding/classic-rose/background.css */
 
-.seamless-background {
-    --bg-mobile: var(--bg-mobile-url, url('/path/to/default-bg.png'));
-    --bg-desktop: var(--bg-desktop-url, url('/path/to/default-bg-desktop.png'));
-
-    /* Terapkan background ke elemen ini */
-    background-image: var(--bg-mobile);
-    background-attachment: scroll;
-    /* Ikut scroll */
-    background-repeat: repeat-y;
-    background-size: 100% auto;
-    background-position: top center;
+.classic-rose-background {
+    background-color: var(--canvas-color, #f5ebec);
+    background-image: var(--background-tile);
+    background-repeat: repeat;
+    background-size: 1024px 1024px;
+    background-position: center top;
 }
 
-/* Ganti gambar untuk layar desktop */
+.seamless-background {
+    position: relative;
+    overflow: clip;
+}
+
+.classic-rose-surface {
+    background-color: var(--surface-color, rgba(255,255,255,.9));
+    color: var(--surface-text-color, #4e1620);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
+}
+
+.classic-rose-primary-action {
+    background-color: var(--color-primary);
+    color: var(--on-primary-color, #fff);
+}
+
+.classic-rose-event-card {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.classic-rose-event-corner {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-color: var(--color-primary);
+    opacity: .75;
+    pointer-events: none;
+}
+
+.classic-rose-event-corner::after {
+    content: "";
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    width: 5px;
+    height: 5px;
+    background: var(--color-primary);
+    transform: rotate(45deg);
+}
+
+.classic-rose-event-corner--start {
+    top: 12px;
+    left: 12px;
+    border-top: 1px solid var(--color-primary);
+    border-left: 1px solid var(--color-primary);
+}
+
+.classic-rose-event-corner--end {
+    right: 12px;
+    bottom: 12px;
+    border-top: 1px solid var(--color-primary);
+    border-left: 1px solid var(--color-primary);
+    transform: rotate(180deg);
+}
+
+.classic-rose-event-rule {
+    width: 46px;
+    height: 1px;
+    background: var(--color-primary);
+    opacity: .7;
+}
+
 @media (min-width: 768px) {
-    .seamless-background {
-        background-image: var(--bg-desktop);
+    .classic-rose-background {
+        background-size: 1536px 1536px;
     }
 }

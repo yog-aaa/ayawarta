@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
-import CornerFlower from "./CornerFlower";
+import SectionDivider from "./SectionDivider";
 import type { InvitationData } from "@/features/invitations/types";
 
 const CopyIcon = ({ className }: { className?: string }) => (
@@ -21,18 +21,12 @@ const CopyIcon = ({ className }: { className?: string }) => (
 	</svg>
 );
 
-const TitleDivider: React.FC<{ src: string }> = ({ src }) => (
-	<div className='relative w-20 h-4'>
-		<Image src={src} alt='Divider' fill className='object-contain' />
-	</div>
-);
-
 interface GiftSectionProps {
 	gifts?: InvitationData["gifts"]; // made optional
 	theme: ThemeConfig;
 }
 
-const GiftSection: React.FC<GiftSectionProps> = ({ gifts, theme }) => {
+const GiftSection: React.FC<GiftSectionProps> = ({ gifts }) => {
 	const [copiedAccount, setCopiedAccount] = useState<string | null>(null);
 	const giftList = gifts ?? []; // safe fallback
 
@@ -54,10 +48,8 @@ const GiftSection: React.FC<GiftSectionProps> = ({ gifts, theme }) => {
 
 	return (
 		<section className='relative'>
-			<CornerFlower flowerSrc={theme.assets.flower} position='top-left' />
-			<CornerFlower flowerSrc={theme.assets.flower} position='bottom-right' />
 			<div
-				className='relative z-20 container mx-auto px-4 sm:px-8 max-w-md flex flex-col items-center gap-8 text-center py-20 md:py-32'
+				className='relative z-20 container mx-auto px-4 sm:px-8 max-w-3xl flex flex-col items-center gap-8 text-center py-20 md:py-32'
 				style={{ color: "var(--color-text)" }}>
 				<motion.div
 					initial={{ opacity: 0, y: 50 }}
@@ -65,12 +57,12 @@ const GiftSection: React.FC<GiftSectionProps> = ({ gifts, theme }) => {
 					viewport={{ once: true }}
 					transition={{ duration: 0.8 }}>
 					<div className='flex items-center justify-center gap-4'>
-						<TitleDivider src={theme.assets.divider} />
+						<SectionDivider />
 						<h2 className='text-xl' style={{ fontFamily: "var(--font-body)" }}>
 							Kirim Hadiah
 						</h2>
 						<div className='transform -scale-x-100'>
-							<TitleDivider src={theme.assets.divider} />
+							<SectionDivider />
 						</div>
 					</div>
 					<p className='text-sm mt-4 max-w-xs mx-auto'>
@@ -80,11 +72,11 @@ const GiftSection: React.FC<GiftSectionProps> = ({ gifts, theme }) => {
 					</p>
 				</motion.div>
 
-				<div className='w-full space-y-4'>
+				<div className='grid w-full gap-4 sm:grid-cols-2'>
 					{giftList.map((gift, index) => (
 						<motion.div
 							key={index}
-							className='bg-white/90 backdrop-blur-sm rounded-lg p-4 flex flex-col items-center'
+							className='classic-rose-surface flex flex-col items-center rounded-2xl p-5'
 							initial={{ opacity: 0, y: 50 }}
 							whileInView={{ opacity: 1, y: 0 }}
 							viewport={{ once: true }}
@@ -94,6 +86,7 @@ const GiftSection: React.FC<GiftSectionProps> = ({ gifts, theme }) => {
 									src={gift.logo}
 									alt={`${gift.platform} logo`}
 									fill
+									sizes='96px'
 									className='object-contain'
 								/>
 							</div>
@@ -105,8 +98,7 @@ const GiftSection: React.FC<GiftSectionProps> = ({ gifts, theme }) => {
 							<p className='text-sm'>a/n {gift.accountHolder}</p>
 							<button
 								onClick={() => handleCopy(gift.accountNumber)}
-								style={{ backgroundColor: "var(--color-primary)" }}
-								className='mt-3 text-white text-xs px-4 py-2 rounded-full flex items-center gap-2 transition-all duration-300'>
+								className='classic-rose-primary-action mt-3 flex min-h-11 items-center gap-2 rounded-full px-4 py-2 text-xs transition-opacity hover:opacity-90'>
 								<CopyIcon className='w-3 h-3' />
 								<span>
 									{copiedAccount === gift.accountNumber ? "Tersalin!" : "Salin Nomor"}

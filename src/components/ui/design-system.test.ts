@@ -194,8 +194,8 @@ describe("Stage 8 & 8.1 — UI and Tailwind Design-System Refactor", () => {
         expect(theme.id).toBeTruthy();
         expect(theme.title).toBeTruthy();
         expect(theme.category).toBe("Pernikahan");
-        expect(theme.backgroundSrc).toContain(`/classic-rose/${theme.id}/bg.png`);
-        expect(theme.flowerSrc).toContain(`/classic-rose/${theme.id}/bunga.png`);
+        expect(theme.backgroundSrc).toContain(`/classic-rose/${theme.id}/preview.webp`);
+        expect(theme.flowerSrc).toContain(`/classic-rose/${theme.id}/bunga.webp`);
         expect(theme.href).toBe(`/wedding/classic-rose/${theme.id}`);
         expect(theme.code).toBeTruthy();
       });

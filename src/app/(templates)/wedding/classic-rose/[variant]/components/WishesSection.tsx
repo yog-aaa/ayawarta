@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { defaultFirebaseWishesAdapter } from "@/features/wishes/firebase-adapter";
 import type {
@@ -12,13 +11,7 @@ import type {
   WishesSnapshot,
 } from "@/features/wishes";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
-import CornerFlower from "./CornerFlower";
-
-const TitleDivider: React.FC<{ src: string }> = ({ src }) => (
-  <div className="relative w-20 h-4">
-    <Image src={src} alt="Divider" fill className="object-contain" />
-  </div>
-);
+import SectionDivider from "./SectionDivider";
 
 export interface WishesSectionProps {
   invitationSlug: string;
@@ -35,7 +28,6 @@ interface FieldErrors {
 
 const WishesSection: React.FC<WishesSectionProps> = ({
   invitationSlug,
-  theme,
   gateway,
 }) => {
   const activeGateway = gateway ?? defaultFirebaseWishesAdapter;
@@ -179,10 +171,8 @@ const WishesSection: React.FC<WishesSectionProps> = ({
 
   return (
     <section className="relative">
-      <CornerFlower flowerSrc={theme.assets.flower} position="top-right" />
-      <CornerFlower flowerSrc={theme.assets.flower} position="bottom-left" />
       <div
-        className="relative z-20 container mx-auto px-4 sm:px-8 max-w-md flex flex-col items-center gap-8 text-center py-20 md:py-32"
+        className="relative z-20 container mx-auto px-4 sm:px-8 max-w-xl flex flex-col items-center gap-8 text-center py-20 md:py-32"
         style={{ color: "var(--color-text)" }}
       >
         <motion.div
@@ -192,12 +182,12 @@ const WishesSection: React.FC<WishesSectionProps> = ({
           transition={{ duration: 0.8 }}
         >
           <div className="flex items-center justify-center gap-4">
-            <TitleDivider src={theme.assets.divider} />
+            <SectionDivider />
             <h2 className="text-xl" style={{ fontFamily: "var(--font-body)" }}>
               Buku Tamu
             </h2>
             <div className="transform -scale-x-100">
-              <TitleDivider src={theme.assets.divider} />
+              <SectionDivider />
             </div>
           </div>
           <p className="text-sm mt-4 max-w-xs mx-auto">
@@ -207,7 +197,7 @@ const WishesSection: React.FC<WishesSectionProps> = ({
 
         <motion.form
           onSubmit={handleSubmit}
-          className="w-full bg-white/90 backdrop-blur-sm rounded-lg p-4 space-y-3 text-left"
+          className="classic-rose-surface w-full space-y-3 rounded-2xl p-5 text-left"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -268,7 +258,7 @@ const WishesSection: React.FC<WishesSectionProps> = ({
                 onClick={() => handleAttendanceChange("Hadir")}
                 className={`flex-1 py-2 text-xs rounded min-h-[44px] min-w-[44px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-primary] ${
                   attendance === "Hadir"
-                    ? "bg-[--color-primary] text-white"
+                    ? "classic-rose-primary-action"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
               >
@@ -281,7 +271,7 @@ const WishesSection: React.FC<WishesSectionProps> = ({
                 onClick={() => handleAttendanceChange("Tidak Hadir")}
                 className={`flex-1 py-2 text-xs rounded min-h-[44px] min-w-[44px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-primary] ${
                   attendance === "Tidak Hadir"
-                    ? "bg-[--color-primary] text-white"
+                    ? "classic-rose-primary-action"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
               >
@@ -342,8 +332,7 @@ const WishesSection: React.FC<WishesSectionProps> = ({
             type="submit"
             disabled={isSubmitting}
             aria-busy={isSubmitting}
-            style={{ backgroundColor: "var(--color-primary)" }}
-            className="w-full text-white py-2 rounded-lg font-semibold min-h-[44px] transition-opacity disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-primary]"
+            className="classic-rose-primary-action w-full py-2 rounded-lg font-semibold min-h-[44px] transition-opacity disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-primary]"
           >
             {isSubmitting ? "Mengirim..." : "Kirim Ucapan"}
           </button>
@@ -377,8 +366,7 @@ const WishesSection: React.FC<WishesSectionProps> = ({
               <button
                 type="button"
                 onClick={handleRetry}
-                style={{ backgroundColor: "var(--color-primary)" }}
-                className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg text-white min-h-[44px] min-w-[44px] transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-primary]"
+                className="classic-rose-primary-action inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg min-h-[44px] min-w-[44px] transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[--color-primary]"
               >
                 Coba Lagi
               </button>
@@ -398,8 +386,7 @@ const WishesSection: React.FC<WishesSectionProps> = ({
           {status === "ready" && wishes.length === 0 && skippedCount === 0 && (
             <div
               role="status"
-              className="w-full bg-white/70 backdrop-blur-sm rounded-lg p-6 text-center text-sm"
-              style={{ color: "var(--color-text)" }}
+              className="classic-rose-surface w-full rounded-2xl p-6 text-center text-sm"
             >
               <p className="font-medium">Belum ada ucapan.</p>
               <p className="text-xs text-gray-500 mt-1">
@@ -418,7 +405,7 @@ const WishesSection: React.FC<WishesSectionProps> = ({
               {wishes.map((wish) => (
                 <motion.div
                   key={wish.id}
-                  className="bg-white/90 backdrop-blur-sm rounded-lg p-3"
+                  className="classic-rose-surface rounded-2xl p-3"
                   initial={{ opacity: 0, x: -50 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5 }}

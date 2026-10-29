@@ -1,121 +1,102 @@
-// src/components/templates/classic-rose/GallerySection.tsx
 "use client";
-import React, { useState } from "react";
+
+import { useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
-import CornerFlower from "./CornerFlower";
+import type { ClassicRoseThemeConfig } from "@/lib/theme-config/classic-rose";
 import type { InvitationData } from "@/features/invitations/types";
+import SectionDivider from "./SectionDivider";
 
-const PlayIcon = ({ className }: { className?: string }) => (
-	<svg
-		className={className}
-		viewBox='0 0 24 24'
-		fill='currentColor'
-		xmlns='http://www.w3.org/2000/svg'>
-		<path d='M8 5v14l11-7z' />
-	</svg>
-);
-
-const TitleDivider: React.FC<{ src: string }> = ({ src }) => (
-	<div className='relative w-20 h-4'>
-		<Image src={src} alt='Divider' fill className='object-contain' />
-	</div>
-);
-
-// Props sekarang hanya butuh 'gallery'
 interface GallerySectionProps {
-	gallery: NonNullable<InvitationData["gallery"]>;
-	theme: ThemeConfig;
+  gallery: NonNullable<InvitationData["gallery"]>;
+  theme: ClassicRoseThemeConfig;
 }
 
-const GallerySection: React.FC<GallerySectionProps> = ({ gallery, theme }) => {
-	const [playVideo, setPlayVideo] = useState(false);
+function getEmbedUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const id = parsed.hostname === "youtu.be"
+      ? parsed.pathname.slice(1)
+      : parsed.hostname.endsWith("youtube.com")
+        ? parsed.searchParams.get("v")
+        : null;
+    return id ? `https://www.youtube.com/embed/${encodeURIComponent(id)}?autoplay=1` : null;
+  } catch {
+    return null;
+  }
+}
 
-	const getEmbedUrl = (url: string) => {
-		const videoId = url.split("v=")[1]?.split("&")[0];
-		return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : "";
-	};
+export default function GallerySection({ gallery }: GallerySectionProps) {
+  const [playVideo, setPlayVideo] = useState(false);
+  const embedUrl = gallery.videoUrl ? getEmbedUrl(gallery.videoUrl) : null;
 
-	const isVideoValid = gallery.videoUrl && getEmbedUrl(gallery.videoUrl) !== "";
+  return (
+    <section className="relative px-4 py-20 sm:px-8 md:py-28">
+      <motion.div
+        className="classic-rose-surface relative z-10 mx-auto w-full max-w-3xl rounded-3xl p-4 sm:p-7"
+        initial={{ opacity: 0, y: 32 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="mb-6 text-center">
+          <p className="text-xs uppercase tracking-[.3em] opacity-75">Kenangan bersama</p>
+          <h2 className="mt-2 text-2xl sm:text-3xl" style={{ fontFamily: "var(--font-heading)" }}>
+            Momen Indah Kami
+          </h2>
+          <SectionDivider className="mx-auto mt-4 w-24" />
+        </div>
 
-	return (
-		<section className='relative'>
-			<CornerFlower flowerSrc={theme.assets.flower} position='top-right' />
-			<CornerFlower flowerSrc={theme.assets.flower} position='bottom-left' />
-			<div
-				className='relative z-20 container mx-auto px-4 sm:px-8 max-w-md flex flex-col items-center gap-10 py-20 md:py-32'
-				style={{ color: "var(--color-text)" }}>
-				<motion.div
-					className='w-full p-4 text-center bg-white/90 backdrop-blur-sm rounded-2xl'
-					initial={{ opacity: 0, y: 50 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true }}
-					transition={{ duration: 0.8 }}>
-					<div className='flex items-center justify-center gap-4'>
-						<TitleDivider src={theme.assets.divider} />
-						<h2 className='text-xl' style={{ fontFamily: "var(--font-body)" }}>
-							Momen Indah Kami
-						</h2>
-						<div className='transform -scale-x-100'>
-							<TitleDivider src={theme.assets.divider} />
-						</div>
-					</div>
-					<p className='text-base mt-2' style={{ fontFamily: "var(--font-body)" }}>
-						The Memorable Wedding Gallery
-					</p>
-					<div className='grid grid-cols-3 grid-rows-4 gap-2 mt-6 h-[500px]'>
-						<div className='col-span-3 row-span-2 relative rounded-lg overflow-hidden group bg-black'>
-							{isVideoValid && !playVideo ? (
-								<>
-									<Image
-										src={gallery.images[0]}
-										alt='Video Thumbnail'
-										fill
-										className='object-cover group-hover:scale-105 transition-transform duration-300'
-									/>
-									<div
-										className='absolute inset-0 bg-black/30 flex items-center justify-center cursor-pointer'
-										onClick={() => setPlayVideo(true)}>
-										<PlayIcon className='w-16 h-16 text-white/80 drop-shadow-lg' />
-									</div>
-								</>
-							) : isVideoValid && playVideo ? (
-								<iframe
-									src={getEmbedUrl(gallery.videoUrl!)}
-									title='YouTube video player'
-									frameBorder='0'
-									allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
-									allowFullScreen
-									className='w-full h-full'></iframe>
-							) : (
-								<Image
-									src={gallery.images[0]}
-									alt='Gallery Image'
-									fill
-									className='object-cover'
-								/>
-							)}
-						</div>
-						{gallery.images.slice(1, 6).map((imgSrc, index) => (
-							<div
-								key={index}
-								className={`relative rounded-lg overflow-hidden ${
-									index === 1 ? "col-span-2" : "col-span-1"
-								}`}>
-								<Image
-									src={imgSrc}
-									alt={`Gallery ${index + 2}`}
-									fill
-									className='object-cover'
-								/>
-							</div>
-						))}
-					</div>
-				</motion.div>
-			</div>
-		</section>
-	);
-};
-
-export default GallerySection;
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+          {embedUrl && (
+            <div className="relative col-span-2 aspect-video overflow-hidden rounded-2xl bg-black/20">
+              {playVideo ? (
+                <iframe
+                  src={embedUrl}
+                  title="Video pernikahan"
+                  className="h-full w-full"
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <>
+                  <Image
+                    src={gallery.images[0]}
+                    alt="Pratinjau video pernikahan"
+                    fill
+                    sizes="(max-width: 767px) 100vw, 720px"
+                    quality={75}
+                    className="object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPlayVideo(true)}
+                    aria-label="Putar video pernikahan"
+                    className="absolute inset-0 flex items-center justify-center bg-black/30 text-white focus-visible:outline-4 focus-visible:outline-offset-[-4px] focus-visible:outline-white"
+                  >
+                    <span className="flex size-16 items-center justify-center rounded-full border border-white/80 bg-black/25 text-2xl backdrop-blur-sm" aria-hidden="true">▶</span>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+          {gallery.images.map((src, index) => (
+            <div
+              key={`${src}-${index}`}
+              className={`relative overflow-hidden rounded-2xl bg-black/10 ${index === 0 ? "col-span-2 aspect-[4/3] sm:aspect-[16/9]" : "aspect-square"}`}
+            >
+              <Image
+                src={src}
+                alt={`Foto kenangan ${index + 1}`}
+                fill
+                sizes={index === 0 ? "(max-width: 767px) 100vw, 720px" : "(max-width: 767px) 50vw, 360px"}
+                quality={75}
+                className="object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </section>
+  );
+}
