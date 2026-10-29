@@ -146,7 +146,9 @@ describe("Stage 8 & 8.1 — UI and Tailwind Design-System Refactor", () => {
       HERO_CONFIG.sliderImages.forEach((img) => {
         expect(img).toMatch(/^\/images\//);
       });
-      expect(HERO_CONFIG.userAvatars.length).toBe(3);
+      expect(HERO_CONFIG.description).toBeTruthy();
+      expect(HERO_CONFIG.primaryCtaText).toBeTruthy();
+      expect(HERO_CONFIG.secondaryCtaText).toBeTruthy();
     });
 
     it("provides complete feature data with icons and tags", () => {

@@ -24,11 +24,6 @@ export interface HeroConfig {
   primaryCtaText: string;
   secondaryCtaText: string;
   sliderImages: readonly string[];
-  userAvatars: readonly string[];
-  proofText: {
-    prefix: string;
-    count: string;
-  };
 }
 
 export const HERO_CONFIG: HeroConfig = {
@@ -45,15 +40,6 @@ export const HERO_CONFIG: HeroConfig = {
     "/images/slider/slide 2.jpg",
     "/images/slider/slide 3.jpg",
   ],
-  userAvatars: [
-    "https://i.pravatar.cc/40?img=1",
-    "https://i.pravatar.cc/40?img=2",
-    "https://i.pravatar.cc/40?img=3",
-  ],
-  proofText: {
-    prefix: "Telah digunakan lebih dari",
-    count: "5rb Pengguna",
-  },
 };
 
 export type FeatureIconName =

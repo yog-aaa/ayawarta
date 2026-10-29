@@ -22,7 +22,7 @@ The memorable elements that must remain recognizable are:
 - Landing-page section order.
 - Existing written content unless a clear typo is fixed.
 - Header information architecture and anchor destinations.
-- Hero artwork, primary calls to action, and social-proof band.
+- Hero artwork and primary calls to action. The hero ends without a wave or user-count band.
 - Feature, pricing, theme, testimonial, and footer concepts.
 - Classic Rose frames, backgrounds, flowers, dividers, typography, colors, and section order.
 - Existing animation intent: gentle entrances, carousel transitions, and invitation opening.

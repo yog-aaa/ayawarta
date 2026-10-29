@@ -238,53 +238,6 @@ export default function HomeSection() {
             </div>
           </motion.div>
         </div>
-
-        {/* Wave Background - Bottom Section */}
-        <motion.div
-          className="relative w-full mt-6 lg:mt-auto"
-          initial={{ y: shouldReduceMotion ? 0 : 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{
-            duration: shouldReduceMotion ? 0.01 : 0.8,
-            delay: shouldReduceMotion ? 0 : 0.5,
-          }}
-        >
-          <svg
-            className="w-full h-auto"
-            viewBox="0 0 1440 120"
-            preserveAspectRatio="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              d="M0,40 Q360,0 720,40 T1440,40 L1440,120 L0,120 Z"
-              fill="#0264FF"
-              className="transition-[fill] duration-300"
-            />
-          </svg>
-
-          {/* Avatars Section */}
-          <div className="relative bg-[#0264FF] px-4 sm:px-8 lg:px-16 py-6 sm:py-8">
-            <div className="container mx-auto flex items-center justify-start gap-3 sm:gap-4">
-              <div className="flex -space-x-3 sm:-space-x-4">
-                {HERO_CONFIG.userAvatars.map((avatar, index) => (
-                  <Image
-                    key={avatar}
-                    src={avatar}
-                    alt={`Foto profil pengguna ${index + 1}`}
-                    width={40}
-                    height={40}
-                    className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-3 border-white shadow-md"
-                  />
-                ))}
-              </div>
-              <p className="text-xs sm:text-sm font-medium text-white">
-                {HERO_CONFIG.proofText.prefix} <br />
-                <span className="font-bold">{HERO_CONFIG.proofText.count}</span> 👑
-              </p>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </section>
   );

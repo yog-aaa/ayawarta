@@ -107,6 +107,7 @@ describe("Landing Interactive Behavior & Rendered State Tests (UI-10, UI-11, UI-
       expect(heading?.textContent).toContain("Undangan digital,");
       expect(heading?.textContent).toContain("semudah bercerita.");
       expect(heading?.querySelector("img")).toBeNull();
+      expect(container.textContent).not.toContain("5rb Pengguna");
 
       const phone = container.querySelector('[data-testid="hero-phone-frame"]');
       const screen = container.querySelector('[data-testid="hero-phone-screen"]');
