@@ -353,13 +353,12 @@ describe("Landing Interactive Behavior & Rendered State Tests (UI-10, UI-11, UI-
         'a[href="#tentang"]'
       );
 
-      // 3 tiers: Basic ("Coba"), Standar ("Pesan Sekarang"), Premium ("Pesan Sekarang")
       expect(ctaLinks.length).toBe(3);
 
       const expectedLabels = [
-        "Coba untuk paket Basic",
-        "Pesan Sekarang untuk paket Standar",
-        "Pesan Sekarang untuk paket Premium",
+        "Pilih paket Kabar",
+        "Pilih paket Cerita",
+        "Pilih paket Istimewa",
       ];
 
       ctaLinks.forEach((link, index) => {

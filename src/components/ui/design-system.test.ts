@@ -161,12 +161,26 @@ describe("Stage 8 & 8.1 — UI and Tailwind Design-System Refactor", () => {
       expect(FEATURE_ASSETS.phoneFeature).toBeTruthy();
     });
 
-    it("defines pricing plans and payment gateway support", () => {
+    it("defines three paid, one-event pricing plans", () => {
       expect(PRICING_PLANS.length).toBe(3);
+      expect(PRICING_PLANS.map((plan) => plan.id)).toEqual([
+        "kabar",
+        "cerita",
+        "istimewa",
+      ]);
+      expect(PRICING_PLANS.map((plan) => plan.priceIdr)).toEqual([
+        49_000,
+        99_000,
+        149_000,
+      ]);
+      expect(PRICING_PLANS.filter((plan) => plan.isRecommended).map((plan) => plan.id)).toEqual([
+        "cerita",
+      ]);
       PRICING_PLANS.forEach((plan) => {
         expect(plan.name).toBeTruthy();
-        expect(plan.price).toBeTruthy();
+        expect(plan.description).toBeTruthy();
         expect(plan.features.length).toBeGreaterThan(0);
+        expect(plan.features.join(" ").toLowerCase()).not.toMatch(/qr check-in|foto tamu/);
       });
       expect(PAYMENT_METHODS.length).toBeGreaterThan(0);
     });

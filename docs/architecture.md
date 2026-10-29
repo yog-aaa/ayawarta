@@ -48,6 +48,10 @@ Stage 5B used the primitive to remediate an oversized JPEG. Oversized PNG and We
 
 Auth.js Credentials provides admin-only login. `/admin` is protected; `/admin/login` remains accessible for recovery from stale sessions.
 
+### Pricing configuration
+
+The public landing page currently reads the three fixed offers from `src/config/landing.ts`; no pricing administration or checkout flow is implemented. Stable plan IDs and numeric IDR amounts keep the display contract explicit. A future admin panel is intended to manage package prices, inclusions, and customization options, with guest photo gallery and QR check-in maintained as independent extensions. The planned behavior and present limits are recorded in [the pricing product contract](pricing.md).
+
 ## Implemented Architecture
 
 ```text

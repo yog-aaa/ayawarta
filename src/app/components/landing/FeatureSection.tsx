@@ -32,7 +32,7 @@ export default function FeatureSection() {
         <AnimateIn direction="up">
           <SectionHeader
             title="Fitur-Fitur untuk Momen Terbaikmu"
-            subtitle="Di sini, kamu pilih bisa desain, sebar undangan, dan lihat siapa aja yang datang, semuanya dari satu tempat."
+            subtitle="Kirim detail acaramu, lalu tim AyaWarta menyiapkan undangan yang siap dibagikan dan menerima kabar kehadiran tamu."
           />
         </AnimateIn>
 

@@ -32,7 +32,7 @@ The memorable elements that must remain recognizable are:
 The section order remains hero, features, pricing, themes, testimonials, then footer. The post-hero presentation follows the hero's navy headings, soft blue and white surfaces, restrained brand-blue accents, rounded invitation framing, fine borders, and light shadows.
 
 - Features: the existing invitation phone stays inside a responsive visual stage beside six readable feature cards.
-- Pricing: the three plans remain, with equal-height cards and one stable blue emphasis on the popular plan. Payment marks appear in consistent light chips.
+- Pricing: Kabar (Rp49.000), Cerita (Rp99.000), and Istimewa (Rp149.000) are one-time, per-event offers prepared by the AyaWarta team. The cards stay equal height, with one stable blue emphasis on Cerita. Guest photo gallery and QR check-in are shown only as planned, separate extensions. Payment marks appear in consistent light chips. See [pricing product contract](pricing.md).
 - Themes: the visible showcase uses the six real Classic Rose color variants and their corresponding preview routes. Preview cards combine each variant's existing background and flower assets; they are style previews, not screenshots of completed invitations. Other category filters show an explicit empty state until matching templates exist. Search filters the available showcase.
 - Testimonials: the current sample stories use text-led cards and are labeled as illustrative. Unrelated cartoon portraits are not displayed as customer photographs.
 - Footer: a deep navy closing section carries the existing about, contact, and social information without a large decorative wave.

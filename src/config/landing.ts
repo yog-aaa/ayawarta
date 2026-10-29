@@ -95,56 +95,60 @@ export const FEATURE_ASSETS = {
 } as const;
 
 export interface PricingPlan {
+  id: string;
   name: string;
-  price: string;
-  period: string;
+  priceIdr: number;
+  description: string;
   features: readonly string[];
   buttonText: string;
-  isPopular: boolean;
+  isRecommended: boolean;
 }
 
 export const PRICING_PLANS: readonly PricingPlan[] = [
   {
-    name: "Basic",
-    price: "0",
-    period: "/Gratis Seminggu",
+    id: "kabar",
+    name: "Kabar",
+    priceIdr: 49_000,
+    description: "Untuk berbagi kabar acara dengan hangat dan jelas.",
     features: [
-      "5 Pilihan Template Dasar",
-      "Detail Acara & Peta Lokasi",
-      "Tanpa Foto",
-      "Terdapat Watermark/Branding Kami",
+      "Dibuatkan tim AyaWarta dari data Anda",
+      "Detail acara, peta, dan hitung mundur",
+      "RSVP dan buku ucapan",
+      "Galeri hingga 5 foto dari pemilik acara",
+      "1 kali revisi konten",
     ],
-    buttonText: "Coba",
-    isPopular: false,
+    buttonText: "Pilih Kabar",
+    isRecommended: false,
   },
   {
-    name: "Standar",
-    price: "39.999",
-    period: "/Bulan",
+    id: "cerita",
+    name: "Cerita",
+    priceIdr: 99_000,
+    description: "Untuk mengajak tamu mengenal kisah di balik acara.",
     features: [
-      "20+ Pilihan Template Premium",
-      "Semua fitur di paket Basic",
-      "Buku Tamu & Ucapan Digital",
-      "Fitur Kirim Kado Digital",
-      "Galeri Foto & Video (max. 10 Foto)",
-      "Tanpa Watermark/Branding",
+      "Semua yang ada di paket Kabar",
+      "Galeri hingga 20 foto dari pemilik acara",
+      "1 video sematan dan cerita perjalanan",
+      "Musik latar dan kado digital",
+      "2 kali revisi konten",
     ],
-    buttonText: "Pesan Sekarang",
-    isPopular: true,
+    buttonText: "Pilih Cerita",
+    isRecommended: true,
   },
   {
-    name: "Premium",
-    price: "79.999",
-    period: "/Bulan",
+    id: "istimewa",
+    name: "Istimewa",
+    priceIdr: 149_000,
+    description: "Untuk undangan yang disiapkan lebih personal.",
     features: [
-      "Semua Tema Eksklusif",
-      "Semua fitur di paket Standard",
-      "Fitur Siaran Langsung (Live)",
-      "Kustomisasi Musik Latar",
-      "Pena Kisah Ajaib (Love Story) AI",
+      "Semua yang ada di paket Cerita",
+      "Galeri hingga 30 foto dari pemilik acara",
+      "Kurasi tulisan oleh tim AyaWarta",
+      "Prioritas antrean pengerjaan",
+      "3 kali revisi konten",
     ],
-    buttonText: "Pesan Sekarang",
-    isPopular: false,
+    buttonText: "Pilih Istimewa",
+    isRecommended: false,
   },
 ] as const;
 
@@ -233,13 +237,13 @@ export const TESTIMONIALS_DATA: readonly TestimonialItem[] = [
     name: "Hendra",
     category: "Khitanan",
     rating: 5,
-    text: "Saya bukan orang yang ngerti-ngerti banget teknologi, tapi buat acara syukuran khitanan anak, saya mau yang praktis. Ternyata pakai ini gampang banget. Tinggal klik-klik, isi info, sebar link ke grup keluarga, selesai. Gak ada lagi pertanyaan 'Acaranya di mana?' atau 'Jam berapa?' berulang-ulang di WhatsApp. Bikin kepala adem.",
+    text: "Saya bukan orang yang ngerti-ngerti banget teknologi, tapi buat acara syukuran khitanan anak, saya mau yang praktis. Ternyata prosesnya gampang. Saya kirim detail acara ke tim AyaWarta, lalu undangannya siap dibagikan ke keluarga. Gak ada lagi pertanyaan 'Acaranya di mana?' atau 'Jam berapa?' berulang-ulang di WhatsApp. Bikin kepala adem.",
   },
   {
     name: "Citra",
     category: "Wisuda",
     rating: 4,
-    text: "Mau wisuda, pengen undang temen-temen tapi budget pas-pasan, hehe. Iseng nyoba yang paket standar di sini, kaget banget! Desainnya kekinian, gak kelihatan murahan sama sekali. Temen-temenku pada muji undangannya, dikira aku jago desain. Padahal tinggal chat miminya sama isi formulir doang.",
+    text: "Mau wisuda, pengen undang temen-temen tapi budget pas-pasan, hehe. Iseng pilih paket Cerita di sini, kaget banget! Desainnya kekinian, gak kelihatan murahan sama sekali. Temen-temenku pada muji undangannya, dikira aku jago desain. Padahal tinggal kirim detail acara ke tim AyaWarta.",
   },
 ] as const;
 
