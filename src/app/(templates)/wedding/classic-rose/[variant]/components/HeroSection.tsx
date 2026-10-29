@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
+import { classicRoseCloudinaryLoader, isClassicRoseCloudinaryAsset } from "@/lib/theme-config/cloudinary-theme-loader";
 import type { InvitationData } from "@/features/invitations/types";
 
 interface HeroProps {
@@ -27,6 +28,7 @@ const HeroSection: React.FC<HeroProps> = ({ data, theme }) => {
 					<div className='relative mx-auto mb-7 aspect-square w-[min(70vw,280px)] sm:w-80'>
 						<Image
 							src={theme.assets.photoFrame}
+							loader={classicRoseCloudinaryLoader}
 							alt=''
 							fill
 							sizes='(max-width: 639px) 70vw, 320px'
@@ -35,6 +37,7 @@ const HeroSection: React.FC<HeroProps> = ({ data, theme }) => {
 						<div className='absolute inset-[14%] rounded-full overflow-hidden'>
 							<Image
 								src={data.heroImage}
+								loader={isClassicRoseCloudinaryAsset(data.heroImage) ? classicRoseCloudinaryLoader : undefined}
 								alt={`${data.groom.name} & ${data.bride.name}`}
 								fill
 								sizes='(max-width: 639px) 51vw, 230px'

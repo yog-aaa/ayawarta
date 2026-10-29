@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import { classicRoseCloudinaryLoader } from "@/lib/theme-config/cloudinary-theme-loader";
 import Link from "next/link";
 import { ArrowUpRight, Search } from "lucide-react";
 import { SHOWCASE_THEMES, THEME_CATEGORIES, type ThemeCategory } from "@/config/landing";
@@ -104,6 +105,7 @@ export default function ThemeSection() {
                   >
                     <Image
                       src={theme.backgroundSrc}
+                      loader={classicRoseCloudinaryLoader}
                       alt=""
                       fill
                       sizes="(min-width: 1024px) 390px, (min-width: 640px) 50vw, 100vw"
@@ -112,6 +114,7 @@ export default function ThemeSection() {
                     <div className="absolute inset-x-7 top-7 h-[52%]">
                       <Image
                         src={theme.flowerSrc}
+                        loader={classicRoseCloudinaryLoader}
                         alt=""
                         fill
                         sizes="(min-width: 1024px) 320px, (min-width: 640px) 40vw, 80vw"

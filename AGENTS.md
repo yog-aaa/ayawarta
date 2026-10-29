@@ -44,8 +44,8 @@ If documents conflict, the approved specification controls product behavior, the
 - Preserve the current AyaWarta UI and brand. This is a refactor, not a redesign.
 - PostgreSQL and Prisma store invitation data and admin users.
 - Firestore remains the real-time store for wishes and RSVP.
-- Cloudinary stores dynamic invitation media only.
-- Static UI assets remain in `public`.
+- Cloudinary stores dynamic invitation media and the optimized Classic Rose runtime artwork. Its verified, versioned theme URLs are tracked in `src/config/classic-rose-cloudinary.json`.
+- Other static UI assets remain in `public`. Classic Rose source PNGs and generated WebPs live under `assets/themes/classic-rose/`, outside the served `public` tree.
 - `rika-fauzi`, `shidqi-mita`, `dudi-aini`, and `default-preview` are production data.
 - All current invitation media belongs under `ayawarta/production/invitations/{slug}/...` in the new Cloudinary account.
 - The application is deployed on Vercel. Production PostgreSQL uses Neon (direct connection for migrations and seed, pooled connection for application runtime).

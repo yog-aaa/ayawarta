@@ -15,11 +15,11 @@ const data: InvitationData = {
 };
 
 describe("default preview artwork", () => {
-  it("uses local, coherent sample photos only for the preview slug", () => {
+  it("uses coherent Cloudinary sample photos only for the preview slug", () => {
     const result = withDefaultPreviewAssets("default-preview", data);
-    expect(result.couple.heroImage).toMatch(/\/sample\/couple\.webp$/);
-    expect(result.couple.groom.photo).toMatch(/\/sample\/groom\.webp$/);
-    expect(result.couple.bride.photo).toMatch(/\/sample\/bride\.webp$/);
+    expect(result.couple.heroImage).toMatch(/^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/v\d+\/ayawarta\/production\/themes\/classic-rose\/sample\/couple-[a-f0-9]{16}\.webp$/);
+    expect(result.couple.groom.photo).toMatch(/\/sample\/groom-[a-f0-9]{16}\.webp$/);
+    expect(result.couple.bride.photo).toMatch(/\/sample\/bride-[a-f0-9]{16}\.webp$/);
     expect(result.gallery?.images).toHaveLength(3);
     expect(result.gallery?.videoUrl).toBe("");
     expect(data.couple.heroImage).toBe("https://example.com/hero.jpg");

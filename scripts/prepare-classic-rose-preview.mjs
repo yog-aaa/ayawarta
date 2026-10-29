@@ -11,7 +11,7 @@ if (sources.length !== names.length) {
 
 const destination = path.join(
   process.cwd(),
-  "public/images/themes/classic-rose/sample"
+  "assets/themes/classic-rose/sample"
 );
 await mkdir(destination, { recursive: true });
 

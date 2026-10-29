@@ -1,3 +1,5 @@
+import classicRoseMedia from "@/config/classic-rose-cloudinary.json";
+
 export interface ClassicRoseVariantConfig {
     assets: {
         background: string;
@@ -45,14 +47,15 @@ const validVariants = {
 export function getClassicRoseThemeConfig(variant: string): ClassicRoseThemeConfig {
     const variantKey = Object.keys(validVariants).includes(variant) ? variant : 'red';
     const colors = validVariants[variantKey as keyof typeof validVariants];
+    const media = classicRoseMedia.variants[variantKey as keyof typeof validVariants];
 
     // Konfigurasi spesifik untuk setiap varian
     const variantConfig: ClassicRoseVariantConfig = {
         assets: {
-            background: `/images/themes/classic-rose/${variantKey}/texture.webp`,
-            flower: `/images/themes/classic-rose/${variantKey}/bunga.webp`,
-            photoFrame: `/images/themes/classic-rose/${variantKey}/border-foto.webp`,
-            bismillah: `/images/themes/classic-rose/${variantKey}/bismillah.webp`,
+            background: media.texture,
+            flower: media.bunga,
+            photoFrame: media["border-foto"],
+            bismillah: media.bismillah,
         },
         colors: colors,
     };

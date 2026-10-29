@@ -2,7 +2,7 @@ import { stat } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
-const root = path.join(process.cwd(), "public/images/themes/classic-rose");
+const root = path.join(process.cwd(), "assets/themes/classic-rose");
 const variants = ["red", "green", "blue", "orange", "black", "white"];
 const canvasColors = {
   red: "#f5ebec",

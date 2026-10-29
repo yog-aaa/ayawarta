@@ -1,0 +1,54 @@
+{
+  "cloudName": "uhwi7xvb",
+  "variants": {
+    "red": {
+      "texture": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284419/ayawarta/production/themes/classic-rose/red/texture-755a9fdc32c6eb98.webp",
+      "preview": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284420/ayawarta/production/themes/classic-rose/red/preview-6644ff18f344ad62.webp",
+      "bunga": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284421/ayawarta/production/themes/classic-rose/red/bunga-c59643ceb3136a53.webp",
+      "border-foto": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284422/ayawarta/production/themes/classic-rose/red/border-foto-3d33e6747e4f815a.webp",
+      "bismillah": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284423/ayawarta/production/themes/classic-rose/red/bismillah-cdf5f01cd54fb570.webp"
+    },
+    "green": {
+      "texture": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284423/ayawarta/production/themes/classic-rose/green/texture-722cc53b5902309a.webp",
+      "preview": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284424/ayawarta/production/themes/classic-rose/green/preview-2faeba716da5010a.webp",
+      "bunga": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284425/ayawarta/production/themes/classic-rose/green/bunga-b019baf19c14d379.webp",
+      "border-foto": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284442/ayawarta/production/themes/classic-rose/green/border-foto-b62ca61a45e6593a.webp",
+      "bismillah": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284443/ayawarta/production/themes/classic-rose/green/bismillah-cdf5f01cd54fb570.webp"
+    },
+    "blue": {
+      "texture": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284444/ayawarta/production/themes/classic-rose/blue/texture-8f5eaf48e3e0649e.webp",
+      "preview": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284445/ayawarta/production/themes/classic-rose/blue/preview-941c337bffb70db6.webp",
+      "bunga": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284450/ayawarta/production/themes/classic-rose/blue/bunga-7b2d4ea349ab6e8e.webp",
+      "border-foto": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284454/ayawarta/production/themes/classic-rose/blue/border-foto-46cb51639309c139.webp",
+      "bismillah": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284455/ayawarta/production/themes/classic-rose/blue/bismillah-cdf5f01cd54fb570.webp"
+    },
+    "orange": {
+      "texture": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284456/ayawarta/production/themes/classic-rose/orange/texture-acdbd7d5b219c6ba.webp",
+      "preview": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284457/ayawarta/production/themes/classic-rose/orange/preview-13b31212240d226a.webp",
+      "bunga": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284458/ayawarta/production/themes/classic-rose/orange/bunga-8163952d36b435f0.webp",
+      "border-foto": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284464/ayawarta/production/themes/classic-rose/orange/border-foto-0507c183508305ca.webp",
+      "bismillah": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284465/ayawarta/production/themes/classic-rose/orange/bismillah-cdf5f01cd54fb570.webp"
+    },
+    "black": {
+      "texture": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284466/ayawarta/production/themes/classic-rose/black/texture-967d790012093d94.webp",
+      "preview": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284466/ayawarta/production/themes/classic-rose/black/preview-c481b06e7d5d025c.webp",
+      "bunga": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284468/ayawarta/production/themes/classic-rose/black/bunga-03336ea3a5d65793.webp",
+      "border-foto": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284475/ayawarta/production/themes/classic-rose/black/border-foto-f61399a2dbccd7a3.webp",
+      "bismillah": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284477/ayawarta/production/themes/classic-rose/black/bismillah-cdf5f01cd54fb570.webp"
+    },
+    "white": {
+      "texture": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284477/ayawarta/production/themes/classic-rose/white/texture-649cd60e664b8084.webp",
+      "preview": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284478/ayawarta/production/themes/classic-rose/white/preview-159205fe5bc727a3.webp",
+      "bunga": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284479/ayawarta/production/themes/classic-rose/white/bunga-6b71a07f31f6268e.webp",
+      "border-foto": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284481/ayawarta/production/themes/classic-rose/white/border-foto-9ec9aeeba213b436.webp",
+      "bismillah": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284482/ayawarta/production/themes/classic-rose/white/bismillah-cdf5f01cd54fb570.webp"
+    }
+  },
+  "sample": {
+    "couple": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284483/ayawarta/production/themes/classic-rose/sample/couple-58a2515dbf38fc9f.webp",
+    "walking": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284484/ayawarta/production/themes/classic-rose/sample/walking-a6423da892a7814b.webp",
+    "details": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284485/ayawarta/production/themes/classic-rose/sample/details-3b35d94c45c53a10.webp",
+    "groom": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284486/ayawarta/production/themes/classic-rose/sample/groom-715df8778ad19cb3.webp",
+    "bride": "https://res.cloudinary.com/uhwi7xvb/image/upload/v1793284486/ayawarta/production/themes/classic-rose/sample/bride-94184e879c05fea8.webp"
+  }
+}

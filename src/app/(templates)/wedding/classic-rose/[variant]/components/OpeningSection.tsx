@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
+import { classicRoseCloudinaryLoader, isClassicRoseCloudinaryAsset } from "@/lib/theme-config/cloudinary-theme-loader";
 
 const MailOpenIcon = ({ className }: { className?: string }) => (
 	<svg
@@ -54,6 +55,7 @@ const OpeningSection: React.FC<OpeningProps> = ({
 				<div className='relative my-4 aspect-square w-[min(72vw,290px)] md:w-[min(42vw,420px)]'>
 					<Image
 						src={theme.assets.photoFrame}
+						loader={classicRoseCloudinaryLoader}
 						alt=''
 						fill
 						sizes='(max-width: 767px) 72vw, 420px'
@@ -64,6 +66,7 @@ const OpeningSection: React.FC<OpeningProps> = ({
 						<div className='relative w-full h-full rounded-full overflow-hidden'>
 							<Image
 								src={heroImage}
+								loader={isClassicRoseCloudinaryAsset(heroImage) ? classicRoseCloudinaryLoader : undefined}
 								alt={`Foto ${coupleNames}`}
 								fill
 								sizes='(max-width: 767px) 52vw, 300px'

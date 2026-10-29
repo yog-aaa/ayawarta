@@ -84,7 +84,7 @@ Classic Rose continues to use theme-specific CSS variables supplied by its theme
 
 The invitation uses one continuous canvas across opening and content, with a seamless WebP texture tile per color variant. The tile repeats in both directions without the visible horizontal join from the former full-page PNG. Floral art belongs to the framed portraits and the theme showcase; repeated floating corner bouquets were removed from content sections. Event cards use a thin inset corner rule and small diamond in the variant's own primary color, replacing the same red bitmap corner formerly used for every variant. Dark variants use a dark translucent card surface and readable gold text, while light variants use a pale surface with dark text. The opening photo receives loading priority; below-the-fold photos use responsive `sizes` and lazy loading.
 
-The `default-preview` slug displays clearly labeled fictional sample photography stored under `public/images/themes/classic-rose/sample/`. Customer invitation photographs are not replaced. Its three-photo gallery is a compact example; production galleries can render every supplied photo in a responsive grid. The map is reached through each event's location link rather than a permanently embedded, hard-coded map.
+The `default-preview` slug displays clearly labeled fictional sample photography delivered from Cloudinary, with local sources under `assets/themes/classic-rose/sample/`. Customer invitation photographs are not replaced. Its three-photo gallery is a compact example; production galleries can render every supplied photo in a responsive grid. The map is reached through each event's location link rather than a permanently embedded, hard-coded map.
 
 ### Implemented token map
 
@@ -96,7 +96,7 @@ The `default-preview` slug displays clearly labeled fictional sample photography
 | Shape and depth | `radius-sm` through `radius-3xl`, `radius-pill`; `shadow-subtle`, `shadow-card`, `shadow-floating`, `shadow-brand` | `src/app/globals.css` |
 | Layout and timing | Narrow/default widths `48rem`/`80rem`; section spacing `4rem`/`5rem`/`8rem`; durations `150ms`/`300ms`/`600ms` | `src/app/globals.css` |
 
-Landing typography uses Noto Sans Thai by default, with Manrope available through `.font-body-alt`. Classic Rose uses Playfair Display, Alice, and Alex Brush. Font variables are loaded in `src/app/layout.tsx`. The `red`, `green`, `blue`, `orange`, `black`, and `white` Classic Rose variants and their static artwork paths are defined in `src/lib/theme-config/classic-rose.ts`; theme assets remain in `public/images/themes/classic-rose/`.
+Landing typography uses Noto Sans Thai by default, with Manrope available through `.font-body-alt`. Classic Rose uses Playfair Display, Alice, and Alex Brush. Font variables are loaded in `src/app/layout.tsx`. The `red`, `green`, `blue`, `orange`, `black`, and `white` Classic Rose variant palettes are defined in `src/lib/theme-config/classic-rose.ts`; their verified Cloudinary artwork URLs are in `src/config/classic-rose-cloudinary.json`. Source artwork remains under `assets/themes/classic-rose/` for regeneration and upload verification.
 
 ## Shared Component Criteria
 

@@ -1,6 +1,7 @@
 import type { InvitationData } from "./types";
+import classicRoseMedia from "@/config/classic-rose-cloudinary.json";
 
-const sampleRoot = "/images/themes/classic-rose/sample";
+const sample = classicRoseMedia.sample;
 
 /** Replace only the public demo artwork; persisted invitation media stays untouched. */
 export function withDefaultPreviewAssets(
@@ -13,9 +14,9 @@ export function withDefaultPreviewAssets(
     ...data,
     couple: {
       ...data.couple,
-      heroImage: `${sampleRoot}/couple.webp`,
-      groom: { ...data.couple.groom, photo: `${sampleRoot}/groom.webp` },
-      bride: { ...data.couple.bride, photo: `${sampleRoot}/bride.webp` },
+      heroImage: sample.couple,
+      groom: { ...data.couple.groom, photo: sample.groom },
+      bride: { ...data.couple.bride, photo: sample.bride },
     },
     ...(data.gallery
       ? {
@@ -23,9 +24,9 @@ export function withDefaultPreviewAssets(
             ...data.gallery,
             videoUrl: "",
             images: [
-              `${sampleRoot}/couple.webp`,
-              `${sampleRoot}/walking.webp`,
-              `${sampleRoot}/details.webp`,
+              sample.couple,
+              sample.walking,
+              sample.details,
             ],
           },
         }

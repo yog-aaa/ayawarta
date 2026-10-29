@@ -1,3 +1,5 @@
+import classicRoseMedia from "./classic-rose-cloudinary.json";
+
 export interface NavLink {
   name: string;
   href: string;
@@ -198,18 +200,18 @@ export interface ThemeItem {
 
 const CLASSIC_ROSE_VARIANTS = [
   { id: "red", colorName: "Merah", accent: "#630718" },
-  { id: "green", colorName: "Hijau", accent: "#7B9557" },
-  { id: "blue", colorName: "Biru", accent: "#5D84B0" },
-  { id: "orange", colorName: "Terakota", accent: "#C86F30" },
-  { id: "black", colorName: "Hitam", accent: "#70501B" },
-  { id: "white", colorName: "Ivory", accent: "#A57C4E" },
+  { id: "green", colorName: "Hijau", accent: "#4c6537" },
+  { id: "blue", colorName: "Biru", accent: "#315b8b" },
+  { id: "orange", colorName: "Terakota", accent: "#9b4f23" },
+  { id: "black", colorName: "Hitam", accent: "#e4bd79" },
+  { id: "white", colorName: "Ivory", accent: "#8c6839" },
 ] as const;
 
 export const SHOWCASE_THEMES: readonly ThemeItem[] = CLASSIC_ROSE_VARIANTS.map(
   ({ id, colorName, accent }, index) => ({
     id,
-    backgroundSrc: `/images/themes/classic-rose/${id}/preview.webp`,
-    flowerSrc: `/images/themes/classic-rose/${id}/bunga.webp`,
+    backgroundSrc: classicRoseMedia.variants[id].preview,
+    flowerSrc: classicRoseMedia.variants[id].bunga,
     title: "Classic Rose",
     colorName,
     code: `CR-${String(index + 1).padStart(2, "0")}`,

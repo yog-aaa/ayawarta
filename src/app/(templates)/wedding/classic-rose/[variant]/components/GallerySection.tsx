@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import type { ClassicRoseThemeConfig } from "@/lib/theme-config/classic-rose";
 import type { InvitationData } from "@/features/invitations/types";
+import { classicRoseCloudinaryLoader, isClassicRoseCloudinaryAsset } from "@/lib/theme-config/cloudinary-theme-loader";
 import SectionDivider from "./SectionDivider";
 
 interface GallerySectionProps {
@@ -62,6 +63,7 @@ export default function GallerySection({ gallery }: GallerySectionProps) {
                 <>
                   <Image
                     src={gallery.images[0]}
+                    loader={isClassicRoseCloudinaryAsset(gallery.images[0]) ? classicRoseCloudinaryLoader : undefined}
                     alt="Pratinjau video pernikahan"
                     fill
                     sizes="(max-width: 767px) 100vw, 720px"
@@ -87,6 +89,7 @@ export default function GallerySection({ gallery }: GallerySectionProps) {
             >
               <Image
                 src={src}
+                loader={isClassicRoseCloudinaryAsset(src) ? classicRoseCloudinaryLoader : undefined}
                 alt={`Foto kenangan ${index + 1}`}
                 fill
                 sizes={index === 0 ? "(max-width: 767px) 100vw, 720px" : "(max-width: 767px) 50vw, 360px"}

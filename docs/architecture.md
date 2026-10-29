@@ -26,11 +26,11 @@ The approved refactor specification and implementation plan in `docs/superpowers
 - All 31 dynamic invitation assets are in Cloudinary cloud `uhwi7xvb`, with metadata in a Git-tracked canonical catalog and PostgreSQL.
 - The legacy `public/images/SAMPLE` and `public/images/dummy-couples` directories were removed after verification.
 - The old Cloudinary account remains untouched as a recovery source.
-- Static UI and theme artwork is stored under `public/images`.
+- Optimized Classic Rose runtime artwork is delivered from Cloudinary through versioned URLs in `src/config/classic-rose-cloudinary.json`. Its local PNG/WebP sources are under `assets/themes/classic-rose/`, outside the served `public` tree. Other static UI artwork remains under `public/images`.
 
 ### Media Ingestion and Image Preparation
 
-The server-only image preparation primitive was built for the completed migration and a future admin workflow. No admin upload screen or routine upload CLI exists yet. Browser code never receives Cloudinary API credentials.
+The server-only image preparation primitive was built for the completed migration and a future admin workflow. No admin upload screen or routine customer-media upload CLI exists yet. The separate `scripts/upload-classic-rose-assets.mjs` handles only the fixed, Git-tracked static theme asset set. Browser code never receives Cloudinary API credentials.
 
 The preparation pipeline must:
 
@@ -60,7 +60,7 @@ Browser
   ├─ Invitation pages
   │    ├─ Server Component loads invitation through repository
   │    └─ Client islands handle opening, motion, audio, and Firestore wishes ── Firestore
-  ├─ Cloudinary delivery URLs for invitation media ── Cloudinary
+  ├─ Cloudinary delivery URLs for invitation media and Classic Rose artwork ── Cloudinary
   └─ Admin login / protected admin page
           │
           ▼
@@ -177,8 +177,7 @@ PostgreSQL must not be introduced into this real-time path during the refactor.
 ### Development
 
 - Next.js runs locally.
-- PostgreSQL is provided by Laragon at the connection configured in `DATABASE_URL`.
-- The database name is `ayawarta`.
+- `DATABASE_URL` is environment-dependent. The current operator's local configuration points to production Neon, so local database commands must be treated as production operations; this asset stage performs none.
 - Dynamic production media uses the new Cloudinary account.
 - Firestore remains connected to the existing project.
 
@@ -186,7 +185,7 @@ PostgreSQL must not be introduced into this real-time path during the refactor.
 
 - The application is already deployed on Vercel.
 - The planned PostgreSQL cutover uses Neon with TLS. Migrations and seed use the direct `DATABASE_URL`; the Neon-backed Vercel Production runtime requires `DATABASE_URL_POOLED`.
-- Cloudinary serves production invitation media.
+- Cloudinary serves production invitation media and Classic Rose runtime artwork.
 - Firestore serves real-time wishes and RSVP.
 
 The Neon database cutover has not been performed. Local seed and seed verification reject remote targets. Separate `prod:migrate`, `prod:seed`, and `prod:verify` entry points have Neon target guards and require an explicitly approved target plus `--execute`; these scripts are preparation, not evidence of a completed cutover. See [deployment operations](deployment.md).

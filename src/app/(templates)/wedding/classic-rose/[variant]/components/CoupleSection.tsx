@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
+import { classicRoseCloudinaryLoader, isClassicRoseCloudinaryAsset } from "@/lib/theme-config/cloudinary-theme-loader";
 import type { InvitationData } from "@/features/invitations/types";
 
 // --- SVG Icons ---
@@ -59,6 +60,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ person, align, theme }) => {
 			<div className={`relative aspect-square w-40 shrink-0 sm:w-44 ${photoOrder}`}>
 				<Image
 					src={theme.assets.photoFrame}
+					loader={classicRoseCloudinaryLoader}
 					alt=''
 					fill
 					sizes='(max-width: 639px) 160px, 176px'
@@ -68,6 +70,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ person, align, theme }) => {
 					<div className='relative w-full h-full rounded-full overflow-hidden'>
 						<Image
 							src={person.photo}
+							loader={isClassicRoseCloudinaryAsset(person.photo) ? classicRoseCloudinaryLoader : undefined}
 							alt={person.name}
 							fill
 							sizes='(max-width: 639px) 120px, 136px'
