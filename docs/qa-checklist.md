@@ -46,6 +46,21 @@ For documentation-only work, compare factual claims with the current source, che
 - [ ] Four required invitation slugs reconstruct through the repository.
 - [ ] Unknown slug returns `null` at repository level.
 
+### A2/T2 authored schema gate
+
+The following checks describe the prepared draft/Siger contract. The migration is authored but **not applied to production Neon**. Do not connect to the operator's local `DATABASE_URL`, which points to production, to complete this checklist. Use an explicitly verified isolated target for any integration checks.
+
+- [ ] New draft, publication, pin, greeting/prayer, caption, and published-version columns match `prisma/schema.prisma` and the reviewed additive migration.
+- [ ] One active draft per existing invitation uses optimistic `draftVersion` and `basePublishedVersion` checks; a new draft does not create a public `Invitation` row.
+- [ ] Existing edit is gated on a verified version-1 baseline for each of the four production invitations; the migration itself does not write baselines.
+- [ ] Each baseline/publication stores a complete restorable snapshot, digest, and exact media pins; immutable history and restrictive media references prevent accidental update or deletion.
+- [ ] Draft media IDs are limited to assets belonging to the same existing invitation; a new draft cannot reuse another customer's media.
+- [ ] The public repository's legacy select excludes new columns until the production schema is migrated; the four published slugs still reconstruct without reading drafts.
+- [ ] Only exact Classic Rose/color and Siger Priangan/ivory theme pairs parse; optional greeting/prayer and gallery alt/caption preserve Classic Rose behavior. Illustrative Siger copy and defaults remain religion-neutral.
+- [ ] No admin editor, draft preview, publish action, or Siger public route is claimed as live; when private preview is added, RSVP/wishes submission is disabled and no Firestore submit adapter is mounted.
+
+**Isolated database evidence (2026-10-30):** All five migrations were applied to a temporary PostgreSQL 18.2 cluster at `127.0.0.1:55432/ayawarta_a2`. Database tests verified baseline idempotency, compare-and-swap conflict rejection, immutable publication triggers, draft-version `CHECK` constraints, publication-media `Restrict` foreign keys, and baseline/seed lock visibility across two connections. This is local verification only: no Neon migration or customer invitation write occurred. The temporary cluster and database were stopped and removed, with port 55432 closed and the temporary path absent; these results do not activate the editor, preview, publish action, or Siger public route.
+
 ## Cloudinary
 
 - [ ] Only dynamic invitation media is included.
@@ -70,6 +85,7 @@ For documentation-only work, compare factual claims with the current source, che
 - [ ] JWT/session exposes only approved fields.
 - [ ] `/admin/*` is protected and `/admin/login` remains accessible.
 - [ ] Bootstrap is idempotent and produces safe output.
+- [ ] Existing `ADMIN` and legacy `SUPER_ADMIN` sessions share one product permission for read/edit/publish; server-side draft methods recheck the active admin without a separate super-admin gate.
 
 ## Firestore
 

@@ -32,3 +32,11 @@ export const ResourceType = {
 } as const
 
 export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType]
+
+
+export const PublicationSource = {
+  BASELINE: 'BASELINE',
+  PUBLISH: 'PUBLISH'
+} as const
+
+export type PublicationSource = (typeof PublicationSource)[keyof typeof PublicationSource]

@@ -58,6 +58,9 @@ export const ModelName = {
   Partner: 'Partner',
   Event: 'Event',
   GalleryItem: 'GalleryItem',
+  InvitationDraft: 'InvitationDraft',
+  InvitationPublication: 'InvitationPublication',
+  InvitationPublicationMedia: 'InvitationPublicationMedia',
   LoveStory: 'LoveStory',
   GiftAccount: 'GiftAccount'
 } as const
@@ -120,6 +123,9 @@ export const InvitationScalarFieldEnum = {
   weddingDate: 'weddingDate',
   heroAssetId: 'heroAssetId',
   galleryVideoUrl: 'galleryVideoUrl',
+  greeting: 'greeting',
+  prayer: 'prayer',
+  publishedVersion: 'publishedVersion',
   musicAssetId: 'musicAssetId',
   ownerId: 'ownerId',
   createdAt: 'createdAt',
@@ -176,10 +182,52 @@ export const GalleryItemScalarFieldEnum = {
   invitationId: 'invitationId',
   assetId: 'assetId',
   altText: 'altText',
+  caption: 'caption',
   position: 'position'
 } as const
 
 export type GalleryItemScalarFieldEnum = (typeof GalleryItemScalarFieldEnum)[keyof typeof GalleryItemScalarFieldEnum]
+
+
+export const InvitationDraftScalarFieldEnum = {
+  id: 'id',
+  invitationId: 'invitationId',
+  proposedSlug: 'proposedSlug',
+  payload: 'payload',
+  schemaVersion: 'schemaVersion',
+  draftVersion: 'draftVersion',
+  basePublishedVersion: 'basePublishedVersion',
+  createdById: 'createdById',
+  updatedById: 'updatedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InvitationDraftScalarFieldEnum = (typeof InvitationDraftScalarFieldEnum)[keyof typeof InvitationDraftScalarFieldEnum]
+
+
+export const InvitationPublicationScalarFieldEnum = {
+  id: 'id',
+  invitationId: 'invitationId',
+  version: 'version',
+  source: 'source',
+  snapshot: 'snapshot',
+  schemaVersion: 'schemaVersion',
+  contentDigest: 'contentDigest',
+  changeSummary: 'changeSummary',
+  actorId: 'actorId',
+  createdAt: 'createdAt'
+} as const
+
+export type InvitationPublicationScalarFieldEnum = (typeof InvitationPublicationScalarFieldEnum)[keyof typeof InvitationPublicationScalarFieldEnum]
+
+
+export const InvitationPublicationMediaScalarFieldEnum = {
+  publicationId: 'publicationId',
+  mediaAssetId: 'mediaAssetId'
+} as const
+
+export type InvitationPublicationMediaScalarFieldEnum = (typeof InvitationPublicationMediaScalarFieldEnum)[keyof typeof InvitationPublicationMediaScalarFieldEnum]
 
 
 export const LoveStoryScalarFieldEnum = {
@@ -214,6 +262,13 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -228,4 +283,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

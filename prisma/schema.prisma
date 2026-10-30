@@ -23,23 +23,31 @@ enum ResourceType {
   AUDIO
 }
 
+enum PublicationSource {
+  BASELINE
+  PUBLISH
+}
+
 model User {
-  id               String       @id @default(cuid())
-  email            String       @unique
+  id               String                  @id @default(cuid())
+  email            String                  @unique
   name             String
   passwordHash     String
-  role             UserRole     @default(ADMIN)
-  isActive         Boolean      @default(true)
-  failedLoginCount Int          @default(0)
+  role             UserRole                @default(ADMIN)
+  isActive         Boolean                 @default(true)
+  failedLoginCount Int                     @default(0)
   lockedUntil      DateTime?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
   invitations      Invitation[]
+  draftsCreated    InvitationDraft[]       @relation("DraftCreatedBy")
+  draftsUpdated    InvitationDraft[]       @relation("DraftUpdatedBy")
+  publications     InvitationPublication[] @relation("PublicationActor")
 }
 
 model MediaAsset {
-  id               String        @id @default(cuid())
-  publicId         String        @unique
+  id               String                       @id @default(cuid())
+  publicId         String                       @unique
   secureUrl        String
   folder           String
   resourceType     ResourceType
@@ -48,35 +56,41 @@ model MediaAsset {
   width            Int?
   height           Int?
   originalName     String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
   partners         Partner[]
   galleryItems     GalleryItem[]
-  heroInvitations  Invitation[]  @relation("InvitationHeroAsset")
-  musicInvitations Invitation[]  @relation("InvitationMusicAsset")
+  heroInvitations  Invitation[]                 @relation("InvitationHeroAsset")
+  musicInvitations Invitation[]                 @relation("InvitationMusicAsset")
+  publicationMedia InvitationPublicationMedia[]
 }
 
 model Invitation {
-  id              String              @id @default(cuid())
-  slug            String              @unique
-  theme           String              @default("classic-rose")
-  variant         String
-  weddingDate     DateTime
-  heroAssetId     String
-  galleryVideoUrl String?
-  musicAssetId    String?
-  ownerId         String?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  owner           User?               @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  heroAsset       MediaAsset          @relation("InvitationHeroAsset", fields: [heroAssetId], references: [id], onDelete: Restrict)
-  musicAsset      MediaAsset?         @relation("InvitationMusicAsset", fields: [musicAssetId], references: [id], onDelete: Restrict)
-  sections        InvitationSections?
-  partners        Partner[]
-  events          Event[]
-  galleryItems    GalleryItem[]
-  loveStories     LoveStory[]
-  giftAccounts    GiftAccount[]
+  id               String                  @id @default(cuid())
+  slug             String                  @unique
+  theme            String                  @default("classic-rose")
+  variant          String
+  weddingDate      DateTime
+  heroAssetId      String
+  galleryVideoUrl  String?
+  greeting         String?
+  prayer           String?
+  publishedVersion Int                     @default(1)
+  musicAssetId     String?
+  ownerId          String?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  owner            User?                   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  heroAsset        MediaAsset              @relation("InvitationHeroAsset", fields: [heroAssetId], references: [id], onDelete: Restrict)
+  musicAsset       MediaAsset?             @relation("InvitationMusicAsset", fields: [musicAssetId], references: [id], onDelete: Restrict)
+  sections         InvitationSections?
+  partners         Partner[]
+  events           Event[]
+  galleryItems     GalleryItem[]
+  loveStories      LoveStory[]
+  giftAccounts     GiftAccount[]
+  draft            InvitationDraft?
+  publications     InvitationPublication[]
 
   @@index([ownerId])
   @@index([heroAssetId])
@@ -130,12 +144,63 @@ model GalleryItem {
   invitationId String
   assetId      String
   altText      String
+  caption      String?
   position     Int
   invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
   asset        MediaAsset @relation(fields: [assetId], references: [id], onDelete: Restrict)
 
   @@unique([invitationId, position])
   @@index([assetId])
+}
+
+model InvitationDraft {
+  id                   String      @id @default(cuid())
+  invitationId         String?     @unique
+  proposedSlug         String
+  payload              Json
+  schemaVersion        Int         @default(1)
+  draftVersion         Int         @default(1)
+  basePublishedVersion Int?
+  createdById          String
+  updatedById          String
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  invitation           Invitation? @relation(fields: [invitationId], references: [id], onDelete: Restrict)
+  createdBy            User        @relation("DraftCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy            User        @relation("DraftUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+
+  @@index([proposedSlug])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+model InvitationPublication {
+  id            String                       @id @default(cuid())
+  invitationId  String
+  version       Int
+  source        PublicationSource
+  snapshot      Json
+  schemaVersion Int                          @default(1)
+  contentDigest String                       @db.Char(64)
+  changeSummary String?
+  actorId       String?
+  createdAt     DateTime                     @default(now())
+  invitation    Invitation                   @relation(fields: [invitationId], references: [id], onDelete: Restrict)
+  actor         User?                        @relation("PublicationActor", fields: [actorId], references: [id], onDelete: Restrict)
+  media         InvitationPublicationMedia[]
+
+  @@unique([invitationId, version])
+  @@index([actorId])
+}
+
+model InvitationPublicationMedia {
+  publicationId String
+  mediaAssetId  String
+  publication   InvitationPublication @relation(fields: [publicationId], references: [id], onDelete: Restrict)
+  mediaAsset    MediaAsset            @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+
+  @@id([publicationId, mediaAssetId])
+  @@index([mediaAssetId])
 }
 
 model LoveStory {

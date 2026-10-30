@@ -11,7 +11,11 @@ const data: InvitationData = {
   },
   weddingDate: new Date("2030-08-28T00:00:00Z"),
   events: [],
-  gallery: { videoUrl: "https://www.youtube.com/watch?v=example", images: ["https://example.com/old.jpg"] },
+  gallery: {
+    videoUrl: "https://www.youtube.com/watch?v=example",
+    images: ["https://example.com/old.jpg"],
+    items: [{ url: "https://example.com/old.jpg", altText: "Foto lama", caption: "" }],
+  },
 };
 
 describe("default preview artwork", () => {
@@ -21,6 +25,8 @@ describe("default preview artwork", () => {
     expect(result.couple.groom.photo).toMatch(/\/sample\/groom-[a-f0-9]{16}\.webp$/);
     expect(result.couple.bride.photo).toMatch(/\/sample\/bride-[a-f0-9]{16}\.webp$/);
     expect(result.gallery?.images).toHaveLength(3);
+    expect(result.gallery?.images).toEqual(result.gallery?.items.map((item) => item.url));
+    expect(result.gallery?.items.every((item) => item.altText.length > 0)).toBe(true);
     expect(result.gallery?.videoUrl).toBe("");
     expect(data.couple.heroImage).toBe("https://example.com/hero.jpg");
     expect(data.gallery?.images).toEqual(["https://example.com/old.jpg"]);

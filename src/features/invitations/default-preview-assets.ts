@@ -10,6 +10,12 @@ export function withDefaultPreviewAssets(
 ): InvitationData {
   if (slug !== "default-preview") return data;
 
+  const items = [
+    { url: sample.couple, altText: "Contoh potret pasangan", caption: "" },
+    { url: sample.walking, altText: "Contoh foto pasangan berjalan", caption: "" },
+    { url: sample.details, altText: "Contoh detail pernikahan", caption: "" },
+  ];
+
   return {
     ...data,
     couple: {
@@ -23,11 +29,8 @@ export function withDefaultPreviewAssets(
           gallery: {
             ...data.gallery,
             videoUrl: "",
-            images: [
-              sample.couple,
-              sample.walking,
-              sample.details,
-            ],
+            items,
+            images: items.map((item) => item.url),
           },
         }
       : {}),

@@ -1,39 +1,87 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
+import { usePathname } from "next/navigation";
 import { LayoutDashboard, LogOut, MailOpen, Menu, X } from "lucide-react";
 import { logoutAction } from "@/features/auth/actions";
 
-export type AdminPage = "overview" | "invitations";
-
 const NAV_ITEMS = [
-  { href: "/admin", label: "Ringkasan", page: "overview", icon: LayoutDashboard },
-  { href: "/admin/invitations", label: "Undangan", page: "invitations", icon: MailOpen },
+  { href: "/admin", label: "Ringkasan", icon: LayoutDashboard },
+  { href: "/admin/invitations", label: "Undangan", icon: MailOpen },
 ] as const;
 
-function NavLinks({ activePage, onNavigate }: { activePage: AdminPage; onNavigate?: () => void }) {
+function NavPendingHint({
+  href,
+  onPendingChange,
+}: {
+  href: string;
+  onPendingChange?: (href: string, pending: boolean) => void;
+}) {
+  const { pending } = useLinkStatus();
+
+  useEffect(() => {
+    onPendingChange?.(href, pending);
+  }, [href, onPendingChange, pending]);
+
+  return (
+    <span
+      aria-hidden="true"
+      className={`ml-auto text-[11px] font-medium transition-opacity duration-150 motion-reduce:duration-0 ${
+        pending ? "opacity-100 delay-[350ms]" : "opacity-0 delay-0"
+      }`}
+    >
+      Memuat…
+    </span>
+  );
+}
+
+function NavLinks({
+  pathname,
+  onNavigate,
+  onPendingChange,
+}: {
+  pathname: string;
+  onNavigate?: () => void;
+  onPendingChange?: (href: string, pending: boolean) => void;
+}) {
   return (
     <nav aria-label="Navigasi panel admin" className="space-y-1">
-      {NAV_ITEMS.map(({ href, label, page, icon: Icon }) => (
+      {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
         <Link
           key={href}
           href={href}
           onClick={onNavigate}
-          aria-current={activePage === page ? "page" : undefined}
+          aria-current={pathname === href ? "page" : undefined}
           className={`focus-ring flex min-h-11 items-center gap-3 rounded-xl px-4 text-sm font-semibold transition-colors motion-reduce:transition-none ${
-            activePage === page
+            pathname === href
               ? "bg-brand-primary text-white shadow-[0_5px_14px_rgba(2,100,255,0.2)]"
               : "text-muted-foreground hover:bg-brand-soft hover:text-brand-secondary"
           }`}
         >
           <Icon size={19} aria-hidden="true" />
           {label}
+          <NavPendingHint href={href} onPendingChange={onPendingChange} />
         </Link>
       ))}
     </nav>
   );
+}
+
+function MobilePendingCue({ pending }: { pending: boolean }) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setVisible(pending), pending ? 350 : 0);
+    return () => window.clearTimeout(timeout);
+  }, [pending]);
+
+  return visible ? (
+    <span role="status" aria-live="polite" className="ml-auto text-xs font-medium text-brand-primary">
+      Memuat halaman…
+    </span>
+  ) : null;
 }
 
 function LogoutButton({ mobile = false }: { mobile?: boolean }) {
@@ -50,10 +98,16 @@ function LogoutButton({ mobile = false }: { mobile?: boolean }) {
   );
 }
 
-export function AdminNavigation({ adminName, activePage }: { adminName: string; activePage: AdminPage }) {
+export function AdminNavigation({ adminName }: { adminName: string }) {
+  const pathname = usePathname();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [mobilePendingHref, setMobilePendingHref] = useState<string | null>(null);
+
+  const updateMobilePending = useCallback((href: string, pending: boolean) => {
+    setMobilePendingHref((current) => pending ? href : current === href ? null : current);
+  }, []);
 
   const openMenu = () => {
     dialogRef.current?.showModal();
@@ -80,7 +134,7 @@ export function AdminNavigation({ adminName, activePage }: { adminName: string; 
         <p className="mb-3 px-4 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
           Ruang kerja
         </p>
-        <NavLinks activePage={activePage} />
+        <NavLinks pathname={pathname} />
         <div className="mt-auto border-t border-brand-secondary/10 pt-5">
           <p className="truncate px-4 text-sm font-bold text-brand-secondary">{adminName}</p>
           <p className="mb-4 mt-1 px-4 text-xs text-muted-foreground">Administrator</p>
@@ -92,6 +146,7 @@ export function AdminNavigation({ adminName, activePage }: { adminName: string; 
         <Link href="/admin" className="focus-ring rounded-lg py-1">
           <Image src="/images/logo.png" alt="AyaWarta" width={120} height={36} className="h-9 w-auto object-contain" priority />
         </Link>
+        <MobilePendingCue key={pathname} pending={mobilePendingHref !== null} />
         <button
           ref={triggerRef}
           type="button"
@@ -135,7 +190,7 @@ export function AdminNavigation({ adminName, activePage }: { adminName: string; 
           <p className="mb-3 px-4 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
             Ruang kerja
           </p>
-          <NavLinks activePage={activePage} onNavigate={closeMenu} />
+          <NavLinks pathname={pathname} onNavigate={closeMenu} onPendingChange={updateMobilePending} />
           <div className="mt-auto border-t border-brand-secondary/10 pt-5">
             <p className="truncate px-4 text-sm font-bold">{adminName}</p>
             <p className="mb-4 mt-1 px-4 text-xs text-muted-foreground">Administrator</p>

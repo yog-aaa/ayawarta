@@ -21,6 +21,7 @@ vi.mock("@/features/invitations/repository", () => ({
 }));
 
 import { invitationRepository } from "@/features/invitations/repository";
+import { InvitationMappingError } from "@/features/invitations/mapper";
 import InvitationPage from "./[slug]/page";
 import InvitePage from "./[slug]/invite/page";
 import ClassicRosePage from "./(templates)/wedding/classic-rose/[variant]/page";
@@ -73,6 +74,13 @@ const mockInvitationData: Invitation["data"] = {
     videoUrl: "",
     images: [
       "https://res.cloudinary.com/uhwi7xvb/image/upload/v1/ayawarta/production/invitations/rika-fauzi/gallery/gallery-01.jpg",
+    ],
+    items: [
+      {
+        url: "https://res.cloudinary.com/uhwi7xvb/image/upload/v1/ayawarta/production/invitations/rika-fauzi/gallery/gallery-01.jpg",
+        altText: "Foto pasangan",
+        caption: "",
+      },
     ],
   },
   loveStory: [
@@ -169,6 +177,25 @@ describe("Public Route Cutover — Hermetic Unit Tests", () => {
       expect(invitationRepository.findBySlug).toHaveBeenCalledWith("unknown-couple-2026");
       expect(mockNotFound).toHaveBeenCalledTimes(1);
     });
+
+    it("does not render a future Siger invitation as Classic Rose", async () => {
+      vi.mocked(invitationRepository.findBySlug).mockResolvedValueOnce({
+        ...createMockInvitation("future-siger"),
+        meta: { theme: "siger-priangan", variant: "ivory" },
+      });
+
+      await expect(
+        InvitationPage({ params: Promise.resolve({ slug: "future-siger" }) })
+      ).rejects.toThrow("NEXT_NOT_FOUND");
+    });
+
+    it("returns 404 for an invalid stored theme pair while surfacing other failures", async () => {
+      vi.mocked(invitationRepository.findBySlug).mockRejectedValueOnce(new InvitationMappingError("Invalid pair"));
+      await expect(InvitationPage({ params: Promise.resolve({ slug: "invalid-pair" }) })).rejects.toThrow("NEXT_NOT_FOUND");
+
+      vi.mocked(invitationRepository.findBySlug).mockRejectedValueOnce(new Error("Database unavailable"));
+      await expect(InvitationPage({ params: Promise.resolve({ slug: "broken-db" }) })).rejects.toThrow("Database unavailable");
+    });
   });
 
   describe("InvitePage (/[slug]/invite/page.tsx)", () => {
@@ -253,6 +280,20 @@ describe("Public Route Cutover — Hermetic Unit Tests", () => {
 
       expect(invitationRepository.findBySlug).toHaveBeenCalledWith("non-existent");
       expect(mockNotFound).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not render a Siger slug in Classic Rose preview", async () => {
+      vi.mocked(invitationRepository.findBySlug).mockResolvedValueOnce({
+        ...createMockInvitation("future-siger"),
+        meta: { theme: "siger-priangan", variant: "ivory" },
+      });
+
+      await expect(
+        ClassicRosePage({
+          params: Promise.resolve({ variant: "red" }),
+          searchParams: Promise.resolve({ slug: "future-siger" }),
+        })
+      ).rejects.toThrow("NEXT_NOT_FOUND");
     });
   });
 

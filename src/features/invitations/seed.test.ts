@@ -663,6 +663,7 @@ describe("Atomic Interactive Transaction Rollback (SEED-01)", () => {
     const mediaUpserts: string[] = [];
 
     const mockTx = {
+      $queryRaw: vi.fn().mockResolvedValue([]),
       mediaAsset: {
         upsert: vi.fn().mockImplementation((args) => {
           mediaUpserts.push(args.where.publicId);
@@ -679,7 +680,11 @@ describe("Atomic Interactive Transaction Rollback (SEED-01)", () => {
         ),
       },
       invitation: {
+        findMany: vi.fn().mockResolvedValue([]),
         upsert: vi.fn().mockResolvedValue({ id: "inv-1" }),
+      },
+      invitationPublication: {
+        count: vi.fn().mockResolvedValue(0),
       },
       invitationSections: {
         upsert: vi.fn().mockResolvedValue({ id: "sec-1" }),
@@ -747,5 +752,30 @@ describe("Atomic Interactive Transaction Rollback (SEED-01)", () => {
     expect(transactionOpened).toBe(true);
     expect(transactionRolledBack).toBe(true);
     expect(mediaUpserts).toHaveLength(5);
+  });
+
+  it.each([
+    { publishedVersion: 2, publicationCount: 0, expected: /published version newer/ },
+    { publishedVersion: 1, publicationCount: 1, expected: /publication history/ },
+  ])("refuses to rewrite a protected invitation before any media write", async ({ publishedVersion, publicationCount, expected }) => {
+    const mediaUpsert = vi.fn();
+    const tx = {
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "published-invitation" }]),
+      invitation: {
+        findMany: vi.fn().mockResolvedValue([{ id: "published-invitation", publishedVersion }]),
+      },
+      invitationPublication: { count: vi.fn().mockResolvedValue(publicationCount) },
+      mediaAsset: { upsert: mediaUpsert },
+    };
+    const db = {
+      $transaction: vi.fn().mockImplementation((callback) => callback(tx)),
+    } as unknown as PrismaClient;
+
+    await expect(executeSeed({
+      report: createValidCanonicalMockReport(),
+      bootstrapAdmin: false,
+      logger: { log: vi.fn(), warn: vi.fn(), error: vi.fn() },
+    }, db)).rejects.toThrow(expected);
+    expect(mediaUpsert).not.toHaveBeenCalled();
   });
 });

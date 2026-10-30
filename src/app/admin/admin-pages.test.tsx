@@ -19,11 +19,14 @@ vi.mock("@/features/admin/invitation-list", () => ({
 }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/components/admin/AdminShell", () => ({
-  AdminShell: ({ children }: { children: React.ReactNode }) => children,
+  AdminShell: ({ adminName, children }: { adminName: string; children: React.ReactNode }) => (
+    <div data-admin-name={adminName}>{children}</div>
+  ),
 }));
 
-import AdminDashboardPage from "./page";
-import AdminInvitationsPage from "./invitations/page";
+import AdminWorkspaceLayout from "./(workspace)/layout";
+import AdminDashboardPage from "./(workspace)/page";
+import AdminInvitationsPage from "./(workspace)/invitations/page";
 
 const list: AdminInvitationListResult = {
   items: [{
@@ -48,8 +51,21 @@ beforeEach(() => {
 });
 
 describe("admin server pages", () => {
+  it("keeps the workspace shell around route content", async () => {
+    const html = renderToStaticMarkup(
+      await AdminWorkspaceLayout({ children: <p>Konten undangan</p> })
+    );
+
+    expect(html).toContain('data-admin-name="Administrator"');
+    expect(html).toContain("Konten undangan");
+  });
+
   it("redirects before reading invitations when the session is invalid", async () => {
     mocks.requireAdminSession.mockRejectedValue(new Error("Forbidden"));
+
+    await expect(
+      AdminWorkspaceLayout({ children: <p>Rahasia</p> })
+    ).rejects.toThrow("REDIRECT:/admin/login");
 
     await expect(AdminDashboardPage()).rejects.toThrow("REDIRECT:/admin/login");
     expect(mocks.getAdminInvitationList).not.toHaveBeenCalled();
@@ -113,5 +129,11 @@ describe("admin server pages", () => {
     expect(overview).toContain("Panel administrator belum dapat dimuat");
     expect(invitations).toContain("Panel administrator belum dapat dimuat");
     expect(overview).not.toContain("Database unavailable");
+
+    const layout = renderToStaticMarkup(
+      await AdminWorkspaceLayout({ children: <p>Rahasia</p> })
+    );
+    expect(layout).toContain("Panel administrator belum dapat dimuat");
+    expect(layout).not.toContain("Rahasia");
   });
 });

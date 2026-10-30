@@ -32,6 +32,7 @@ export type EventItem = {
 export type Gallery = {
   videoUrl: string;
   images: string[];
+  items: Array<{ url: string; altText: string; caption: string }>;
 };
 
 export type LoveStoryItem = {
@@ -46,8 +47,6 @@ export type GiftAccountItem = {
   logo: string;
 };
 
-export type InvitationTheme = "classic-rose";
-
 export type ClassicRoseVariant =
   | "red"
   | "green"
@@ -56,17 +55,19 @@ export type ClassicRoseVariant =
   | "black"
   | "white";
 
-export type InvitationVariant = ClassicRoseVariant;
+export type InvitationMeta =
+  | { theme: "classic-rose"; variant: ClassicRoseVariant }
+  | { theme: "siger-priangan"; variant: "ivory" };
 
-export type InvitationMeta = {
-  theme: InvitationTheme;
-  variant: InvitationVariant;
-};
+export type InvitationTheme = InvitationMeta["theme"];
+export type InvitationVariant = InvitationMeta["variant"];
 
 export type InvitationData = {
   sections: InvitationSectionsConfig;
   couple: Couple;
   weddingDate: Date;
+  greeting?: string;
+  prayer?: string;
   events: EventItem[];
   gallery?: Gallery;
   loveStory?: LoveStoryItem[];

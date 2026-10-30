@@ -4,7 +4,7 @@ import {
   mapPrismaToInvitation,
   mapPrismaToInvitationData,
 } from "./mapper";
-import type { InvitationDetailPayload } from "./query";
+import type { InvitationDetailPayload, PublicInvitationDetailPayload } from "./query";
 
 function createValidPayload(): InvitationDetailPayload {
   return {
@@ -15,6 +15,9 @@ function createValidPayload(): InvitationDetailPayload {
     weddingDate: new Date("2026-11-20T08:00:00Z"),
     heroAssetId: "asset-hero",
     galleryVideoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    greeting: null,
+    prayer: null,
+    publishedVersion: 1,
     musicAssetId: "asset-music",
     ownerId: "user-1",
     createdAt: new Date("2026-10-01T00:00:00Z"),
@@ -135,6 +138,7 @@ function createValidPayload(): InvitationDetailPayload {
         invitationId: "inv-1",
         assetId: "asset-gal-1",
         altText: "Foto 1",
+        caption: null,
         position: 1,
         asset: {
           id: "asset-gal-1",
@@ -156,6 +160,7 @@ function createValidPayload(): InvitationDetailPayload {
         invitationId: "inv-1",
         assetId: "asset-gal-2",
         altText: "Foto 2",
+        caption: "Momen bersama",
         position: 2,
         asset: {
           id: "asset-gal-2",
@@ -213,6 +218,15 @@ function createValidPayload(): InvitationDetailPayload {
 }
 
 describe("Invitation Mapper", () => {
+  it.each(["red", "green", "blue", "orange", "black", "white"])(
+    "preserves the Classic Rose %s variant",
+    (variant) => {
+      const payload = createValidPayload();
+      payload.variant = variant;
+      expect(mapPrismaToInvitation(payload).meta).toEqual({ theme: "classic-rose", variant });
+    }
+  );
+
   it("performs complete mapping for a valid payload", () => {
     const payload = createValidPayload();
     const result = mapPrismaToInvitation(payload);
@@ -264,7 +278,21 @@ describe("Invitation Mapper", () => {
         "https://res.cloudinary.com/demo/image/upload/gal-1.jpg",
         "https://res.cloudinary.com/demo/image/upload/gal-2.jpg",
       ],
+      items: [
+        {
+          url: "https://res.cloudinary.com/demo/image/upload/gal-1.jpg",
+          altText: "Foto 1",
+          caption: "",
+        },
+        {
+          url: "https://res.cloudinary.com/demo/image/upload/gal-2.jpg",
+          altText: "Foto 2",
+          caption: "Momen bersama",
+        },
+      ],
     });
+    expect(result.data.greeting).toBe("");
+    expect(result.data.prayer).toBe("");
 
     expect(result.data.loveStory).toEqual([
       { title: "Awal Berkenalan", content: "Kami bertemu di kampus..." },
@@ -358,6 +386,56 @@ describe("Invitation Mapper", () => {
     const payloadNullVideo = createValidPayload();
     payloadNullVideo.galleryVideoUrl = null;
     expect(mapPrismaToInvitation(payloadNullVideo).data.gallery?.videoUrl).toBe("");
+  });
+
+  it("maps optional greeting and prayer for Siger without a religious default", () => {
+    const payload = createValidPayload();
+    payload.theme = "siger-priangan";
+    payload.variant = "ivory";
+    payload.greeting = "Wilujeng sumping";
+    payload.prayer = "Semoga hari ini berkesan.";
+
+    const result = mapPrismaToInvitation(payload);
+    expect(result.meta).toEqual({ theme: "siger-priangan", variant: "ivory" });
+    expect(result.data.greeting).toBe("Wilujeng sumping");
+    expect(result.data.prayer).toBe("Semoga hari ini berkesan.");
+  });
+
+  it("normalizes absent post-migration fields on the legacy public payload", () => {
+    const full = createValidPayload();
+    const legacy = {
+      id: full.id,
+      slug: full.slug,
+      theme: full.theme,
+      variant: full.variant,
+      weddingDate: full.weddingDate,
+      heroAssetId: full.heroAssetId,
+      galleryVideoUrl: full.galleryVideoUrl,
+      musicAssetId: full.musicAssetId,
+      ownerId: full.ownerId,
+      createdAt: full.createdAt,
+      updatedAt: full.updatedAt,
+      sections: full.sections,
+      heroAsset: full.heroAsset,
+      musicAsset: full.musicAsset,
+      partners: full.partners,
+      events: full.events,
+      galleryItems: full.galleryItems.map((item) => ({
+        id: item.id,
+        invitationId: item.invitationId,
+        assetId: item.assetId,
+        altText: item.altText,
+        position: item.position,
+        asset: item.asset,
+      })),
+      loveStories: full.loveStories,
+      giftAccounts: full.giftAccounts,
+    } satisfies PublicInvitationDetailPayload;
+    const mapped = mapPrismaToInvitation(legacy);
+    expect(mapped.data.greeting).toBe("");
+    expect(mapped.data.prayer).toBe("");
+    expect(mapped.data.gallery?.items.every((item) => item.caption === "")).toBe(true);
+    expect(mapped.data.gallery?.images).toEqual(mapped.data.gallery?.items.map((item) => item.url));
   });
 
   it("maps music URL when musicAsset is present and leaves undefined when absent", () => {
@@ -484,5 +562,15 @@ describe("Invitation Mapper", () => {
     expect(() => mapPrismaToInvitation(payload)).toThrowError(
       /Unsupported variant: "golden-yellow"/
     );
+  });
+
+  it("rejects cross-theme variants instead of rendering a fallback", () => {
+    const classic = createValidPayload();
+    classic.variant = "ivory";
+    expect(() => mapPrismaToInvitation(classic)).toThrow(/for theme "classic-rose"/);
+
+    const siger = createValidPayload();
+    siger.theme = "siger-priangan";
+    expect(() => mapPrismaToInvitation(siger)).toThrow(/for theme "siger-priangan"/);
   });
 });

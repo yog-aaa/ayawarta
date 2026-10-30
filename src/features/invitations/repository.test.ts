@@ -3,7 +3,7 @@ import {
   createInvitationRepository,
   type InvitationDatabaseClient,
 } from "./repository";
-import { invitationDetailInclude, type InvitationDetailPayload } from "./query";
+import { invitationDetailInclude, publicInvitationSelect, type InvitationDetailPayload } from "./query";
 
 function createMockPayload(slug: string): InvitationDetailPayload {
   return {
@@ -14,6 +14,9 @@ function createMockPayload(slug: string): InvitationDetailPayload {
     weddingDate: new Date("2026-12-01T08:00:00Z"),
     heroAssetId: "asset-hero",
     galleryVideoUrl: null,
+    greeting: null,
+    prayer: null,
+    publishedVersion: 1,
     musicAssetId: null,
     ownerId: null,
     createdAt: new Date(),
@@ -110,6 +113,7 @@ function createMockPayload(slug: string): InvitationDetailPayload {
         invitationId: "inv-repo-1",
         assetId: "asset-gal",
         altText: "Foto Galeri",
+        caption: null,
         position: 1,
         asset: {
           id: "asset-gal",
@@ -147,7 +151,7 @@ describe("Invitation Repository (Hermetic Unit Tests)", () => {
     expect(mockFindUnique).toHaveBeenCalledTimes(1);
     expect(mockFindUnique).toHaveBeenCalledWith({
       where: { slug: "special-slug" },
-      include: invitationDetailInclude,
+      select: publicInvitationSelect,
     });
 
     expect(result).not.toBeNull();
@@ -174,7 +178,7 @@ describe("Invitation Repository (Hermetic Unit Tests)", () => {
     expect(mockFindUnique).toHaveBeenCalledTimes(1);
     expect(mockFindUnique).toHaveBeenCalledWith({
       where: { slug: "non-existent-slug" },
-      include: invitationDetailInclude,
+      select: publicInvitationSelect,
     });
     expect(result).toBeNull();
   });
@@ -233,6 +237,15 @@ describe("Invitation Repository (Hermetic Unit Tests)", () => {
     // Ensure owner/credentials are completely excluded
     expect("owner" in invitationDetailInclude).toBe(false);
     expect("passwordHash" in invitationDetailInclude).toBe(false);
+  });
+
+  it("selects only pre-migration scalar columns for public reads", () => {
+    expect(publicInvitationSelect).not.toHaveProperty("greeting");
+    expect(publicInvitationSelect).not.toHaveProperty("prayer");
+    expect(publicInvitationSelect).not.toHaveProperty("publishedVersion");
+    expect(publicInvitationSelect.galleryItems.select).not.toHaveProperty("caption");
+    expect(publicInvitationSelect.galleryItems.select.altText).toBe(true);
+    expect(publicInvitationSelect.heroAsset).toBe(true);
   });
 
   it("allows fetching raw unmapped payload via findPayloadBySlug", async () => {

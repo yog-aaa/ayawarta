@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import "../background.css";
 
 import { getClassicRoseThemeConfig } from "@/lib/theme-config/classic-rose";
+import { InvitationMappingError } from "@/features/invitations/mapper";
 import { invitationRepository } from "@/features/invitations/repository";
 import ClassicRoseClientView from "./components/ClassicRoseClientView";
 
@@ -33,9 +34,12 @@ export default async function ClassicRosePage({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const targetSlug = resolvedSearchParams?.slug || "default-preview";
 
-  const invitation = await invitationRepository.findBySlug(targetSlug);
+  const invitation = await invitationRepository.findBySlug(targetSlug).catch((error: unknown) => {
+    if (error instanceof InvitationMappingError) notFound();
+    throw error;
+  });
 
-  if (!invitation) {
+  if (!invitation || invitation.meta.theme !== "classic-rose") {
     notFound();
   }
 

@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminInvitationList } from "@/components/admin/AdminInvitationList";
 import { AdminListError } from "@/components/admin/AdminListError";
-import { AdminUnavailable } from "@/components/admin/AdminUnavailable";
 import { getAdminInvitationList } from "@/features/admin/invitation-list";
 import { requireAdminSession } from "@/features/auth/service";
-import { isAdminAuthorizationError } from "../admin-errors";
+import { isAdminAuthorizationError } from "../../admin-errors";
 
 export const metadata = {
   title: "Daftar Undangan Admin | AyaWarta",
@@ -31,12 +29,11 @@ export default async function AdminInvitationsPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  let admin;
   try {
-    admin = await requireAdminSession();
+    await requireAdminSession();
   } catch (error) {
     if (isAdminAuthorizationError(error)) redirect("/admin/login");
-    return <AdminUnavailable retryHref="/admin/invitations" />;
+    return <AdminListError retryHref="/admin/invitations" title="Panel administrator belum dapat dimuat" headingLevel="h1" />;
   }
 
   const params = await searchParams;
@@ -50,7 +47,7 @@ export default async function AdminInvitationsPage({
   } catch (error) {
     if (isAdminAuthorizationError(error)) redirect("/admin/login");
     return (
-      <AdminShell adminName={admin.name} activePage="invitations">
+      <>
         <div className="mb-8">
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.24em] text-brand-primary">
             Katalog undangan
@@ -60,7 +57,7 @@ export default async function AdminInvitationsPage({
           </h1>
         </div>
         <AdminListError retryHref={listHref(query, page)} />
-      </AdminShell>
+      </>
     );
   }
 
@@ -68,7 +65,7 @@ export default async function AdminInvitationsPage({
   const hasNext = invitations.page < invitations.pageCount;
 
   return (
-    <AdminShell adminName={admin.name} activePage="invitations">
+    <>
       <div className="mb-8">
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.24em] text-brand-primary">
           Katalog undangan
@@ -147,6 +144,6 @@ export default async function AdminInvitationsPage({
           </nav>
         )}
       </section>
-    </AdminShell>
+    </>
   );
 }

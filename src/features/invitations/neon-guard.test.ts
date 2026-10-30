@@ -642,6 +642,7 @@ describe("Neon Production Database Target Guard & Connection Selection", () => {
         mutableEnv.ADMIN_PASSWORD = "LocalShellWrongPassword!";
 
         const mockTx = {
+          $queryRaw: vi.fn().mockResolvedValue([]),
           mediaAsset: {
             upsert: vi.fn().mockResolvedValue({ id: "media-1", publicId: "ayawarta/test" }),
             findMany: vi.fn().mockResolvedValue(
@@ -653,10 +654,12 @@ describe("Neon Production Database Target Guard & Connection Selection", () => {
             ),
           },
           invitation: {
+            findMany: vi.fn().mockResolvedValue([]),
             upsert: vi.fn().mockImplementation((args) =>
               Promise.resolve({ id: `inv-${args.where.slug}`, ...args.create })
             ),
           },
+          invitationPublication: { count: vi.fn().mockResolvedValue(0) },
           invitationSections: { upsert: vi.fn().mockResolvedValue({}) },
           partner: {
             deleteMany: vi.fn().mockResolvedValue({ count: 2 }),

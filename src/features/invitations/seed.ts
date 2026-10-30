@@ -15,7 +15,7 @@ import {
 } from "@/features/media/canonical-catalog";
 import { bootstrapAdminUser, type BootstrapAdminResult } from "@/features/auth/bootstrap";
 import type { ValidatedCloudinaryUploadReport } from "@/features/media/schema";
-import type { Prisma, PrismaClient } from "@/generated/prisma/client";
+import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 
 export interface SeedTableCounts {
   user: number;
@@ -233,6 +233,30 @@ export async function executeSeed(
   logger.log("[Seed] Starting atomic database transaction...");
   await db.$transaction(
     async (tx) => {
+      // Serialize this guard with baseline creation for the same published rows.
+      await tx.$queryRaw`SELECT "id" FROM "Invitation" WHERE "slug" IN (${Prisma.join(SEED_INVITATIONS.map((inv) => inv.slug))}) FOR UPDATE`;
+      // A historical snapshot or later published version means the seed is no longer
+      // the owner of that invitation's content. Refuse before any media or child write.
+      const existingInvitations = await tx.invitation.findMany({
+        where: { slug: { in: SEED_INVITATIONS.map((inv) => inv.slug) } },
+        select: { id: true, publishedVersion: true },
+      });
+      if (existingInvitations.some((invitation) => invitation.publishedVersion > 1)) {
+        throw new SeedExecutionError(
+          "Seed refused: a target invitation has a published version newer than the seed baseline."
+        );
+      }
+      if (existingInvitations.length > 0) {
+        const publications = await tx.invitationPublication.count({
+          where: { invitationId: { in: existingInvitations.map((invitation) => invitation.id) } },
+        });
+        if (publications > 0) {
+          throw new SeedExecutionError(
+            "Seed refused: a target invitation has publication history."
+          );
+        }
+      }
+
       // 4a. Upsert MediaAsset records inside transaction
       for (const input of mediaInputs) {
         if (
@@ -320,6 +344,8 @@ export async function executeSeed(
     },
     {
       timeout: 30000, // 30s safety timeout for the full interactive transaction
+      // A fresh post-lock snapshot must see any baseline committed while waiting.
+      isolationLevel: "ReadCommitted",
     }
   );
 

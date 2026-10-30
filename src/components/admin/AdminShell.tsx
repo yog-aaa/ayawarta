@@ -1,13 +1,11 @@
 import type { ReactNode } from "react";
-import { AdminNavigation, type AdminPage } from "./AdminNavigation";
+import { AdminNavigation } from "./AdminNavigation";
 
 export function AdminShell({
   adminName,
-  activePage,
   children,
 }: {
   adminName: string;
-  activePage: AdminPage;
   children: ReactNode;
 }) {
   return (
@@ -15,7 +13,7 @@ export function AdminShell({
       <a href="#admin-main" className="skip-link">
         Lewati navigasi admin
       </a>
-      <AdminNavigation adminName={adminName} activePage={activePage} />
+      <AdminNavigation adminName={adminName} />
       <div className="min-w-0 flex-1">
         <main
           id="admin-main"

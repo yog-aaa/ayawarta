@@ -23,6 +23,7 @@ import type { PrismaClient } from "@/generated/prisma/client";
 function createMockPrismaClient() {
   const upsertedMediaAssets: Array<{ publicId: string; folder: string; originalName: string; secureUrl: string; resourceType: string; format: string; bytes: number; width: number | null; height: number | null }> = [];
   const mockTx = {
+    $queryRaw: vi.fn().mockResolvedValue([]),
     mediaAsset: {
       upsert: vi.fn().mockImplementation((args) => {
         upsertedMediaAssets.push({ ...args.create });
@@ -39,7 +40,11 @@ function createMockPrismaClient() {
       ),
     },
     invitation: {
+      findMany: vi.fn().mockResolvedValue([]),
       upsert: vi.fn().mockResolvedValue({ id: "inv-1" }),
+    },
+    invitationPublication: {
+      count: vi.fn().mockResolvedValue(0),
     },
     invitationSections: {
       upsert: vi.fn().mockResolvedValue({ id: "sec-1" }),

@@ -48,6 +48,8 @@ Stage 5B used the primitive to remediate an oversized JPEG. Oversized PNG and We
 
 Auth.js Credentials provides admin-only login. `/admin` is protected; `/admin/login` remains accessible for recovery from stale sessions.
 
+The current admin workspace has a real read-only invitation summary and searchable, paginated list. The A2 server-only draft repository and service have been authored, but no editor, private draft preview route, or publish action is exposed. The draft schema migration has not been applied to production Neon, so these server operations are not production-ready.
+
 ### Pricing configuration
 
 The public landing page currently reads the three fixed offers from `src/config/landing.ts`; no pricing administration or checkout flow is implemented. Stable plan IDs and numeric IDR amounts keep the display contract explicit. A future admin panel is intended to manage package prices, inclusions, and customization options, with guest photo gallery and QR check-in maintained as independent extensions. The planned behavior and present limits are recorded in [the pricing product contract](pricing.md).
@@ -120,6 +122,7 @@ src/
 ├── components/ui/
 ├── features/
 │   ├── auth/
+│   ├── admin/
 │   ├── invitations/
 │   ├── media/
 │   └── wishes/
@@ -138,6 +141,7 @@ The generated Prisma client is under `src/generated/prisma`; generated code must
 | Theme preview | `src/app/(templates)/wedding/classic-rose/[variant]/page.tsx` | Validate the requested variant and load the explicit `slug` query parameter, defaulting to the `default-preview` record. |
 | Invitation domain | `src/features/invitations/repository.ts`, `query.ts`, `mapper.ts`, `types.ts` | Keep Prisma payloads on the server and map them to template data. |
 | Authentication | `src/auth.ts`, `src/proxy.ts`, `src/features/auth/` | Credentials sign-in, route protection, current-admin validation, and lockout state. |
+| Admin workspace | `src/app/admin/(workspace)/`, `src/features/admin/` | Real read-only list now; private draft persistence and validation prepared behind server-only functions, without editor or publish routes. |
 | Real-time wishes | `src/features/wishes/` and `src/lib/firebase.ts` | Browser-only Firestore subscription, validation, and submission. |
 | Media | `src/features/media/` | Canonical catalog, preparation and verification primitives, and server-only Cloudinary access. |
 | Database | `prisma/schema.prisma`, `prisma/migrations/`, `src/lib/server/db.ts` | Relational schema, migrations, and Prisma Client through `@prisma/adapter-pg`. |
@@ -145,12 +149,18 @@ The generated Prisma client is under `src/generated/prisma`; generated code must
 ## Public Invitation Data Flow
 
 1. `[slug]/page.tsx` receives the slug.
-2. A server-only repository queries the invitation and ordered relations.
+2. A server-only repository queries the invitation and ordered relations. Until the reviewed schema migration is activated, `publicInvitationSelect` in `src/features/invitations/query.ts` selects only pre-migration columns so legacy public reads remain compatible with the current Neon schema.
 3. The query includes the required hero `MediaAsset` separately from gallery items, partner photos, and optional music.
 4. A mapper converts the persistence result to the stable invitation domain contract, including the hero URL as `couple.heroImage` and nullable `galleryVideoUrl` as `gallery.videoUrl`.
 5. Missing data triggers `notFound()`.
 6. The selected theme configuration and invitation domain object are passed to the Classic Rose view.
 7. Client components handle only behavior that needs browser APIs or client-side subscriptions.
+
+The T2 domain and draft schemas now recognize two exact theme/variant pairs: Classic Rose with `red`, `green`, `blue`, `orange`, `black`, or `white`; Siger Priangan with `ivory` only. The mapper rejects unsupported pairs. It also exposes optional greeting/prayer and ordered gallery items with alt text/caption while retaining `gallery.images` for Classic Rose. The public `/{slug}` route still renders Classic Rose only and returns 404 for other themes; no Siger public route or admin theme publication is available yet. The illustrative Siger sample is typed data, not a public fallback or a writable Firestore invitation.
+
+## Draft and publication boundary (authored, not activated)
+
+`src/features/admin/draft-schema.ts` validates versioned private payloads. `draft-repository.ts` stores one draft per existing published invitation, checks optimistic versions, and requires a verified version-1 baseline before opening an existing invitation for editing. `publication-snapshot.ts` captures the complete published aggregate and media identities, hashes it, and derives media pins. The additive schema adds `InvitationDraft`, immutable `InvitationPublication`, and `InvitationPublicationMedia` records; publishing remains a later stage. A draft is never returned by the public invitation repository, and no draft write is safe against production until the migration and baseline process receive separate target authorization.
 
 ## Wishes and RSVP Data Flow
 

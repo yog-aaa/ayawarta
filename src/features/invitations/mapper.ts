@@ -6,11 +6,14 @@ import type {
   GiftAccountItem,
   Invitation,
   InvitationData,
+  InvitationMeta,
   InvitationSectionsConfig,
   InvitationTheme,
   LoveStoryItem,
 } from "./types";
-import type { InvitationDetailPayload } from "./query";
+import type { InvitationDetailPayload, PublicInvitationDetailPayload } from "./query";
+
+type MappableInvitationPayload = InvitationDetailPayload | PublicInvitationDetailPayload;
 
 export class InvitationMappingError extends Error {
   constructor(message: string) {
@@ -19,8 +22,8 @@ export class InvitationMappingError extends Error {
   }
 }
 
-const SUPPORTED_THEMES: readonly InvitationTheme[] = ["classic-rose"];
-const SUPPORTED_VARIANTS: readonly ClassicRoseVariant[] = [
+const SUPPORTED_THEMES: readonly InvitationTheme[] = ["classic-rose", "siger-priangan"];
+const CLASSIC_ROSE_VARIANTS: readonly ClassicRoseVariant[] = [
   "red",
   "green",
   "blue",
@@ -29,20 +32,35 @@ const SUPPORTED_VARIANTS: readonly ClassicRoseVariant[] = [
   "white",
 ];
 
-export function mapPrismaToInvitation(
-  payload: InvitationDetailPayload
-): Invitation {
-  if (!SUPPORTED_THEMES.includes(payload.theme as InvitationTheme)) {
+export function parseInvitationMeta(theme: string, variant: string): InvitationMeta {
+  if (!SUPPORTED_THEMES.includes(theme as InvitationTheme)) {
     throw new InvitationMappingError(
-      `Unsupported theme: "${payload.theme}". Supported themes: ${SUPPORTED_THEMES.join(", ")}`
+      `Unsupported theme: "${theme}". Supported themes: ${SUPPORTED_THEMES.join(", ")}`
     );
   }
 
-  if (!SUPPORTED_VARIANTS.includes(payload.variant as ClassicRoseVariant)) {
+  if (theme === "siger-priangan") {
+    if (variant !== "ivory") {
+      throw new InvitationMappingError(
+        `Unsupported variant: "${variant}" for theme "${theme}". Supported variants: ivory`
+      );
+    }
+    return { theme, variant: "ivory" };
+  }
+
+  if (!CLASSIC_ROSE_VARIANTS.includes(variant as ClassicRoseVariant)) {
     throw new InvitationMappingError(
-      `Unsupported variant: "${payload.variant}". Supported variants: ${SUPPORTED_VARIANTS.join(", ")}`
+      `Unsupported variant: "${variant}" for theme "${theme}". Supported variants: ${CLASSIC_ROSE_VARIANTS.join(", ")}`
     );
   }
+
+  return { theme: "classic-rose", variant: variant as ClassicRoseVariant };
+}
+
+export function mapPrismaToInvitation(
+  payload: MappableInvitationPayload
+): Invitation {
+  const meta = parseInvitationMeta(payload.theme, payload.variant);
 
   if (!payload.sections) {
     throw new InvitationMappingError(
@@ -112,16 +130,20 @@ export function mapPrismaToInvitation(
     const sortedGalleryItems = [...(payload.galleryItems ?? [])].sort(
       (a, b) => a.position - b.position
     );
-    const images = sortedGalleryItems.map((item) => {
+    const items = sortedGalleryItems.map((item) => {
       if (!item.asset?.secureUrl) {
         throw new InvitationMappingError(
           `Gallery item at position ${item.position} has no asset`
         );
       }
-      return item.asset.secureUrl;
+      return {
+        url: item.asset.secureUrl,
+        altText: item.altText,
+        caption: "caption" in item ? item.caption ?? "" : "",
+      };
     });
 
-    if (images.length === 0) {
+    if (items.length === 0) {
       throw new InvitationMappingError(
         "Gallery section is active but contains no images"
       );
@@ -129,7 +151,8 @@ export function mapPrismaToInvitation(
 
     gallery = {
       videoUrl: payload.galleryVideoUrl ?? "",
-      images,
+      items,
+      images: items.map((item) => item.url),
     };
   }
 
@@ -160,14 +183,13 @@ export function mapPrismaToInvitation(
   const musicUrl = payload.musicAsset?.secureUrl || undefined;
 
   return {
-    meta: {
-      theme: payload.theme as InvitationTheme,
-      variant: payload.variant as ClassicRoseVariant,
-    },
+    meta,
     data: {
       sections,
       couple,
       weddingDate: payload.weddingDate,
+      greeting: "greeting" in payload ? payload.greeting ?? "" : "",
+      prayer: "prayer" in payload ? payload.prayer ?? "" : "",
       events,
       ...(gallery !== undefined ? { gallery } : {}),
       ...(loveStory !== undefined ? { loveStory } : {}),
@@ -178,7 +200,7 @@ export function mapPrismaToInvitation(
 }
 
 export function mapPrismaToInvitationData(
-  payload: InvitationDetailPayload
+  payload: MappableInvitationPayload
 ): InvitationData {
   return mapPrismaToInvitation(payload).data;
 }

@@ -60,15 +60,25 @@ describe("Local Database Target Guard (SEED-02)", () => {
 
   describe("Rejected targets and safety boundaries", () => {
     it("rejects missing or empty DATABASE_URL", () => {
-      expect(() => validateLocalDatabaseTarget(undefined)).toThrowError(
-        DbGuardError
-      );
-      expect(() => validateLocalDatabaseTarget("")).toThrowError(
-        DbGuardError
-      );
-      expect(() => validateLocalDatabaseTarget("   ")).toThrowError(
-        DbGuardError
-      );
+      const originalDatabaseUrl = process.env.DATABASE_URL;
+      delete process.env.DATABASE_URL;
+      try {
+        expect(() => validateLocalDatabaseTarget(undefined)).toThrowError(
+          DbGuardError
+        );
+        expect(() => validateLocalDatabaseTarget("")).toThrowError(
+          DbGuardError
+        );
+        expect(() => validateLocalDatabaseTarget("   ")).toThrowError(
+          DbGuardError
+        );
+      } finally {
+        if (originalDatabaseUrl === undefined) {
+          delete process.env.DATABASE_URL;
+        } else {
+          process.env.DATABASE_URL = originalDatabaseUrl;
+        }
+      }
     });
 
     it("rejects malformed URL", () => {

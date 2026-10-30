@@ -1,25 +1,22 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowUpRight, MailOpen, Sparkles } from "lucide-react";
-import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminInvitationList } from "@/components/admin/AdminInvitationList";
 import { AdminListError } from "@/components/admin/AdminListError";
-import { AdminUnavailable } from "@/components/admin/AdminUnavailable";
 import { getAdminInvitationList } from "@/features/admin/invitation-list";
 import { requireAdminSession } from "@/features/auth/service";
-import { isAdminAuthorizationError } from "./admin-errors";
+import { isAdminAuthorizationError } from "../admin-errors";
 
 export const metadata = {
   title: "Ringkasan Admin | AyaWarta",
 };
 
 export default async function AdminDashboardPage() {
-  let admin;
   try {
-    admin = await requireAdminSession();
+    await requireAdminSession();
   } catch (error) {
     if (isAdminAuthorizationError(error)) redirect("/admin/login");
-    return <AdminUnavailable retryHref="/admin" />;
+    return <AdminListError retryHref="/admin" title="Panel administrator belum dapat dimuat" headingLevel="h1" />;
   }
 
   let invitations;
@@ -28,7 +25,7 @@ export default async function AdminDashboardPage() {
   } catch (error) {
     if (isAdminAuthorizationError(error)) redirect("/admin/login");
     return (
-      <AdminShell adminName={admin.name} activePage="overview">
+      <>
         <div className="mb-8">
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.24em] text-brand-primary">
             Ruang kerja AyaWarta
@@ -38,12 +35,12 @@ export default async function AdminDashboardPage() {
           </h1>
         </div>
         <AdminListError retryHref="/admin" />
-      </AdminShell>
+      </>
     );
   }
 
   return (
-    <AdminShell adminName={admin.name} activePage="overview">
+    <>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.24em] text-brand-primary">
@@ -116,6 +113,6 @@ export default async function AdminDashboardPage() {
         </div>
         <AdminInvitationList items={invitations.items.slice(0, 5)} />
       </section>
-    </AdminShell>
+    </>
   );
 }

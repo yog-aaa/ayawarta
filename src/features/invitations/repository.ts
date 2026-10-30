@@ -1,6 +1,6 @@
 import "server-only";
 
-import { invitationDetailInclude, type InvitationDetailPayload } from "./query";
+import { publicInvitationSelect, type PublicInvitationDetailPayload } from "./query";
 import { mapPrismaToInvitation } from "./mapper";
 import type { Invitation } from "./types";
 
@@ -8,8 +8,8 @@ export interface InvitationDatabaseClient {
   invitation: {
     findUnique(args: {
       where: { slug: string };
-      include: typeof invitationDetailInclude;
-    }): Promise<InvitationDetailPayload | null>;
+      select: typeof publicInvitationSelect;
+    }): Promise<PublicInvitationDetailPayload | null>;
   };
 }
 
@@ -29,14 +29,14 @@ export function createInvitationRepository(
   return {
     async findPayloadBySlug(
       slug: string
-    ): Promise<InvitationDetailPayload | null> {
+    ): Promise<PublicInvitationDetailPayload | null> {
       if (!slug || typeof slug !== "string") {
         return null;
       }
       const db = customDb ?? (await getDefaultClient());
       return db.invitation.findUnique({
         where: { slug },
-        include: invitationDetailInclude,
+        select: publicInvitationSelect,
       });
     },
 

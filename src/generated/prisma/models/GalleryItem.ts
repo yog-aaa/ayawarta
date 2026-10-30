@@ -39,6 +39,7 @@ export type GalleryItemMinAggregateOutputType = {
   invitationId: string | null
   assetId: string | null
   altText: string | null
+  caption: string | null
   position: number | null
 }
 
@@ -47,6 +48,7 @@ export type GalleryItemMaxAggregateOutputType = {
   invitationId: string | null
   assetId: string | null
   altText: string | null
+  caption: string | null
   position: number | null
 }
 
@@ -55,6 +57,7 @@ export type GalleryItemCountAggregateOutputType = {
   invitationId: number
   assetId: number
   altText: number
+  caption: number
   position: number
   _all: number
 }
@@ -73,6 +76,7 @@ export type GalleryItemMinAggregateInputType = {
   invitationId?: true
   assetId?: true
   altText?: true
+  caption?: true
   position?: true
 }
 
@@ -81,6 +85,7 @@ export type GalleryItemMaxAggregateInputType = {
   invitationId?: true
   assetId?: true
   altText?: true
+  caption?: true
   position?: true
 }
 
@@ -89,6 +94,7 @@ export type GalleryItemCountAggregateInputType = {
   invitationId?: true
   assetId?: true
   altText?: true
+  caption?: true
   position?: true
   _all?: true
 }
@@ -184,6 +190,7 @@ export type GalleryItemGroupByOutputType = {
   invitationId: string
   assetId: string
   altText: string
+  caption: string | null
   position: number
   _count: GalleryItemCountAggregateOutputType | null
   _avg: GalleryItemAvgAggregateOutputType | null
@@ -215,6 +222,7 @@ export type GalleryItemWhereInput = {
   invitationId?: Prisma.StringFilter<"GalleryItem"> | string
   assetId?: Prisma.StringFilter<"GalleryItem"> | string
   altText?: Prisma.StringFilter<"GalleryItem"> | string
+  caption?: Prisma.StringNullableFilter<"GalleryItem"> | string | null
   position?: Prisma.IntFilter<"GalleryItem"> | number
   invitation?: Prisma.XOR<Prisma.InvitationScalarRelationFilter, Prisma.InvitationWhereInput>
   asset?: Prisma.XOR<Prisma.MediaAssetScalarRelationFilter, Prisma.MediaAssetWhereInput>
@@ -225,6 +233,7 @@ export type GalleryItemOrderByWithRelationInput = {
   invitationId?: Prisma.SortOrder
   assetId?: Prisma.SortOrder
   altText?: Prisma.SortOrder
+  caption?: Prisma.SortOrderInput | Prisma.SortOrder
   position?: Prisma.SortOrder
   invitation?: Prisma.InvitationOrderByWithRelationInput
   asset?: Prisma.MediaAssetOrderByWithRelationInput
@@ -239,6 +248,7 @@ export type GalleryItemWhereUniqueInput = Prisma.AtLeast<{
   invitationId?: Prisma.StringFilter<"GalleryItem"> | string
   assetId?: Prisma.StringFilter<"GalleryItem"> | string
   altText?: Prisma.StringFilter<"GalleryItem"> | string
+  caption?: Prisma.StringNullableFilter<"GalleryItem"> | string | null
   position?: Prisma.IntFilter<"GalleryItem"> | number
   invitation?: Prisma.XOR<Prisma.InvitationScalarRelationFilter, Prisma.InvitationWhereInput>
   asset?: Prisma.XOR<Prisma.MediaAssetScalarRelationFilter, Prisma.MediaAssetWhereInput>
@@ -249,6 +259,7 @@ export type GalleryItemOrderByWithAggregationInput = {
   invitationId?: Prisma.SortOrder
   assetId?: Prisma.SortOrder
   altText?: Prisma.SortOrder
+  caption?: Prisma.SortOrderInput | Prisma.SortOrder
   position?: Prisma.SortOrder
   _count?: Prisma.GalleryItemCountOrderByAggregateInput
   _avg?: Prisma.GalleryItemAvgOrderByAggregateInput
@@ -265,12 +276,14 @@ export type GalleryItemScalarWhereWithAggregatesInput = {
   invitationId?: Prisma.StringWithAggregatesFilter<"GalleryItem"> | string
   assetId?: Prisma.StringWithAggregatesFilter<"GalleryItem"> | string
   altText?: Prisma.StringWithAggregatesFilter<"GalleryItem"> | string
+  caption?: Prisma.StringNullableWithAggregatesFilter<"GalleryItem"> | string | null
   position?: Prisma.IntWithAggregatesFilter<"GalleryItem"> | number
 }
 
 export type GalleryItemCreateInput = {
   id?: string
   altText: string
+  caption?: string | null
   position: number
   invitation: Prisma.InvitationCreateNestedOneWithoutGalleryItemsInput
   asset: Prisma.MediaAssetCreateNestedOneWithoutGalleryItemsInput
@@ -281,12 +294,14 @@ export type GalleryItemUncheckedCreateInput = {
   invitationId: string
   assetId: string
   altText: string
+  caption?: string | null
   position: number
 }
 
 export type GalleryItemUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   altText?: Prisma.StringFieldUpdateOperationsInput | string
+  caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   invitation?: Prisma.InvitationUpdateOneRequiredWithoutGalleryItemsNestedInput
   asset?: Prisma.MediaAssetUpdateOneRequiredWithoutGalleryItemsNestedInput
@@ -297,6 +312,7 @@ export type GalleryItemUncheckedUpdateInput = {
   invitationId?: Prisma.StringFieldUpdateOperationsInput | string
   assetId?: Prisma.StringFieldUpdateOperationsInput | string
   altText?: Prisma.StringFieldUpdateOperationsInput | string
+  caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -305,12 +321,14 @@ export type GalleryItemCreateManyInput = {
   invitationId: string
   assetId: string
   altText: string
+  caption?: string | null
   position: number
 }
 
 export type GalleryItemUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   altText?: Prisma.StringFieldUpdateOperationsInput | string
+  caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -319,6 +337,7 @@ export type GalleryItemUncheckedUpdateManyInput = {
   invitationId?: Prisma.StringFieldUpdateOperationsInput | string
   assetId?: Prisma.StringFieldUpdateOperationsInput | string
   altText?: Prisma.StringFieldUpdateOperationsInput | string
+  caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -342,6 +361,7 @@ export type GalleryItemCountOrderByAggregateInput = {
   invitationId?: Prisma.SortOrder
   assetId?: Prisma.SortOrder
   altText?: Prisma.SortOrder
+  caption?: Prisma.SortOrder
   position?: Prisma.SortOrder
 }
 
@@ -354,6 +374,7 @@ export type GalleryItemMaxOrderByAggregateInput = {
   invitationId?: Prisma.SortOrder
   assetId?: Prisma.SortOrder
   altText?: Prisma.SortOrder
+  caption?: Prisma.SortOrder
   position?: Prisma.SortOrder
 }
 
@@ -362,6 +383,7 @@ export type GalleryItemMinOrderByAggregateInput = {
   invitationId?: Prisma.SortOrder
   assetId?: Prisma.SortOrder
   altText?: Prisma.SortOrder
+  caption?: Prisma.SortOrder
   position?: Prisma.SortOrder
 }
 
@@ -456,6 +478,7 @@ export type GalleryItemUncheckedUpdateManyWithoutInvitationNestedInput = {
 export type GalleryItemCreateWithoutAssetInput = {
   id?: string
   altText: string
+  caption?: string | null
   position: number
   invitation: Prisma.InvitationCreateNestedOneWithoutGalleryItemsInput
 }
@@ -464,6 +487,7 @@ export type GalleryItemUncheckedCreateWithoutAssetInput = {
   id?: string
   invitationId: string
   altText: string
+  caption?: string | null
   position: number
 }
 
@@ -501,12 +525,14 @@ export type GalleryItemScalarWhereInput = {
   invitationId?: Prisma.StringFilter<"GalleryItem"> | string
   assetId?: Prisma.StringFilter<"GalleryItem"> | string
   altText?: Prisma.StringFilter<"GalleryItem"> | string
+  caption?: Prisma.StringNullableFilter<"GalleryItem"> | string | null
   position?: Prisma.IntFilter<"GalleryItem"> | number
 }
 
 export type GalleryItemCreateWithoutInvitationInput = {
   id?: string
   altText: string
+  caption?: string | null
   position: number
   asset: Prisma.MediaAssetCreateNestedOneWithoutGalleryItemsInput
 }
@@ -515,6 +541,7 @@ export type GalleryItemUncheckedCreateWithoutInvitationInput = {
   id?: string
   assetId: string
   altText: string
+  caption?: string | null
   position: number
 }
 
@@ -548,12 +575,14 @@ export type GalleryItemCreateManyAssetInput = {
   id?: string
   invitationId: string
   altText: string
+  caption?: string | null
   position: number
 }
 
 export type GalleryItemUpdateWithoutAssetInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   altText?: Prisma.StringFieldUpdateOperationsInput | string
+  caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   invitation?: Prisma.InvitationUpdateOneRequiredWithoutGalleryItemsNestedInput
 }
@@ -562,6 +591,7 @@ export type GalleryItemUncheckedUpdateWithoutAssetInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   invitationId?: Prisma.StringFieldUpdateOperationsInput | string
   altText?: Prisma.StringFieldUpdateOperationsInput | string
+  caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -569,6 +599,7 @@ export type GalleryItemUncheckedUpdateManyWithoutAssetInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   invitationId?: Prisma.StringFieldUpdateOperationsInput | string
   altText?: Prisma.StringFieldUpdateOperationsInput | string
+  caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -576,12 +607,14 @@ export type GalleryItemCreateManyInvitationInput = {
   id?: string
   assetId: string
   altText: string
+  caption?: string | null
   position: number
 }
 
 export type GalleryItemUpdateWithoutInvitationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   altText?: Prisma.StringFieldUpdateOperationsInput | string
+  caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   asset?: Prisma.MediaAssetUpdateOneRequiredWithoutGalleryItemsNestedInput
 }
@@ -590,6 +623,7 @@ export type GalleryItemUncheckedUpdateWithoutInvitationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   assetId?: Prisma.StringFieldUpdateOperationsInput | string
   altText?: Prisma.StringFieldUpdateOperationsInput | string
+  caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -597,6 +631,7 @@ export type GalleryItemUncheckedUpdateManyWithoutInvitationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   assetId?: Prisma.StringFieldUpdateOperationsInput | string
   altText?: Prisma.StringFieldUpdateOperationsInput | string
+  caption?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -607,6 +642,7 @@ export type GalleryItemSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   invitationId?: boolean
   assetId?: boolean
   altText?: boolean
+  caption?: boolean
   position?: boolean
   invitation?: boolean | Prisma.InvitationDefaultArgs<ExtArgs>
   asset?: boolean | Prisma.MediaAssetDefaultArgs<ExtArgs>
@@ -617,6 +653,7 @@ export type GalleryItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   invitationId?: boolean
   assetId?: boolean
   altText?: boolean
+  caption?: boolean
   position?: boolean
   invitation?: boolean | Prisma.InvitationDefaultArgs<ExtArgs>
   asset?: boolean | Prisma.MediaAssetDefaultArgs<ExtArgs>
@@ -627,6 +664,7 @@ export type GalleryItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   invitationId?: boolean
   assetId?: boolean
   altText?: boolean
+  caption?: boolean
   position?: boolean
   invitation?: boolean | Prisma.InvitationDefaultArgs<ExtArgs>
   asset?: boolean | Prisma.MediaAssetDefaultArgs<ExtArgs>
@@ -637,10 +675,11 @@ export type GalleryItemSelectScalar = {
   invitationId?: boolean
   assetId?: boolean
   altText?: boolean
+  caption?: boolean
   position?: boolean
 }
 
-export type GalleryItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "invitationId" | "assetId" | "altText" | "position", ExtArgs["result"]["galleryItem"]>
+export type GalleryItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "invitationId" | "assetId" | "altText" | "caption" | "position", ExtArgs["result"]["galleryItem"]>
 export type GalleryItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   invitation?: boolean | Prisma.InvitationDefaultArgs<ExtArgs>
   asset?: boolean | Prisma.MediaAssetDefaultArgs<ExtArgs>
@@ -665,6 +704,7 @@ export type $GalleryItemPayload<ExtArgs extends runtime.Types.Extensions.Interna
     invitationId: string
     assetId: string
     altText: string
+    caption: string | null
     position: number
   }, ExtArgs["result"]["galleryItem"]>
   composites: {}
@@ -1095,6 +1135,7 @@ export interface GalleryItemFieldRefs {
   readonly invitationId: Prisma.FieldRef<"GalleryItem", 'String'>
   readonly assetId: Prisma.FieldRef<"GalleryItem", 'String'>
   readonly altText: Prisma.FieldRef<"GalleryItem", 'String'>
+  readonly caption: Prisma.FieldRef<"GalleryItem", 'String'>
   readonly position: Prisma.FieldRef<"GalleryItem", 'Int'>
 }
     

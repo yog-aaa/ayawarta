@@ -25,6 +25,8 @@ The implementation is in `src/auth.ts`, `src/auth.config.ts`, `src/proxy.ts`, an
 
 There is no registration route.
 
+`ADMIN` and the legacy `SUPER_ADMIN` value currently have the same product permission: read the workspace and, when the editor and publish stages are implemented, edit and publish invitations. The retained enum supports existing sessions and records; it does not create a separate approval tier or distinct UI. No role-removal migration is part of the current work.
+
 ## Credential Flow
 
 1. Parse credentials using a server-side validation schema.
@@ -70,6 +72,8 @@ It does not expose `passwordHash`, lockout counters, or secrets.
 Authentication proves identity; authorization checks an active admin role. A valid session without an allowed role must not access admin pages or admin actions.
 
 `src/proxy.ts` matches `/admin/:path*` and `src/auth.config.ts` handles login versus protected-route redirects. Protected server pages also call `requireAdminSession`, which reloads the current user and rejects deleted, inactive, locked, or role-revoked accounts. Every future admin mutation must perform authorization on the server. Hiding navigation in the UI is not sufficient.
+
+The authored `src/features/admin/draft-service.ts` calls `requireAdminSession` for draft reads, creation, saves, publication history, and publishability preflight. It returns typed results and domain errors rather than exposing Prisma rows. These server-only functions are not an exposed editor route, preview route, or publish action. Their tables are in an authored migration that has not been applied to production Neon; authorization alone does not make them available for production use.
 
 ## Bootstrap
 
