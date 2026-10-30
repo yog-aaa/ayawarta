@@ -11,6 +11,9 @@ const BASE_TABLES = [
   "User", "MediaAsset", "Invitation", "InvitationSections", "Partner",
   "Event", "GalleryItem", "LoveStory", "GiftAccount",
 ];
+const BOOTSTRAP_TABLES = [
+  ...BASE_TABLES, "InvitationDraft", "InvitationPublication", "InvitationPublicationMedia",
+];
 
 type MigrationRow = {
   migration_name: string;
@@ -35,6 +38,9 @@ export interface ReleaseStateClient {
   galleryItem: { count(): Promise<number> };
   loveStory: { count(): Promise<number> };
   giftAccount: { count(): Promise<number> };
+  invitationDraft: { count(): Promise<number> };
+  invitationPublication: { count(): Promise<number> };
+  invitationPublicationMedia: { count(): Promise<number> };
 }
 
 export function committedMigrations(root = process.cwd()): CommittedMigration[] {
@@ -105,8 +111,16 @@ export async function inspectReleaseState(
   }
 
   if (counts.every((count) => count === 0)) {
-    if (ledger.length !== migrations.length || names.length !== BASE_TABLES.length + 1) {
+    if (ledger.length !== migrations.length || names.length !== BOOTSTRAP_TABLES.length + 1 ||
+        BOOTSTRAP_TABLES.some((name) => !names.includes(name))) {
       throw new Error("Empty schema is not an exact completed bootstrap schema.");
+    }
+    const adminCounts = await Promise.all([
+      client.invitationDraft.count(), client.invitationPublication.count(),
+      client.invitationPublicationMedia.count(),
+    ]);
+    if (adminCounts.some((count) => count !== 0)) {
+      throw new Error("Empty schema contains admin draft or publication data.");
     }
     return "seed-ready";
   }

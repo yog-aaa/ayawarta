@@ -23,6 +23,8 @@ export const serverEnvSchema = z.object({
 
   // Optional keys
   DATABASE_URL_POOLED: z.string().min(1).optional(),
+  APPROVED_NEON_TARGET_FINGERPRINT: z.string().min(1).optional(),
+  AYAWARTA_LOCAL_NEON_RUNTIME: z.enum(["enabled"]).optional(),
   NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: z.string().optional(),
   NEXT_DISABLE_LIGHTNINGCSS: z.string().optional(),
 });
@@ -56,15 +58,21 @@ export function resolveDeploymentEnvironment(explicit?: string): DeploymentEnvir
 
 /**
  * Selects the database connection URL based on explicit execution mode and deployment environment (NEO-04, NEO-12).
- * - In "local" or "development" mode: runtime STRICTLY uses direct local DATABASE_URL and rejects remote database URLs.
- *   The presence of DATABASE_URL_POOLED (e.g. from .env.production) NEVER switches the local runtime to pooled or remote.
+ * - In "local" or "development" mode: runtime uses a guarded local DATABASE_URL by default.
+ *   An explicit local Neon opt-in requires matching direct/pooled URLs and approved target identity.
+ *   The mere presence of DATABASE_URL_POOLED never changes the target.
  * - In "production" mode (Vercel Production):
  *   - "runtime" mode: DATABASE_URL_POOLED is mandatory. If missing or empty, throws Error. Falling back to direct connection is prohibited.
  *   - "migration" mode: uses direct DATABASE_URL.
  * - In "preview" mode (Vercel Preview): uses DATABASE_URL_POOLED if present, otherwise direct DATABASE_URL.
  */
 export function selectDatabaseConnectionUrl(
-  env: { DATABASE_URL: string; DATABASE_URL_POOLED?: string },
+  env: {
+    DATABASE_URL: string;
+    DATABASE_URL_POOLED?: string;
+    APPROVED_NEON_TARGET_FINGERPRINT?: string;
+    AYAWARTA_LOCAL_NEON_RUNTIME?: "enabled";
+  },
   mode: DatabaseConnectionMode = "runtime",
   targetEnv?: DeploymentEnvironment
 ): DatabaseConnectionSelection {
@@ -72,6 +80,20 @@ export function selectDatabaseConnectionUrl(
 
   // Local / Development isolation (NEO-12, NEO-15)
   if (deploymentEnv === "local" || deploymentEnv === "development") {
+    if (mode === "runtime" && env.AYAWARTA_LOCAL_NEON_RUNTIME === "enabled") {
+      const pooled = env.DATABASE_URL_POOLED?.trim();
+      const approvedTarget = env.APPROVED_NEON_TARGET_FINGERPRINT?.trim();
+      if (!pooled || !approvedTarget) {
+        throw new Error("Local Neon runtime requires pooled URL and approved target fingerprint.");
+      }
+      validateNeonDatabaseTargets({
+        directUrl: env.DATABASE_URL,
+        pooledUrl: pooled,
+        approvedTarget,
+        requireApprovedTarget: true,
+      });
+      return { url: pooled, isPooled: true, sourceKey: "DATABASE_URL_POOLED" };
+    }
     const rawUrl = env.DATABASE_URL?.trim();
     // Validate target through single consistent local database contract (NEO-15)
     validateLocalDatabaseTarget(rawUrl);

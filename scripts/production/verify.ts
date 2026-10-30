@@ -40,6 +40,9 @@ export interface DatabaseMetadataClient {
   galleryItem?: { count(): Promise<number> };
   loveStory?: { count(): Promise<number> };
   giftAccount?: { count(): Promise<number> };
+  invitationDraft?: { count(): Promise<number> };
+  invitationPublication?: { count(): Promise<number> };
+  invitationPublicationMedia?: { count(): Promise<number> };
   $disconnect?(): Promise<void>;
 }
 
@@ -89,6 +92,9 @@ const KNOWN_APP_TABLES = [
   "galleryitem",
   "lovestory",
   "giftaccount",
+  "invitationdraft",
+  "invitationpublication",
+  "invitationpublicationmedia",
 ];
 const KNOWN_SYSTEM_TABLES = ["_prisma_migrations"];
 
@@ -101,7 +107,6 @@ function resolveApprovedTarget(
   const cliArg = process.argv.find((arg) => arg.startsWith("--approved-target="));
   if (cliArg) return cliArg.split("=")[1]?.trim();
   if (config?.APPROVED_NEON_TARGET_FINGERPRINT?.trim()) return config.APPROVED_NEON_TARGET_FINGERPRINT.trim();
-  if (process.env.APPROVED_NEON_TARGET_FINGERPRINT?.trim()) return process.env.APPROVED_NEON_TARGET_FINGERPRINT.trim();
   return undefined;
 }
 
@@ -262,6 +267,17 @@ export async function inspectProductionDatabaseState(
     counts.galleryItem = await client.galleryItem.count();
     counts.loveStory = await client.loveStory.count();
     counts.giftAccount = await client.giftAccount.count();
+  }
+
+  for (const [table, key] of [
+    ["invitationdraft", "invitationDraft"],
+    ["invitationpublication", "invitationPublication"],
+    ["invitationpublicationmedia", "invitationPublicationMedia"],
+  ] as const) {
+    if (!lowerNames.includes(table)) continue;
+    const delegate = client[key];
+    if (!delegate) throw new Error(`Cannot inspect ${key} row count.`);
+    counts[key] = await delegate.count();
   }
 
   const totalRows = Object.values(counts).reduce((a, b) => a + b, 0);

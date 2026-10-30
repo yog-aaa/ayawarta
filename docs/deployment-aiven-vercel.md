@@ -1,6 +1,6 @@
 # AyaWarta local operations and Neon/Vercel production cutover
 
-This guide describes the current local workflow and the **future** Neon/Vercel cutover. It does not authorize production changes. [`docs/deployment.md`](deployment.md) is the short environment overview.
+This guide describes the local workflow and Neon/Vercel operations. The approved Neon migration and one-time seed completed on 2026-10-30; release state is `seeded`. Vercel deployment remains separate. The bootstrap commands below are historical recovery guidance and must not be repeated on the seeded database. [`docs/deployment.md`](deployment.md) is the short environment overview.
 
 ## Data ownership
 
@@ -69,7 +69,7 @@ Neon provides two connection strings:
 
 Both URLs may use one `sslmode`, optional `channel_binding=require`, and optional `schema=public`. Duplicate query parameters and connection overrides such as `user`, `password`, `host`, and `port` are rejected. If a port is written in the URL authority, it must be `5432`.
 
-**Local runtime connection isolation (NEO-12):** When deployed locally, the application runtime strictly uses `DATABASE_URL` (direct local connection) and rejects remote database hosts. The presence of `DATABASE_URL_POOLED` in coexisting files (such as `.env.production`) never switches local execution to pooled or remote mode.
+**Local runtime connection isolation (NEO-12):** Local runtime uses `DATABASE_URL` on local PostgreSQL by default. For the owner's intentional local-to-Neon workflow, ignored `.env.local` must explicitly set `AYAWARTA_LOCAL_NEON_RUNTIME=enabled`, `DATABASE_URL_POOLED`, and `APPROVED_NEON_TARGET_FINGERPRINT` alongside the matching direct `DATABASE_URL`. The runtime validates the complete Neon target tuple before using the pooled connection. The opt-in does not change local Prisma CLI, seed, or integration-test guards. Restart Next.js after changing `.env.local`.
 
 **The local `prisma:seed` and `seed:verify` CLIs remain strictly local-only.** They deliberately reject Neon before connecting. Production cutover must use the dedicated production entrypoints (`pnpm prod:migrate`, `pnpm prod:seed`, `pnpm prod:verify`), which enforce fail-closed Neon target verification before any connection is opened. All live execution requires an approved Neon target tuple (**endpoint ID + database name + role**, via `APPROVED_NEON_TARGET_FINGERPRINT` or `--approved-target=<endpoint:database:role>`); without owner authorization of the complete tuple, the gate status is strictly `UNPROVEN` and aborts prior to opening a database connection. All production CLIs sanitize error messages to suppress raw error strings, driver error objects, and connection credentials.
 
@@ -98,7 +98,7 @@ The dry run prints the plan and runs no external commands. Every live invocation
 | Read-only release state | `Bootstrap` | `Bootstrap -ResumeBootstrap` | `Update` |
 | --- | --- | --- | --- |
 | `uninitialized`: no public tables or residual enum/view/sequence | Migrate, seed once, exact baseline verification, push | Stop | Stop |
-| `seed-ready`: all committed migrations applied; exactly the nine AyaWarta tables plus migration ledger; all application tables empty | Stop | Seed once, exact baseline verification, push | Stop |
+| `seed-ready`: all committed migrations applied; exactly the twelve current AyaWarta tables plus migration ledger; all application tables empty | Stop | Seed once, exact baseline verification, push | Stop |
 | `seeded`: approved invitation slugs, canonical media IDs, admin, sections, and partner roles exist | Stop | Stop | Migrate pending changes, skip seed, push |
 | Partial data, missing table, failed/unknown migration, or ambiguous state | Stop | Stop | Stop |
 
@@ -128,7 +128,7 @@ For later releases:
 
 After push, the wrapper confirms only that `origin/main` points to the reviewed SHA. It reports the Vercel trigger and Ready state as **unverified**. In the linked Vercel project's Production deployments, confirm a deployment with that exact SHA was created and reached Ready; then run the post-deploy smoke checklist. A prior production URL responding successfully proves neither fact. An operator with an already authenticated, linked Vercel CLI may locate a deployment by `githubCommitSha` metadata, but this wrapper does not require new Vercel credentials or claim automated Ready verification ([Vercel deployment list](https://vercel.com/docs/cli/list)). If no deployment appears, or it is not Ready, stop and investigate without rerunning seed or assuming database rollback. If the Git integration does not deploy from `main`, stop and review the release process.
 
-No Neon database write, migration, seed, or Vercel production deployment is performed during this preparation stage.
+The approved initial Neon migration and seed were performed on 2026-10-30. No Vercel production deployment or Git push was performed in that operation.
 
 ## Rollback and Database Recovery
 

@@ -10,6 +10,7 @@ const migrations = [
 const baseTables = [
   "_prisma_migrations", "User", "MediaAsset", "Invitation", "InvitationSections",
   "Partner", "Event", "GalleryItem", "LoveStory", "GiftAccount",
+  "InvitationDraft", "InvitationPublication", "InvitationPublicationMedia",
 ];
 const seededCounts = [1, 31, 4, 4, 8, 6, 21, 6, 5];
 
@@ -21,6 +22,7 @@ function client(options: {
   slugs?: string[];
   missingPartner?: boolean;
   mediaIds?: string[];
+  adminCounts?: number[];
 } = {}): ReleaseStateClient {
   const counts = options.counts ?? seededCounts;
   const count = (index: number) => ({ count: async () => counts[index] });
@@ -50,6 +52,9 @@ function client(options: {
     },
     invitationSections: count(3), partner: count(4), event: count(5),
     galleryItem: count(6), loveStory: count(7), giftAccount: count(8),
+    invitationDraft: { count: async () => options.adminCounts?.[0] ?? 0 },
+    invitationPublication: { count: async () => options.adminCounts?.[1] ?? 0 },
+    invitationPublicationMedia: { count: async () => options.adminCounts?.[2] ?? 0 },
   } as ReleaseStateClient;
 }
 
@@ -64,6 +69,8 @@ describe("read-only production release state", () => {
     await expect(inspectReleaseState(client({ counts: Array(9).fill(0) }), migrations)).resolves.toBe("seed-ready");
     await expect(inspectReleaseState(client({ counts: Array(9).fill(0), tables: [...baseTables, "Unknown"] }), migrations))
       .rejects.toThrow("exact completed bootstrap schema");
+    await expect(inspectReleaseState(client({ counts: Array(9).fill(0), adminCounts: [0, 1, 0] }), migrations))
+      .rejects.toThrow("admin draft or publication data");
     await expect(inspectReleaseState(client({ counts: Array(9).fill(0), ledger: [{
       migration_name: "001_init", checksum: migrations[0].checksum,
       finished_at: new Date(), rolled_back_at: null, logs: null,

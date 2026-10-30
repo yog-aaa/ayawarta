@@ -608,6 +608,27 @@ describe("Neon Production Database Target Guard & Connection Selection", () => {
       expect(result.message).toContain("Database contains application data");
     });
 
+    it("counts admin tables when checking whether a migrated schema is empty", async () => {
+      const tables = [
+        "User", "MediaAsset", "Invitation", "InvitationSections", "Partner",
+        "Event", "GalleryItem", "LoveStory", "GiftAccount",
+        "InvitationDraft", "InvitationPublication", "InvitationPublicationMedia",
+        "_prisma_migrations",
+      ];
+      const zero = { count: vi.fn().mockResolvedValue(0) };
+      const mockClient: DatabaseMetadataClient = {
+        $queryRaw: vi.fn().mockResolvedValue(tables.map((tablename) => ({ tablename }))),
+        user: zero, mediaAsset: zero, invitation: zero, invitationSections: zero,
+        partner: zero, event: zero, galleryItem: zero, loveStory: zero,
+        giftAccount: zero, invitationDraft: zero,
+        invitationPublication: { count: vi.fn().mockResolvedValue(1) },
+        invitationPublicationMedia: zero,
+      };
+      const result = await inspectProductionDatabaseState(mockClient);
+      expect(result.state).toBe("has_data");
+      expect(result.tableCounts?.invitationPublication).toBe(1);
+    });
+
     it("detects foreign / unexpected tables in public schema", async () => {
       const mockTables = [{ tablename: "some_foreign_table" }, { tablename: "another_app" }];
       const mockClient: DatabaseMetadataClient = {

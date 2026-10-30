@@ -106,7 +106,6 @@ export function loadProductionConfig(
     options?.approvedTarget ??
     options?.approvedTargetId ??
     envMap.APPROVED_NEON_TARGET_FINGERPRINT?.trim() ??
-    process.env.APPROVED_NEON_TARGET_FINGERPRINT?.trim() ??
     (envMap.APPROVED_NEON_ENDPOINT && envMap.APPROVED_NEON_DATABASE && envMap.APPROVED_NEON_ROLE
       ? {
           endpoint: envMap.APPROVED_NEON_ENDPOINT.trim(),
@@ -114,8 +113,7 @@ export function loadProductionConfig(
           role: envMap.APPROVED_NEON_ROLE.trim(),
         }
       : undefined) ??
-    envMap.APPROVED_NEON_PROJECT_ID?.trim() ??
-    process.env.APPROVED_NEON_PROJECT_ID?.trim();
+    envMap.APPROVED_NEON_PROJECT_ID?.trim();
 
   const sanitizedTarget = validateNeonDatabaseTargets({
     directUrl,

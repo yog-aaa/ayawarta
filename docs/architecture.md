@@ -48,7 +48,7 @@ Stage 5B used the primitive to remediate an oversized JPEG. Oversized PNG and We
 
 Auth.js Credentials provides admin-only login. `/admin` is protected; `/admin/login` remains accessible for recovery from stale sessions.
 
-The admin workspace has a real invitation summary and searchable, paginated published list. A3 adds a separate list of new private drafts, `/admin/invitations/new`, `/admin/invitations/[id]/edit`, and a saved-draft-only `/admin/invitations/[id]/preview`; `[id]` is a draft ID on the edit and preview routes. Server actions create drafts or save them with a version check, and opening an existing published invitation requires a verified baseline snapshot. There is no publish action. The additive schema migration has not been applied to production Neon, so draft reads and writes cannot yet be activated there; the published list remains available when the draft index is unavailable.
+The admin workspace has a real invitation summary and searchable, paginated published list. A3 adds a separate list of new private drafts, `/admin/invitations/new`, `/admin/invitations/[id]/edit`, and a saved-draft-only `/admin/invitations/[id]/preview`; `[id]` is a draft ID on the edit and preview routes. Server actions create drafts or save them with a version check, and opening an existing published invitation requires a verified baseline snapshot. There is no publish action. The additive schema migration is applied to Neon; existing published invitations still require version-1 baseline snapshots before editing.
 
 ### Pricing configuration
 
@@ -150,7 +150,7 @@ The generated Prisma client is under `src/generated/prisma`; generated code must
 ## Public Invitation Data Flow
 
 1. `[slug]/page.tsx` receives the slug.
-2. A server-only repository queries the invitation and ordered relations. Until the reviewed schema migration is activated, `publicInvitationSelect` in `src/features/invitations/query.ts` selects only pre-migration columns so legacy public reads remain compatible with the current Neon schema.
+2. A server-only repository queries the invitation and ordered relations. `publicInvitationSelect` in `src/features/invitations/query.ts` keeps the public projection compact and compatible with the seeded Neon rows.
 3. The query includes the required hero `MediaAsset` separately from gallery items, partner photos, and optional music.
 4. A mapper converts the persistence result to the stable invitation domain contract, including the hero URL as `couple.heroImage` and nullable `galleryVideoUrl` as `gallery.videoUrl`.
 5. Missing data triggers `notFound()`.
@@ -161,9 +161,9 @@ The domain and draft schemas recognize two exact theme/variant pairs: Classic Ro
 
 ## Draft and publication boundary (authored, not activated)
 
-`src/features/admin/draft-schema.ts` validates versioned private payloads. `draft-repository.ts` stores one draft per existing published invitation, checks optimistic versions, and requires a verified version-1 baseline before opening an existing invitation for editing. `publication-snapshot.ts` captures the complete published aggregate and media identities, hashes it, and derives media pins. The additive schema adds `InvitationDraft`, immutable `InvitationPublication`, and `InvitationPublicationMedia` records; publishing remains a later stage.
+`src/features/admin/draft-schema.ts` validates versioned private payloads. `draft-repository.ts` stores one draft per existing published invitation, checks optimistic versions, and requires a verified version-1 baseline before opening an existing invitation for editing. `publication-snapshot.ts` captures the complete published aggregate and media identities, hashes it, and derives media pins. The applied additive schema includes `InvitationDraft`, immutable `InvitationPublication`, and `InvitationPublicationMedia` records; publishing remains a later stage.
 
-The A3 editor saves partially complete drafts through authenticated server actions. The private preview reloads the **saved** draft, has `force-dynamic`/zero revalidation, and either shows field-level incompleteness or renders the matching theme with a draft banner. Missing required photos may appear as placeholders for preview, but they remain publish blockers. Classic Rose omits its wishes component in draft mode; Siger shows a read-only wishes notice without loading its live Firestore adapter. Media choices are limited to deliverable assets already associated with that same invitation, with resource-type checks; an asset also shared with another invitation can only remain in its original published slot. New drafts have no selectable customer media until a separate provisioning stage. A draft is never returned by the public invitation repository, and production draft operations remain unavailable until the migration and baseline process receive separate target authorization.
+The A3 editor saves partially complete drafts through authenticated server actions. The private preview reloads the **saved** draft, has `force-dynamic`/zero revalidation, and either shows field-level incompleteness or renders the matching theme with a draft banner. Missing required photos may appear as placeholders for preview, but they remain publish blockers. Classic Rose omits its wishes component in draft mode; Siger shows a read-only wishes notice without loading its live Firestore adapter. Media choices are limited to deliverable assets already associated with that same invitation, with resource-type checks; an asset also shared with another invitation can only remain in its original published slot. New drafts have no selectable customer media until a separate provisioning stage. A draft is never returned by the public invitation repository. Existing published invitations remain blocked from drafting until their baseline snapshots are written and verified in a separate approved operation.
 
 ## Wishes and RSVP Data Flow
 
@@ -190,7 +190,7 @@ PostgreSQL must not be introduced into this real-time path during the refactor.
 ### Development
 
 - Next.js runs locally.
-- `DATABASE_URL` is environment-dependent. The current operator's local configuration points to production Neon, so local database commands must be treated as production operations; this asset stage performs none.
+- The owner's local runtime explicitly opts into the approved pooled Neon target. Local migration, seed, and integration-test commands remain local-only and must not be used against that URL.
 - Dynamic production media uses the new Cloudinary account.
 - Firestore remains connected to the existing project.
 
@@ -201,7 +201,7 @@ PostgreSQL must not be introduced into this real-time path during the refactor.
 - Cloudinary serves production invitation media and Classic Rose runtime artwork.
 - Firestore serves real-time wishes and RSVP.
 
-The Neon database cutover has not been performed. Local seed and seed verification reject remote targets. Separate `prod:migrate`, `prod:seed`, and `prod:verify` entry points have Neon target guards and require an explicitly approved target plus `--execute`; these scripts are preparation, not evidence of a completed cutover. See [deployment operations](deployment.md).
+The approved Neon schema migration and one-time canonical seed completed on 2026-10-30 and passed exact seed verification. Local seed and seed verification still reject remote targets. Future Neon changes must use guarded production entry points under a new explicit authorization. Vercel deployment was not part of this database operation. See [deployment operations](deployment.md).
 
 ## Tooling and Dependency Decisions
 

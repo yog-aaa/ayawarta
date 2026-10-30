@@ -1,6 +1,6 @@
 # AyaWarta Environment and Deployment Guide
 
-For exact current commands, local guard behavior, and the future cutover order, use [the operational guide](deployment-aiven-vercel.md). Production operations remain unexecuted.
+Neon schema migration and the one-time canonical seed completed on 2026-10-30 for the approved `ep-mute-water-azaf9oyl:ayawarta:neondb_owner` target. Read-only verification confirmed 12 application tables, 86 seed rows across the original nine data tables, four invitation slugs, 31 canonical media records, and release state `seeded`. Vercel deployment and production environment parity were not changed or verified. For current commands and guards, use [the operational guide](deployment-aiven-vercel.md). Do not rerun the initial seed on this populated database.
 
 ## Environments
 
@@ -66,7 +66,7 @@ On Vercel Production (`VERCEL_ENV=production`), the application runtime strictly
 ### Target Isolation, Approval Gate & Boundary Guarantees
 
 - **Connection URL query contract (NEO-17)**: Production commands and Vercel Production runtime validate both URLs. Each may contain one `sslmode`, optional `channel_binding=require`, and optional `schema=public`. Duplicate parameters and all connection overrides (including `user`, `password`, `host`, and `port`) are rejected before connecting. An explicit port, if present, must be `5432`.
-- **Local Runtime Connection Isolation (NEO-12)**: When running in local mode, the Next.js runtime strictly uses `DATABASE_URL` and validates that it points to an authorized local host (`localhost`, `127.0.0.1`, `::1`). Any remote database URL configured in local mode is rejected. The coexistence of `DATABASE_URL_POOLED` (e.g. from `.env.production`) NEVER switches the local runtime to pooled or remote mode.
+- **Local Runtime Connection Isolation (NEO-12)**: By default, local Next.js requires `DATABASE_URL` on an authorized local host (`localhost`, `127.0.0.1`, `::1`). The owner's intentional local-to-Neon workflow requires an explicit `AYAWARTA_LOCAL_NEON_RUNTIME=enabled` opt-in plus matching direct/pooled URLs and `APPROVED_NEON_TARGET_FINGERPRINT` in ignored `.env.local`; runtime then uses the pooled URL. This opt-in does not enable local Prisma migration, seed, or integration-test commands against Neon.
 - **Target Approval Gate (NEO-14)**: Live operations (`--execute`) on `prod:migrate`, `prod:seed`, and `prod:verify` fail closed before connection unless an approved Neon target tuple (**endpoint ID + database name + role**) is explicitly supplied (via `APPROVED_NEON_TARGET_FINGERPRINT` or `--approved-target=<endpoint:database:role>`). Prior to owner review and authorization of the exact tuple, the gate status is strictly reported as `UNPROVEN`. Separate mutation checks detect endpoint, database, or role mismatches.
 - **Prisma Configuration On-Load Full Validation (NEO-13)**: Default `prisma.config.ts` is strictly local-only (rejects all remote hosts including Neon, Aiven, AWS, Supabase, and rejects forged environment flags). The shell marker `AYAWARTA_EXECUTION_CONTEXT=production_migration_wrapper` is not trusted alone; when present, `prisma.config.ts` performs full on-load validation of direct URL, pooled URL, TLS enforcement, and the complete approved target tuple.
 - **Honest Protection Boundary**: The Prisma configuration guard prevents accidental execution of repository scripts (such as `npx prisma migrate dev` or `prisma db push`) against remote databases. It is an internal guardrail for repository tooling, not an absolute sandbox against an operator with local shell access creating external scripts or custom configs.
@@ -85,11 +85,11 @@ Before cutover:
 
 ## Production Cutover Checklist
 
-- [ ] Direct and pooled connection URLs verified via preflight target guard (`assertNeonDatabaseTargets`) with TLS enforced and approved target identity verified (gate status transitions from `UNPROVEN` to `verified`).
-- [ ] Neon database state inspected and confirmed uninitialized / empty (`pnpm prod:verify --check-empty --execute`). Note: emptiness and connection success are verified in this live cutover step, not assumed in advance.
-- [ ] Prisma migrations applied successfully via guarded wrapper (`pnpm prod:migrate --execute`) with piped output capture.
-- [ ] Production seed completed with validated admin credentials (`pnpm prod:seed --execute`).
-- [ ] Post-seed verification passes with strictly 86 rows across 9 tables (1 AdminUser, 31 MediaAsset, 4 Invitation, 4 HeroContent/Sections, 8 CoupleProfile/Partner, 6 Event, 21 EventTimeline/GalleryItem, 6 Story/LoveStory, 5 GiftAccount), 4 slugs, and 31 canonical MediaAsset records verified 1:1 across all 9 schema columns (`pnpm prod:verify --execute`).
+- [x] Direct and pooled connection URLs verified via preflight target guard (`assertNeonDatabaseTargets`) with TLS enforced and approved target identity verified.
+- [x] Neon database state inspected and confirmed uninitialized / empty before migration (`pnpm prod:verify --check-empty --execute`).
+- [x] Prisma migrations applied successfully via guarded wrapper (`pnpm prod:migrate --execute`) with piped output capture.
+- [x] Production seed completed with validated admin credentials (`pnpm prod:seed --execute`). Do not rerun it on a populated database.
+- [x] Post-seed verification passed with 86 rows across nine baseline data tables, four slugs, and 31 canonical MediaAsset records (`pnpm prod:verify --execute`). The three new admin tables were empty immediately after seed.
 - [ ] New Cloudinary media is verified.
 - [ ] Vercel variables configured with correct scopes (`DATABASE_URL_POOLED` for production runtime).
 - [ ] Production build passes.

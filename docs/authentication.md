@@ -74,7 +74,7 @@ Authentication proves identity; authorization checks an active admin role. A val
 
 `src/proxy.ts` matches `/admin/:path*` and `src/auth.config.ts` handles login versus protected-route redirects. Protected server pages also call `requireAdminSession`, which reloads the current user and rejects deleted, inactive, locked, or role-revoked accounts. Every future admin mutation must perform authorization on the server. Hiding navigation in the UI is not sufficient.
 
-`src/app/admin/actions.ts` exposes create, open, and save operations for the A3 editor. The server-only draft service rechecks `requireAdminSession` for reads, writes, publication history, and publishability preflight, and returns typed results rather than Prisma rows. The private preview reloads only a saved draft under the same authorization, with dynamic rendering and guest submission disabled. There is no publish action. The draft tables are in an authored migration that has not been applied to production Neon; route protection does not make editing available there until the migration and baseline are separately activated.
+`src/app/admin/actions.ts` exposes create, open, and save operations for the A3 editor. The server-only draft service rechecks `requireAdminSession` for reads, writes, publication history, and publishability preflight, and returns typed results rather than Prisma rows. The private preview reloads only a saved draft under the same authorization, with dynamic rendering and guest submission disabled. There is no publish action. The draft tables were migrated to Neon on 2026-10-30, but editing existing invitations still requires separate verified publication baselines.
 
 ## Bootstrap
 

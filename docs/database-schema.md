@@ -4,7 +4,7 @@
 
 PostgreSQL stores invitation content, media metadata, and administrators. Firestore wishes and RSVP are outside this schema.
 
-The authored schema is `prisma/schema.prisma`. Four historical migrations precede `prisma/migrations/20261030060000_add_admin_drafts_and_siger_fields/`, an additive A2/T2 migration that is **authored but has not been applied to production Neon**. This document explains the current code contract; the new tables and columns are not available on production until a separately authorized migration and baseline process completes.
+The authored schema is `prisma/schema.prisma`. Four historical migrations precede `prisma/migrations/20261030060000_add_admin_drafts_and_siger_fields/`, an additive A2/T2 migration applied to the approved production Neon target on 2026-10-30. The three admin tables and new columns now exist; version-1 publication baseline records have not yet been written.
 
 ## Relationship Overview
 
@@ -196,7 +196,7 @@ The invitation repository returns:
 
 The repository returns `null` for a missing slug. It does not substitute `default-preview`.
 
-Until the new migration is applied to production, the public repository uses `publicInvitationSelect` to avoid selecting `greeting`, `prayer`, `caption`, `publishedVersion`, and draft/publication relations from the legacy Neon schema. The mapper defaults optional Siger content to empty strings and still derives `Gallery.images` from ordered gallery items for Classic Rose. The full include is reserved for admin draft/snapshot operations after migration and baseline activation.
+The public repository still uses the compact `publicInvitationSelect` projection; the mapper defaults optional Siger content to empty strings and derives `Gallery.images` from ordered gallery items for Classic Rose. The full include is used by admin draft/snapshot operations, subject to baseline activation.
 
 ## Migration Discipline
 

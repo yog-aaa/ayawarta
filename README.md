@@ -4,6 +4,8 @@ AyaWarta is a Next.js 16 digital invitation app. PostgreSQL stores invitations, 
 
 ## Local setup (Windows and Laragon)
 
+The steps below are for an isolated Laragon database. For the owner's current Neon-backed localhost runtime, use the explicit opt-in in [deployment operations](docs/deployment-aiven-vercel.md) and skip local migration/seed commands; the approved Neon target was migrated and seeded on 2026-10-30.
+
 The final local QA ran on Node.js **24.15.0** with the pinned **pnpm 10.34.7**. Start Laragon PostgreSQL on `localhost:5432` and create the `ayawarta` database. Do not reset an existing database to follow this guide.
 
 ```powershell
@@ -61,4 +63,4 @@ The one-time media migration commands were retired after the verified upload and
 | Verification and manual review | [QA checklist](docs/qa-checklist.md) |
 | Current agent workflow and historical stage records | [Agent documentation index](docs/agent/index.md) |
 
-Production Neon migration, seed, Vercel configuration, and deployment require a separately approved cutover. The current local `prisma:seed` and `seed:verify` commands deliberately reject remote database targets, while `prod:migrate`, `prod:seed`, and `prod:verify` require explicit `--execute` flags and validate direct and pooled Neon targets before connecting. The default Prisma configuration also guards `prisma:migrate`; run the documented preflight immediately before `admin:bootstrap` and `test:db`, which do not have a suite-wide local-target guard.
+The approved Neon migration and one-time seed completed on 2026-10-30; do not repeat the initial seed on this populated target. Vercel configuration and deployment remain separate. The owner's localhost runtime may explicitly use Neon through the guarded opt-in documented in [deployment operations](docs/deployment-aiven-vercel.md); local `prisma:seed`, `seed:verify`, and `prisma:migrate` still reject remote database targets. Future production operations require separate exact authorization. Run the documented local target preflight immediately before `admin:bootstrap` and `test:db`, which do not have a suite-wide local-target guard.

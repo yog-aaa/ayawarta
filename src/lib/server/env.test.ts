@@ -181,6 +181,31 @@ describe("Environment Validation Contract", () => {
       }
     });
 
+    it("uses the matching pooled Neon target only with explicit local runtime approval", () => {
+      const approved = {
+        DATABASE_URL: remoteNeonDirectUrl,
+        DATABASE_URL_POOLED: remoteNeonPooledUrl,
+        APPROVED_NEON_TARGET_FINGERPRINT: "ep-cool-fog-123456:ayawarta_prod:ayawarta_owner",
+        AYAWARTA_LOCAL_NEON_RUNTIME: "enabled" as const,
+      };
+      const result = selectDatabaseConnectionUrl(approved, "runtime", "local");
+      expect(result).toEqual({
+        url: remoteNeonPooledUrl,
+        isPooled: true,
+        sourceKey: "DATABASE_URL_POOLED",
+      });
+      expect(() => selectDatabaseConnectionUrl({
+        ...approved,
+        APPROVED_NEON_TARGET_FINGERPRINT: "ep-other:ayawarta_prod:ayawarta_owner",
+      }, "runtime", "local")).toThrow("Target mismatch");
+      expect(() => selectDatabaseConnectionUrl({
+        ...approved,
+        DATABASE_URL_POOLED: undefined,
+      }, "runtime", "local")).toThrow("requires pooled URL");
+      expect(() => selectDatabaseConnectionUrl(approved, "migration", "local"))
+        .toThrow("Disallowed database host for local deployment");
+    });
+
     it("strictly rejects host and connection target redirection parameters in local mode (NEO-15: Runtime)", () => {
       const redirectUrls = [
         "postgresql://user:pass@localhost:5432/ayawarta?host=remote.example",

@@ -31,7 +31,6 @@ function resolveApprovedTarget(
   const cliArg = process.argv.find((arg) => arg.startsWith("--approved-target="));
   if (cliArg) return cliArg.split("=")[1]?.trim();
   if (config?.APPROVED_NEON_TARGET_FINGERPRINT?.trim()) return config.APPROVED_NEON_TARGET_FINGERPRINT.trim();
-  if (process.env.APPROVED_NEON_TARGET_FINGERPRINT?.trim()) return process.env.APPROVED_NEON_TARGET_FINGERPRINT.trim();
   return undefined;
 }
 
