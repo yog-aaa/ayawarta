@@ -25,6 +25,7 @@ import { InvitationMappingError } from "@/features/invitations/mapper";
 import InvitationPage from "./[slug]/page";
 import InvitePage from "./[slug]/invite/page";
 import ClassicRosePage from "./(templates)/wedding/classic-rose/[variant]/page";
+import { buildInvitationMessage } from "./[slug]/invite/components/InviteClientView";
 import type { Invitation } from "@/features/invitations/types";
 
 const mockInvitationData: Invitation["data"] = {
@@ -178,15 +179,17 @@ describe("Public Route Cutover — Hermetic Unit Tests", () => {
       expect(mockNotFound).toHaveBeenCalledTimes(1);
     });
 
-    it("does not render a future Siger invitation as Classic Rose", async () => {
+    it("dispatches a Siger invitation to its own renderer", async () => {
       vi.mocked(invitationRepository.findBySlug).mockResolvedValueOnce({
         ...createMockInvitation("future-siger"),
         meta: { theme: "siger-priangan", variant: "ivory" },
       });
 
-      await expect(
-        InvitationPage({ params: Promise.resolve({ slug: "future-siger" }) })
-      ).rejects.toThrow("NEXT_NOT_FOUND");
+      const pageElement = await InvitationPage({ params: Promise.resolve({ slug: "future-siger" }) });
+      expect(pageElement.props.invitationSlug).toBe("future-siger");
+      expect(pageElement.props.data.couple.groom.name).toBe("Fauzi");
+      expect(pageElement.props.themeConfig).toBeUndefined();
+      expect(mockNotFound).not.toHaveBeenCalled();
     });
 
     it("returns 404 for an invalid stored theme pair while surfacing other failures", async () => {
@@ -213,6 +216,22 @@ describe("Public Route Cutover — Hermetic Unit Tests", () => {
       expect(pageElement.props.slug).toBe("rika-fauzi");
       expect(pageElement.props.invitationData.couple.groom.name).toBe("Fauzi");
       expect(pageElement.props.invitationData.couple.bride.name).toBe("Rika");
+      expect(pageElement.props.theme).toBe("classic-rose");
+    });
+
+    it("uses neutral invitation copy for Siger while preserving Classic Rose copy", () => {
+      const url = "https://ayawarta.my.id/test-siger?to=Tamu";
+      const siger = buildInvitationMessage("Tamu", mockInvitationData, url, "siger-priangan");
+      const classic = buildInvitationMessage("Tamu", mockInvitationData, url, "classic-rose");
+      expect(siger).toContain("Fauzi & Rika");
+      expect(siger).toContain(url);
+      expect(siger).not.toMatch(/Allah|Jazaakumullah|Insyaa/i);
+      expect(classic).toContain("Jazaakumullah");
+    });
+
+    it("returns 404 for an invalid stored theme pair on the invite-link route", async () => {
+      vi.mocked(invitationRepository.findBySlug).mockRejectedValueOnce(new InvitationMappingError("Invalid pair"));
+      await expect(InvitePage({ params: Promise.resolve({ slug: "invalid-pair" }) })).rejects.toThrow("NEXT_NOT_FOUND");
     });
 
     it("calls notFound() for unknown slug on invite page", async () => {

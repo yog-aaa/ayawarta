@@ -42,7 +42,7 @@ export type InvitationDetailPayload = Prisma.InvitationGetPayload<{
  * Public reads use only columns present before the admin/Siger migration. The
  * operator's local app currently targets an unmigrated Neon database; Prisma
  * `include` would otherwise select newly generated scalar columns eagerly.
- * Switch to the full include only in the reviewed T3/production activation.
+ * Select the new content columns after the reviewed production migration in T5.
  */
 export const publicInvitationSelect = {
   id: true,

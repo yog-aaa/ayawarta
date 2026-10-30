@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, CalendarDays, MailOpen } from "lucide-react";
 import type { AdminInvitationSummary } from "@/features/admin/invitation-list";
+import { AdminOpenDraftButton } from "./AdminOpenDraftButton";
 
 function dateLabel(isoDate: string): string {
   const date = new Date(isoDate);
@@ -20,9 +21,13 @@ function previewHref(slug: string): string {
 export function AdminInvitationList({
   items,
   searchQuery,
+  draftIds = {},
+  showEditorActions = false,
 }: {
   items: readonly AdminInvitationSummary[];
   searchQuery?: string;
+  draftIds?: Readonly<Record<string, string>>;
+  showEditorActions?: boolean;
 }) {
   if (items.length === 0) {
     return (
@@ -50,6 +55,7 @@ export function AdminInvitationList({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="break-words text-base font-bold text-brand-secondary">{item.coupleName}</p>
+                {showEditorActions && <p className="mt-1 text-[11px] font-semibold text-brand-primary">Terbit{draftIds[item.id] ? " · Draf tersimpan" : ""}</p>}
                 <p className="mt-1 break-all text-xs text-muted-foreground">/{item.slug}</p>
               </div>
               <Link
@@ -76,6 +82,7 @@ export function AdminInvitationList({
                 <dd className="mt-1 font-semibold text-brand-secondary">{dateLabel(item.updatedAt)}</dd>
               </div>
             </dl>
+            {showEditorActions && <div className="mt-4 flex justify-end border-t border-brand-secondary/10 pt-3"><AdminOpenDraftButton invitationId={item.id} draftId={draftIds[item.id]} /></div>}
           </li>
         ))}
       </ul>
@@ -88,7 +95,7 @@ export function AdminInvitationList({
               <th scope="col" className="px-4 py-4">Tema</th>
               <th scope="col" className="px-4 py-4">Tanggal acara</th>
               <th scope="col" className="px-4 py-4">Diperbarui</th>
-              <th scope="col" className="px-5 py-4 text-right sm:px-7">Pratinjau</th>
+              <th scope="col" className="px-5 py-4 text-right sm:px-7">{showEditorActions ? "Tindakan" : "Pratinjau"}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-brand-secondary/10">
@@ -96,6 +103,7 @@ export function AdminInvitationList({
               <tr key={item.id} className="align-middle">
                 <td className="max-w-[240px] px-5 py-4 sm:px-7">
                   <p className="break-words font-bold text-brand-secondary">{item.coupleName}</p>
+                  {showEditorActions && <p className="mt-1 text-[11px] font-semibold text-brand-primary">Terbit{draftIds[item.id] ? " · Draf tersimpan" : ""}</p>}
                   <p className="mt-1 break-all text-xs text-muted-foreground">/{item.slug}</p>
                 </td>
                 <td className="px-4 py-4 capitalize text-brand-secondary">
@@ -107,6 +115,8 @@ export function AdminInvitationList({
                 </td>
                 <td className="whitespace-nowrap px-4 py-4 text-muted-foreground">{dateLabel(item.updatedAt)}</td>
                 <td className="px-5 py-4 text-right sm:px-7">
+                  <div className="flex flex-wrap justify-end gap-1">
+                  {showEditorActions && <AdminOpenDraftButton invitationId={item.id} draftId={draftIds[item.id]} />}
                   <Link
                     href={previewHref(item.slug)}
                     target="_blank"
@@ -116,6 +126,7 @@ export function AdminInvitationList({
                   >
                     Buka <ArrowUpRight size={15} aria-hidden="true" />
                   </Link>
+                  </div>
                 </td>
               </tr>
             ))}

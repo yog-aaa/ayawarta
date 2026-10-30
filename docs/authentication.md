@@ -20,12 +20,13 @@ The implementation is in `src/auth.ts`, `src/auth.config.ts`, `src/proxy.ts`, an
 | --- | --- |
 | `/admin/login` | Public; redirects authenticated administrators to `/admin`. |
 | `/admin` | Authenticated active `ADMIN` or `SUPER_ADMIN`. |
-| `/admin/*` | Protected by the same authorization rule. |
+| `/admin/invitations`, `/admin/invitations/new`, `/admin/invitations/[id]/edit`, `/admin/invitations/[id]/preview` | Protected by the same authorization rule; edit and preview IDs identify drafts. |
+| Other `/admin/*` routes | Protected by the same authorization rule. |
 | `/api/auth/*` | Auth.js handlers. |
 
 There is no registration route.
 
-`ADMIN` and the legacy `SUPER_ADMIN` value currently have the same product permission: read the workspace and, when the editor and publish stages are implemented, edit and publish invitations. The retained enum supports existing sessions and records; it does not create a separate approval tier or distinct UI. No role-removal migration is part of the current work.
+`ADMIN` and the legacy `SUPER_ADMIN` value have the same product permission: read the workspace, create and edit drafts, and, when the publish stage is implemented, publish invitations. The retained enum supports existing sessions and records; it does not create a separate approval tier or distinct UI. No role-removal migration is part of the current work.
 
 ## Credential Flow
 
@@ -73,7 +74,7 @@ Authentication proves identity; authorization checks an active admin role. A val
 
 `src/proxy.ts` matches `/admin/:path*` and `src/auth.config.ts` handles login versus protected-route redirects. Protected server pages also call `requireAdminSession`, which reloads the current user and rejects deleted, inactive, locked, or role-revoked accounts. Every future admin mutation must perform authorization on the server. Hiding navigation in the UI is not sufficient.
 
-The authored `src/features/admin/draft-service.ts` calls `requireAdminSession` for draft reads, creation, saves, publication history, and publishability preflight. It returns typed results and domain errors rather than exposing Prisma rows. These server-only functions are not an exposed editor route, preview route, or publish action. Their tables are in an authored migration that has not been applied to production Neon; authorization alone does not make them available for production use.
+`src/app/admin/actions.ts` exposes create, open, and save operations for the A3 editor. The server-only draft service rechecks `requireAdminSession` for reads, writes, publication history, and publishability preflight, and returns typed results rather than Prisma rows. The private preview reloads only a saved draft under the same authorization, with dynamic rendering and guest submission disabled. There is no publish action. The draft tables are in an authored migration that has not been applied to production Neon; route protection does not make editing available there until the migration and baseline are separately activated.
 
 ## Bootstrap
 
@@ -120,7 +121,10 @@ Adding any deferred feature requires a separate reviewed design.
 - unauthenticated redirect;
 - authenticated admin redirected away from login;
 - logout invalidates access;
-- bootstrap idempotency.
+- bootstrap idempotency;
+- unauthenticated create/save actions and direct edit/preview requests are rejected;
+- active `ADMIN` and legacy `SUPER_ADMIN` can access the same draft operations;
+- draft preview never mounts a guest submission adapter.
 
 ## Review Checklist
 

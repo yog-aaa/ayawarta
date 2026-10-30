@@ -1,6 +1,6 @@
 import type { Invitation } from "./types";
 
-/** Illustrative content for the private Siger preview route. Never use as a slug fallback. */
+/** Illustrative content for the public Siger sample route. Never use as a slug fallback. */
 export const sigerPrianganSample = {
   kind: "illustrative-preview" as const,
   guestInteractions: "read-only" as const,
@@ -8,7 +8,7 @@ export const sigerPrianganSample = {
   invitation: {
     meta: { theme: "siger-priangan", variant: "ivory" },
     data: {
-      sections: { couple: true, events: true, gallery: false, loveStory: true, gifts: false, wishes: true },
+      sections: { couple: true, events: true, gallery: true, loveStory: true, gifts: true, wishes: true },
       couple: {
         groom: {
           name: "Damar",
@@ -38,6 +38,16 @@ export const sigerPrianganSample = {
         },
       ],
       loveStory: [{ title: "Cerita kami", content: "Teks contoh untuk memperlihatkan tata letak undangan." }],
+      gallery: {
+        videoUrl: "",
+        images: [],
+        items: [
+          { url: "", altText: "Tempat foto pasangan contoh pertama", caption: "Ruang untuk kenangan pasangan" },
+          { url: "", altText: "Tempat foto pasangan contoh kedua", caption: "" },
+          { url: "", altText: "Tempat foto pasangan contoh ketiga", caption: "" },
+        ],
+      },
+      gifts: [{ platform: "Rekening contoh", accountHolder: "Nama pasangan", accountNumber: "Nomor rekening contoh", logo: "" }],
     },
   },
 } satisfies {

@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
 import { AdminInvitationList } from "@/components/admin/AdminInvitationList";
 import { AdminListError } from "@/components/admin/AdminListError";
+import { AdminNewDraftList } from "@/components/admin/AdminNewDraftList";
+import { getAdminDraftIndex } from "@/features/admin/draft-index";
 import { getAdminInvitationList } from "@/features/admin/invitation-list";
 import { requireAdminSession } from "@/features/auth/service";
 import { isAdminAuthorizationError } from "../../admin-errors";
@@ -14,12 +16,14 @@ export const metadata = {
 type SearchParams = {
   q?: string | string[];
   page?: string | string[];
+  draftPage?: string | string[];
 };
 
-function listHref(query: string, page: number): string {
+function listHref(query: string, page: number, draftPage = 1): string {
   const params = new URLSearchParams();
   if (query) params.set("q", query);
   if (page > 1) params.set("page", String(page));
+  if (draftPage > 1) params.set("draftPage", String(draftPage));
   const suffix = params.toString();
   return suffix ? `/admin/invitations?${suffix}` : "/admin/invitations";
 }
@@ -40,6 +44,8 @@ export default async function AdminInvitationsPage({
   const query = (typeof params.q === "string" ? params.q : "").trim().slice(0, 80);
   const pageText = typeof params.page === "string" ? params.page : "";
   const page = /^\d+$/.test(pageText) ? Math.max(1, Math.min(Number(pageText), 1000)) : 1;
+  const draftPageText = typeof params.draftPage === "string" ? params.draftPage : "";
+  const draftPage = /^\d+$/.test(draftPageText) ? Math.max(1, Math.min(Number(draftPageText), 1000)) : 1;
 
   let invitations;
   try {
@@ -63,10 +69,20 @@ export default async function AdminInvitationsPage({
 
   const hasPrevious = invitations.page > 1;
   const hasNext = invitations.page < invitations.pageCount;
+  const draftIndex = await getAdminDraftIndex({
+    publishedInvitationIds: invitations.items.map((item) => item.id),
+    q: query || undefined,
+    page: draftPage,
+  });
+  if (!draftIndex.ok && (draftIndex.code === "unauthorized" || draftIndex.code === "forbidden")) redirect("/admin/login");
+  const draftIds = draftIndex.ok
+    ? Object.fromEntries(draftIndex.data.linked.map((item) => [item.invitationId, item.draftId]))
+    : {};
 
   return (
     <>
-      <div className="mb-8">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.24em] text-brand-primary">
           Katalog undangan
         </p>
@@ -76,7 +92,11 @@ export default async function AdminInvitationsPage({
         <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
           Cari berdasarkan nama pasangan atau tautan undangan.
         </p>
+        </div>
+        {draftIndex.ok && <Link href="/admin/invitations/new" className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand-primary px-5 text-sm font-semibold text-white hover:bg-brand-primary-hover"><Plus size={17} aria-hidden="true" /> Buat draf</Link>}
       </div>
+
+      {!draftIndex.ok && <div role="alert" className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">Data draf belum tersedia. Daftar undangan terbit tetap dapat dilihat; penyuntingan menunggu panel draf siap.</div>}
 
       <section aria-label="Daftar undangan" className="overflow-hidden rounded-[1.75rem] border border-brand-secondary/10 bg-white shadow-subtle">
         <div className="flex flex-col gap-5 border-b border-brand-secondary/10 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-7">
@@ -114,7 +134,7 @@ export default async function AdminInvitationsPage({
           </div>
         </div>
 
-        <AdminInvitationList items={invitations.items} searchQuery={query} />
+        <AdminInvitationList items={invitations.items} searchQuery={query} draftIds={draftIds} showEditorActions={draftIndex.ok} />
 
         {invitations.pageCount > 1 && (
           <nav aria-label="Halaman daftar undangan" className="flex flex-wrap items-center justify-between gap-3 border-t border-brand-secondary/10 px-5 py-4 sm:px-7">
@@ -123,7 +143,7 @@ export default async function AdminInvitationsPage({
             </p>
             <div className="flex items-center gap-2">
               {hasPrevious ? (
-                <Link href={listHref(query, invitations.page - 1)} className="focus-ring inline-flex min-h-11 items-center gap-1 rounded-xl border border-brand-secondary/15 px-3 text-sm font-semibold text-brand-secondary hover:bg-brand-soft" aria-label="Halaman sebelumnya">
+                <Link href={listHref(query, invitations.page - 1, draftIndex.ok ? draftIndex.data.page : draftPage)} className="focus-ring inline-flex min-h-11 items-center gap-1 rounded-xl border border-brand-secondary/15 px-3 text-sm font-semibold text-brand-secondary hover:bg-brand-soft" aria-label="Halaman sebelumnya">
                   <ChevronLeft size={16} aria-hidden="true" /> Sebelumnya
                 </Link>
               ) : (
@@ -132,7 +152,7 @@ export default async function AdminInvitationsPage({
                 </span>
               )}
               {hasNext ? (
-                <Link href={listHref(query, invitations.page + 1)} className="focus-ring inline-flex min-h-11 items-center gap-1 rounded-xl border border-brand-secondary/15 px-3 text-sm font-semibold text-brand-secondary hover:bg-brand-soft" aria-label="Halaman berikutnya">
+                <Link href={listHref(query, invitations.page + 1, draftIndex.ok ? draftIndex.data.page : draftPage)} className="focus-ring inline-flex min-h-11 items-center gap-1 rounded-xl border border-brand-secondary/15 px-3 text-sm font-semibold text-brand-secondary hover:bg-brand-soft" aria-label="Halaman berikutnya">
                   Berikutnya <ChevronRight size={16} aria-hidden="true" />
                 </Link>
               ) : (
@@ -144,6 +164,24 @@ export default async function AdminInvitationsPage({
           </nav>
         )}
       </section>
+
+      {draftIndex.ok && <section aria-labelledby="admin-new-drafts-title" className="mt-8 overflow-hidden rounded-[1.75rem] border border-brand-secondary/10 bg-white shadow-subtle">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-secondary/10 px-5 py-5 sm:px-7">
+          <div>
+            <h2 id="admin-new-drafts-title" className="text-lg font-bold text-brand-secondary">Draf baru</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{draftIndex.data.total.toLocaleString("id-ID")} draf privat tanpa halaman publik.</p>
+          </div>
+          <Link href="/admin/invitations/new" className="focus-ring inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-brand-primary hover:bg-brand-soft">Buat draf</Link>
+        </div>
+        <AdminNewDraftList drafts={draftIndex.data.newDrafts} />
+        {draftIndex.data.pageCount > 1 && <nav aria-label="Halaman draf baru" className="flex flex-wrap items-center justify-between gap-3 border-t border-brand-secondary/10 px-5 py-4 sm:px-7">
+          <p className="text-sm text-muted-foreground">Halaman {draftIndex.data.page} dari {draftIndex.data.pageCount}</p>
+          <div className="flex items-center gap-2">
+            {draftIndex.data.page > 1 && <Link href={listHref(query, invitations.page, draftIndex.data.page - 1)} className="focus-ring inline-flex min-h-11 items-center rounded-xl border border-brand-secondary/15 px-3 text-sm font-semibold text-brand-secondary hover:bg-brand-soft">Sebelumnya</Link>}
+            {draftIndex.data.page < draftIndex.data.pageCount && <Link href={listHref(query, invitations.page, draftIndex.data.page + 1)} className="focus-ring inline-flex min-h-11 items-center rounded-xl border border-brand-secondary/15 px-3 text-sm font-semibold text-brand-secondary hover:bg-brand-soft">Berikutnya</Link>}
+          </div>
+        </nav>}
+      </section>}
     </>
   );
 }

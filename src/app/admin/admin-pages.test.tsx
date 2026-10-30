@@ -6,6 +6,7 @@ import type { AdminInvitationListResult } from "@/features/admin/invitation-list
 const mocks = vi.hoisted(() => ({
   requireAdminSession: vi.fn(),
   getAdminInvitationList: vi.fn(),
+  getAdminDraftIndex: vi.fn(),
   redirect: vi.fn((href: string) => {
     throw new Error(`REDIRECT:${href}`);
   }),
@@ -17,7 +18,13 @@ vi.mock("@/features/auth/service", () => ({
 vi.mock("@/features/admin/invitation-list", () => ({
   getAdminInvitationList: mocks.getAdminInvitationList,
 }));
-vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("@/features/admin/draft-index", () => ({
+  getAdminDraftIndex: mocks.getAdminDraftIndex,
+}));
+vi.mock("next/navigation", () => ({
+  redirect: mocks.redirect,
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+}));
 vi.mock("@/components/admin/AdminShell", () => ({
   AdminShell: ({ adminName, children }: { adminName: string; children: React.ReactNode }) => (
     <div data-admin-name={adminName}>{children}</div>
@@ -48,6 +55,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.requireAdminSession.mockResolvedValue({ name: "Administrator" });
   mocks.getAdminInvitationList.mockResolvedValue(list);
+  mocks.getAdminDraftIndex.mockResolvedValue({ ok: true, data: {
+    linked: [{ invitationId: "inv-1", draftId: "draft-1", draftVersion: 2, updatedAt: "2026-10-30T01:00:00.000Z" }],
+    newDrafts: [{ id: "new-1", proposedSlug: "nina-raka", coupleName: "Nina & Raka", theme: "classic-rose", variant: "red", updatedAt: "2026-10-30T01:00:00.000Z", draftVersion: 1, valid: true }],
+    total: 1, page: 1, pageSize: 12, pageCount: 1,
+  } });
 });
 
 describe("admin server pages", () => {
@@ -94,10 +106,24 @@ describe("admin server pages", () => {
     );
 
     expect(mocks.getAdminInvitationList).toHaveBeenCalledWith({ q: "Dudi", page: 2 });
+    expect(mocks.getAdminDraftIndex).toHaveBeenCalledWith({ publishedInvitationIds: ["inv-1"], q: "Dudi", page: 1 });
     expect(html).toContain('name="q"');
     expect(html).toContain('href="/admin/invitations?q=Dudi"');
     expect(html).toContain('href="/admin/invitations?q=Dudi&amp;page=3"');
     expect(html).toContain("Halaman");
+    expect(html).toContain("Draf baru");
+    expect(html).toContain("Sunting draf");
+    expect(html).toContain("Nina &amp; Raka");
+  });
+
+  it("keeps published rows visible when the draft index is unavailable", async () => {
+    mocks.getAdminDraftIndex.mockResolvedValue({ ok: false, code: "dependency_failure", message: "Data draf belum dapat dimuat." });
+    const html = renderToStaticMarkup(await AdminInvitationsPage({ searchParams: Promise.resolve({}) }));
+
+    expect(html).toContain("Dudi &amp; Aini");
+    expect(html).toContain("Data draf belum tersedia");
+    expect(html).not.toContain("Sunting draf");
+    expect(html).not.toContain("Nina &amp; Raka");
   });
 
   it("shows a generic retry state when the read model fails", async () => {

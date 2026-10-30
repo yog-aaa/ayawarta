@@ -3,20 +3,41 @@
 import { useMemo, useState } from "react";
 import { Check, Copy, Link as LinkIcon, MessageSquare, Users } from "lucide-react";
 
-import type { InvitationData } from "@/features/invitations/types";
+import type { InvitationData, InvitationTheme } from "@/features/invitations/types";
 
 export interface InviteClientViewProps {
   slug: string;
   invitationData: InvitationData;
+  theme: InvitationTheme;
 }
 
-const buildInvitationMessage = (
+export const buildInvitationMessage = (
   name: string,
   invitationData: InvitationData,
-  invitationUrl: string
+  invitationUrl: string,
+  theme: InvitationTheme
 ) => {
   const { couple, events } = invitationData;
   const reception = events && events.length > 0 ? events[events.length - 1] : undefined;
+
+  if (theme === "siger-priangan") {
+    return `UNDANGAN PERNIKAHAN
+
+Kepada Yth. ${name},
+
+Dengan hangat kami mengundang Anda untuk merayakan pernikahan kami:
+
+${couple.groom.name} & ${couple.bride.name}
+
+${reception?.date ?? ""}${reception?.time ? ` · ${reception.time}` : ""}
+${reception?.location ?? ""}
+${reception?.address ?? ""}
+
+Lihat undangan dan informasi lengkap di:
+${invitationUrl}
+
+Kehadiran Anda akan berarti bagi kami.`;
+  }
 
   return `بِسْــــــــــــــمِ اللهِ الرَّحْمَنِ الرَّحِيْـــــم
 
@@ -54,6 +75,7 @@ Wedding E-Invitation ini merupakan undangan resmi dari kami, kami mohon maaf men
 export default function InviteClientView({
   slug,
   invitationData,
+  theme,
 }: InviteClientViewProps) {
   const [namesInput, setNamesInput] = useState("");
   const [guestList, setGuestList] = useState<string[]>([]);
@@ -102,7 +124,7 @@ export default function InviteClientView({
   };
 
   const handleShareToWhatsApp = (name: string, url: string) => {
-    const message = buildInvitationMessage(name, invitationData, url);
+    const message = buildInvitationMessage(name, invitationData, url, theme);
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");

@@ -194,6 +194,36 @@ export function validateDraftForPublish(input: unknown, context: PublishDraftCon
   return Object.keys(errors).length ? { ok: false, fieldErrors: errors } : { ok: true, payload };
 }
 
+/** A saved draft may be previewed with clearly marked empty portrait slots before A5 media provisioning. */
+export function validateDraftForPreview(input: unknown, context: PublishDraftContext = {}):
+  | { ok: true; payload: DraftPayloadV1; missingMediaFields: string[] }
+  | { ok: false; fieldErrors: DraftFieldErrors } {
+  const saved = parseDraftForSave(input);
+  if (!saved.ok) return saved;
+  const validated = validateDraftForPublish(saved.payload, {
+    ...context,
+    enabledThemes: ["classic-rose", "siger-priangan"],
+  });
+  if (validated.ok) return { ...validated, missingMediaFields: [] };
+
+  const missingMediaFields: string[] = [];
+  const errors = { ...validated.fieldErrors };
+  const placeholderFields = [
+    ["heroAssetId", saved.payload.heroAssetId],
+    ["partners.groom.photoAssetId", saved.payload.partners.groom.photoAssetId],
+    ["partners.bride.photoAssetId", saved.payload.partners.bride.photoAssetId],
+  ] as const;
+  for (const [field, id] of placeholderFields) {
+    if (id === null && errors[field]?.every((message) => message === "Pilih media yang terverifikasi.")) {
+      missingMediaFields.push(field);
+      delete errors[field];
+    }
+  }
+  return Object.keys(errors).length
+    ? { ok: false, fieldErrors: errors }
+    : { ok: true, payload: saved.payload, missingMediaFields };
+}
+
 export function createEmptyDraftPayload(): DraftPayloadV1 {
   return {
     schemaVersion: 1,

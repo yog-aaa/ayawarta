@@ -4,6 +4,7 @@ import {
   createEmptyDraftPayload,
   parseDraftForSave,
   validateDraftForPublish,
+  validateDraftForPreview,
 } from "./draft-schema";
 
 function completeDraft() {
@@ -91,5 +92,21 @@ describe("draft payload v1", () => {
       expect(result.fieldErrors["galleryItems.0.assetId"]).toBeDefined();
       expect(result.fieldErrors["galleryItems.0.altText"]).toBeDefined();
     }
+  });
+
+  it("allows missing required portraits in preview while still rejecting foreign media", () => {
+    const payload = completeDraft();
+    payload.heroAssetId = null;
+    payload.partners.groom.photoAssetId = null;
+    payload.partners.bride.photoAssetId = null;
+    const preview = validateDraftForPreview(payload, { allowedMediaAssetIds: new Set() });
+    expect(preview).toMatchObject({ ok: true, missingMediaFields: [
+      "heroAssetId", "partners.groom.photoAssetId", "partners.bride.photoAssetId",
+    ] });
+
+    payload.heroAssetId = "foreign-asset";
+    const forged = validateDraftForPreview(payload, { allowedMediaAssetIds: new Set() });
+    expect(forged.ok).toBe(false);
+    if (!forged.ok) expect(forged.fieldErrors.heroAssetId).toBeDefined();
   });
 });

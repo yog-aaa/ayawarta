@@ -86,11 +86,13 @@ The invitation uses one continuous canvas across opening and content, with a sea
 
 The `default-preview` slug displays clearly labeled fictional sample photography delivered from Cloudinary, with local sources under `assets/themes/classic-rose/sample/`. Customer invitation photographs are not replaced. Its three-photo gallery is a compact example; production galleries can render every supplied photo in a responsive grid. The map is reached through each event's location link rather than a permanently embedded, hard-coded map.
 
-### Siger Priangan content contract (prepared, not public)
+### Siger Priangan static template
 
 The typed invitation and draft contracts now allow the exact pair `siger-priangan`/`ivory` alongside the six Classic Rose pairs. They add optional greeting and prayer copy and per-gallery-image alt text and caption. Empty greeting and prayer are valid; template defaults and illustrative examples must remain religion-neutral and must not infer a ceremony or prayer from a couple's identity. Gallery alt text describes meaningful images, while captions are optional editorial content. Classic Rose retains its existing composition and `gallery.images` compatibility.
 
-The Siger sample in `src/features/invitations/siger-priangan-sample.ts` is illustrative data for a future private preview, with guest interactions marked read-only. There is no Siger public route or published theme flow yet. Public `/{slug}` currently renders Classic Rose only. The eventual admin editor must expose the optional greeting/prayer and gallery alt/caption fields when the Siger stage is enabled; its private draft preview must disable RSVP/wishes submission and explain that guest interactions are unavailable in preview.
+`/wedding/siger-priangan/ivory` now renders the illustrative sample from `src/features/invitations/siger-priangan-sample.ts`. It rejects other variants, identifies itself as a preview, and shows RSVP/wishes as read-only without mounting the live adapter. Public `/{slug}` dispatches a valid published Siger record to the same view; no production invitation has been converted to Siger and the draft/publish flow does not yet enable Siger publication. Unknown slugs still return 404.
+
+The T3 view follows the [Siger Priangan visual board](design/siger-priangan-board.md): an ivory paper cover, ink-green text, restrained gold rules, a reading column up to 760 px, and a section sequence driven by visibility flags. Cover, portraits, gallery slots, and ornament use CSS and explicit placeholders when sample or draft media is absent. The current relief is an abstract CSS study, not culturally verified final artwork. The sample uses neutral event and greeting copy; optional prayer may remain empty. T4 owns reviewed Siger artwork, optimized and verified runtime media, and section-scoped motion. The cover's native anchor scrolls to content that is present in the initial HTML, so event details remain readable before JavaScript loads.
 
 ### Implemented token map
 
@@ -184,7 +186,7 @@ The login page should feel like part of AyaWarta:
 - make loading, disabled, error, and focus states explicit;
 - remain usable on narrow mobile screens.
 
-The protected workspace now has a real invitation summary and searchable, paginated list using AyaWarta's blue tokens and accessible states. Private draft persistence and validation are authored server-side, but no editor, private draft preview, or publish action is exposed. Future editing surfaces should adapt only useful shell, card, and table patterns to the existing AyaWarta identity; a published invitation must remain unchanged until an explicit, confirmed publish step.
+The protected workspace has a real invitation summary, searchable published list, and separate private-new-draft list. The A3 editor covers identity/theme, couple, events, gallery, story, gifts, music, optional greeting/prayer, and section visibility. Reorderable child rows use labeled up/down controls; form errors link to fields, save state is announced, and unsaved changes prompt before leaving. A saved draft can open a private preview in a new tab; incomplete content shows validation guidance, while missing required portrait media uses visible placeholders and remains a publish blocker. The preview labels itself as a draft and disables RSVP/wishes submission. Saving a draft never changes the public page. There is no publish control or completed media-upload flow yet, and production editing awaits the separately authorized Neon migration and baseline activation.
 
 ## Visual Review Evidence
 

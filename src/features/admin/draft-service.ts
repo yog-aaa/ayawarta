@@ -4,6 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { requireAdminSession } from "@/features/auth/service";
 import { parseInvitationMeta } from "@/features/invitations/mapper";
 import type { InvitationDetailPayload } from "@/features/invitations/query";
+import { loadAssociatedMedia } from "./editor-media";
 import {
   createDraftRepository,
   DraftPersistenceError,
@@ -81,6 +82,10 @@ function mapFailure(error: unknown): AdminDraftResult<never> {
   if (error instanceof Error && error.message === "Forbidden") {
     return failure("forbidden", "Akses administrator tidak tersedia.");
   }
+  if (typeof error === "object" && error !== null && "code" in error &&
+      typeof error.code === "string" && ["P1001", "P1002", "P1017", "P2021", "P2022"].includes(error.code)) {
+    return failure("dependency_failure", "Penyimpanan draf belum tersedia. Coba lagi setelah panel draf diaktifkan.");
+  }
   return failure("unexpected", "Permintaan tidak dapat diproses. Coba lagi.");
 }
 
@@ -155,15 +160,40 @@ function draftFromPublished(row: InvitationDetailPayload): DraftPayloadV1 {
   };
 }
 
-function referencedMedia(payload: DraftPayloadV1): Array<{ field: string; id: string }> {
-  const values: Array<{ field: string; id: string }> = [];
-  const add = (field: string, id: string | null) => { if (id) values.push({ field, id }); };
-  add("heroAssetId", payload.heroAssetId);
-  add("musicAssetId", payload.musicAssetId);
-  add("partners.groom.photoAssetId", payload.partners.groom.photoAssetId);
-  add("partners.bride.photoAssetId", payload.partners.bride.photoAssetId);
-  payload.galleryItems.forEach((item, index) => add(`galleryItems.${index}.assetId`, item.assetId));
+function referencedMedia(payload: DraftPayloadV1): Array<{ field: string; id: string; expected: "IMAGE" | "AUDIO" }> {
+  const values: Array<{ field: string; id: string; expected: "IMAGE" | "AUDIO" }> = [];
+  const add = (field: string, id: string | null, expected: "IMAGE" | "AUDIO") => {
+    if (id) values.push({ field, id, expected });
+  };
+  add("heroAssetId", payload.heroAssetId, "IMAGE");
+  add("musicAssetId", payload.musicAssetId, "AUDIO");
+  add("partners.groom.photoAssetId", payload.partners.groom.photoAssetId, "IMAGE");
+  add("partners.bride.photoAssetId", payload.partners.bride.photoAssetId, "IMAGE");
+  payload.galleryItems.forEach((item, index) => add(`galleryItems.${index}.assetId`, item.assetId, "IMAGE"));
   return values;
+}
+
+function preservesPublishedSlot(
+  field: string,
+  id: string,
+  payload: DraftPayloadV1,
+  live: InvitationDetailPayload | null
+): boolean {
+  if (!live) return false;
+  if (field === "heroAssetId") return live.heroAssetId === id;
+  if (field === "musicAssetId") return live.musicAssetId === id;
+  if (field === "partners.groom.photoAssetId") {
+    return live.partners.find((partner) => partner.role === "GROOM")?.photoAssetId === id;
+  }
+  if (field === "partners.bride.photoAssetId") {
+    return live.partners.find((partner) => partner.role === "BRIDE")?.photoAssetId === id;
+  }
+  const galleryIndex = /^galleryItems\.(\d+)\.assetId$/.exec(field);
+  if (galleryIndex) {
+    const item = payload.galleryItems[Number(galleryIndex[1])];
+    return Boolean(item && live.galleryItems.some((published) => published.id === item.key && published.assetId === id));
+  }
+  return false;
 }
 
 async function validateMediaScope(
@@ -173,10 +203,21 @@ async function validateMediaScope(
 ): Promise<AdminDraftResult<never> | null> {
   const refs = referencedMedia(payload);
   if (refs.length === 0) return null;
-  const allowed = invitationId ? await repo.findAllowedMediaAssetIds(invitationId) : new Set<string>();
+  const media = invitationId ? await loadAssociatedMedia(invitationId) : [];
+  const byId = new Map(media.map((item) => [item.id, item]));
+  const live = invitationId && media.some((item) => item.shared)
+    ? await repo.findPublishedById(invitationId)
+    : null;
   const errors: DraftFieldErrors = {};
-  for (const { field, id } of refs) {
-    if (!allowed.has(id)) errors[field] = ["Media tidak tersedia untuk undangan ini."];
+  for (const { field, id, expected } of refs) {
+    const item = byId.get(id);
+    if (!item || !item.deliverable) {
+      errors[field] = ["Media tidak tersedia untuk undangan ini."];
+    } else if (item.resourceType !== expected) {
+      errors[field] = ["Jenis media tidak sesuai dengan kolom ini."];
+    } else if (item.shared && !preservesPublishedSlot(field, id, payload, live)) {
+      errors[field] = ["Media yang juga dipakai undangan lain tidak dapat dipilih untuk kolom baru."];
+    }
   }
   return Object.keys(errors).length ? failure("validation", "Periksa pilihan media.", errors) : null;
 }

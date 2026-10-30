@@ -23,10 +23,16 @@ function InvitationView({
 	invitationSlug,
 	themeConfig,
 	data,
+	isDraftPreview = false,
+	hasMissingMedia = false,
+	usesPublicSampleMedia = false,
 }: {
 	invitationSlug: string;
 	themeConfig: ClassicRoseThemeConfig;
 	data: InvitationData;
+	isDraftPreview?: boolean;
+	hasMissingMedia?: boolean;
+	usesPublicSampleMedia?: boolean;
 }) {
 	const [isOpened, setIsOpened] = useState(false);
 	const searchParams = useSearchParams();
@@ -61,6 +67,7 @@ function InvitationView({
 
 	return (
 		<div style={themeStyle} className='classic-rose-background min-h-[100svh] font-[--font-body]'>
+			{isDraftPreview && <div role='status' className='sticky top-0 z-50 bg-[#17243d] px-4 py-3 text-center text-sm font-bold text-white'>Pratinjau draf · Konfirmasi dan ucapan tidak dapat dikirim{hasMissingMedia ? " · Foto belum tersedia ditampilkan sebagai placeholder" : ""}{usesPublicSampleMedia ? " · Foto contoh mengikuti tampilan publik default-preview" : ""}</div>}
 			<AnimatePresence>
 				{!isOpened ? (
 					<motion.div
@@ -111,9 +118,10 @@ function InvitationView({
 								<GiftSection gifts={data.gifts} theme={themeConfig} />
 							)}
 
-							{sections.wishes && (
+							{sections.wishes && !isDraftPreview && (
 								<WishesSection invitationSlug={invitationSlug} theme={themeConfig} />
 							)}
+							{sections.wishes && isDraftPreview && <section className='mx-auto max-w-xl px-5 py-20 text-center'><h2 className='text-2xl'>Konfirmasi &amp; Ucapan</h2><p className='mt-4'>Formulir dinonaktifkan dalam pratinjau draf.</p></section>}
 						</motion.div>
 					</main>
 				)}
@@ -126,11 +134,25 @@ export default function ClassicRoseClientView({
 	invitationSlug,
 	themeConfig,
 	data,
+	isDraftPreview = false,
 }: {
 	invitationSlug: string;
 	themeConfig: ClassicRoseThemeConfig;
 	data: InvitationData;
+	isDraftPreview?: boolean;
 }) {
+	const previewPhoto = "/images/themes/preview-photo-placeholder.svg";
+	const sampleRecord = invitationSlug === "default-preview";
+	const hasMissingMedia = !sampleRecord && (!data.couple.heroImage || !data.couple.groom.photo || !data.couple.bride.photo);
+	const displayData = isDraftPreview && !sampleRecord ? {
+		...data,
+		couple: {
+			...data.couple,
+			heroImage: data.couple.heroImage || previewPhoto,
+			groom: { ...data.couple.groom, photo: data.couple.groom.photo || previewPhoto },
+			bride: { ...data.couple.bride, photo: data.couple.bride.photo || previewPhoto },
+		},
+	} : withDefaultPreviewAssets(invitationSlug, data);
 	return (
 		<Suspense
 			fallback={
@@ -141,7 +163,10 @@ export default function ClassicRoseClientView({
 			<InvitationView
 				invitationSlug={invitationSlug}
 				themeConfig={themeConfig}
-				data={withDefaultPreviewAssets(invitationSlug, data)}
+				data={displayData}
+				isDraftPreview={isDraftPreview}
+				hasMissingMedia={hasMissingMedia}
+				usesPublicSampleMedia={isDraftPreview && sampleRecord}
 			/>
 		</Suspense>
 	);
