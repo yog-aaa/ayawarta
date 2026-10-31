@@ -7,6 +7,14 @@ const migrations = [
   { name: "001_init", checksum: "a".repeat(64) },
   { name: "002_complete", checksum: "b".repeat(64) },
 ];
+const adminMigrations = [
+  ...migrations,
+  { name: "20261030060000_add_admin_drafts_and_siger_fields", checksum: "c".repeat(64) },
+];
+const a5Migrations = [
+  ...adminMigrations,
+  { name: "20261031060000_add_draft_media_provenance", checksum: "d".repeat(64) },
+];
 const baseTables = [
   "_prisma_migrations", "User", "MediaAsset", "Invitation", "InvitationSections",
   "Partner", "Event", "GalleryItem", "LoveStory", "GiftAccount",
@@ -23,6 +31,7 @@ function client(options: {
   missingPartner?: boolean;
   mediaIds?: string[];
   adminCounts?: number[];
+  draftMediaCount?: number;
 } = {}): ReleaseStateClient {
   const counts = options.counts ?? seededCounts;
   const count = (index: number) => ({ count: async () => counts[index] });
@@ -55,6 +64,7 @@ function client(options: {
     invitationDraft: { count: async () => options.adminCounts?.[0] ?? 0 },
     invitationPublication: { count: async () => options.adminCounts?.[1] ?? 0 },
     invitationPublicationMedia: { count: async () => options.adminCounts?.[2] ?? 0 },
+    draftMediaProvision: { count: async () => options.draftMediaCount ?? 0 },
   } as ReleaseStateClient;
 }
 
@@ -70,7 +80,7 @@ describe("read-only production release state", () => {
     await expect(inspectReleaseState(client({ counts: Array(9).fill(0), tables: [...baseTables, "Unknown"] }), migrations))
       .rejects.toThrow("exact completed bootstrap schema");
     await expect(inspectReleaseState(client({ counts: Array(9).fill(0), adminCounts: [0, 1, 0] }), migrations))
-      .rejects.toThrow("admin draft or publication data");
+      .rejects.toThrow("admin draft, publication, or media provenance data");
     await expect(inspectReleaseState(client({ counts: Array(9).fill(0), ledger: [{
       migration_name: "001_init", checksum: migrations[0].checksum,
       finished_at: new Date(), rolled_back_at: null, logs: null,
@@ -101,6 +111,46 @@ describe("read-only production release state", () => {
       migration_name: "001_init", checksum: migrations[0].checksum,
       finished_at: new Date(), rolled_back_at: null, logs: null,
     }] }), migrations)).resolves.toBe("seeded");
+  });
+
+  it("requires every A2 admin table on a populated seeded database", async () => {
+    const adminLedger = adminMigrations.map((migration) => ({
+      migration_name: migration.name, checksum: migration.checksum,
+      finished_at: new Date(), rolled_back_at: null, logs: null,
+    }));
+    await expect(inspectReleaseState(client({ ledger: adminLedger }), adminMigrations))
+      .resolves.toBe("seeded");
+    for (const missingTable of ["InvitationDraft", "InvitationPublication", "InvitationPublicationMedia"]) {
+      await expect(inspectReleaseState(client({
+        tables: baseTables.filter((name) => name !== missingTable), ledger: adminLedger,
+      }), adminMigrations)).rejects.toThrow("Admin migration and required draft/publication tables disagree");
+    }
+  });
+
+  it("requires the A5 table exactly when its committed migration was applied", async () => {
+    const a5Ledger = a5Migrations.map((migration) => ({
+      migration_name: migration.name, checksum: migration.checksum,
+      finished_at: new Date(), rolled_back_at: null, logs: null,
+    }));
+    const a5Tables = [...baseTables, "DraftMediaProvision"];
+    await expect(inspectReleaseState(client({ tables: a5Tables, ledger: a5Ledger, draftMediaCount: 2 }), a5Migrations))
+      .resolves.toBe("seeded");
+    await expect(inspectReleaseState(client({ tables: baseTables, ledger: a5Ledger }), a5Migrations))
+      .rejects.toThrow("A5 migration and draft-media table disagree");
+    await expect(inspectReleaseState(client({ tables: a5Tables }), a5Migrations))
+      .rejects.toThrow("A5 migration and draft-media table disagree");
+  });
+
+  it("requires zero A5 provenance rows for empty bootstrap recovery", async () => {
+    const a5Ledger = a5Migrations.map((migration) => ({
+      migration_name: migration.name, checksum: migration.checksum,
+      finished_at: new Date(), rolled_back_at: null, logs: null,
+    }));
+    const input = { tables: [...baseTables, "DraftMediaProvision"], ledger: a5Ledger,
+      counts: Array(9).fill(0) };
+    await expect(inspectReleaseState(client(input), a5Migrations)).resolves.toBe("seed-ready");
+    await expect(inspectReleaseState(client({ ...input, draftMediaCount: 1 }), a5Migrations))
+      .rejects.toThrow("media provenance data");
   });
 
   it("rejects missing canonical seed identities without exact row-count requirements", async () => {

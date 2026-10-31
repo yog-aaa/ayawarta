@@ -105,6 +105,17 @@ The A4 media gate checks invitation ownership, resource type, the original slot 
 
 **A5 source verification (2026-10-31):** Frozen pnpm install, Prisma format/validate/generate, TypeScript, ESLint, production build, and `git diff --check` passed. Hermetic Vitest passed 69 files and 864 tests (two opt-in database files skipped in that run). Three opt-in A4/A5 tests passed on disposable PostgreSQL 18.2 at `127.0.0.1:55434/ayawarta_a5`: provenance constraints, late first-publication rollback/retry/reopen, and legacy A4 publication. The cluster was stopped and removed afterward. Fake Cloudinary tests cover readback, missing remote content, and preflight order; no live image upload occurred. The offline media report passed 31/31. Read-only AyaWarta smoke on localhost port 3001 passed ten public routes, login HTTP 200, and unauthenticated admin redirects. The full first run's two timing failures passed when rerun with two workers; the complete two-worker run passed. The remaining unchecked item requires an isolated migrated browser session and visual/mobile review after activation planning; it does not imply that Neon was migrated or A5 enabled.
 
+### A6 release-readiness gate
+
+- [x] Current architecture, design, database, authentication, media, deployment, and admin-operation documents describe the A5 code and activation boundary.
+- [x] A separate [production activation runbook](runbooks/admin-a5-production-activation.md) identifies the approved target, recovery path, deployment verification, stop points, and distinct media activation.
+- [x] The release-state gate recognizes the A2 and A5 migration tables and accepts seeded databases with later legitimate admin rows; its tests include missing-table and additive-row cases.
+- [x] Six committed migrations, repeatable seed, and release-state inspection were exercised on a disposable loopback PostgreSQL target. No Neon migration or seed was run during A6.
+- [x] The editor's mobile validation links focus their fields; the mobile admin dialog closes and transfers focus on a desktop resize. The isolated browser showed no horizontal overflow from 360 to 1440 px.
+- [ ] Successful upload, idempotent retry, remote-success/database-failure recovery, draft preview, and first publication are demonstrated end to end with a mocked provider in the isolated browser. The current code requires the canonical Cloudinary account identity, so a separate nonproduction account is not a compatible fixture. The production activation runbook keeps this gate **OPEN**.
+
+See the [A6 release-readiness report](reviews/admin-a6-release-readiness.md) for command outcomes, the isolated fixture, and remaining release conditions. A6 source review alone does not authorize Neon, Vercel, Cloudinary, customer-content, or Git writes.
+
 ## Cloudinary
 
 - [ ] Only dynamic invitation media is included.

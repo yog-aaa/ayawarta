@@ -43,6 +43,7 @@ export interface DatabaseMetadataClient {
   invitationDraft?: { count(): Promise<number> };
   invitationPublication?: { count(): Promise<number> };
   invitationPublicationMedia?: { count(): Promise<number> };
+  draftMediaProvision?: { count(): Promise<number> };
   $disconnect?(): Promise<void>;
 }
 
@@ -95,6 +96,7 @@ const KNOWN_APP_TABLES = [
   "invitationdraft",
   "invitationpublication",
   "invitationpublicationmedia",
+  "draftmediaprovision",
 ];
 const KNOWN_SYSTEM_TABLES = ["_prisma_migrations"];
 
@@ -273,6 +275,7 @@ export async function inspectProductionDatabaseState(
     ["invitationdraft", "invitationDraft"],
     ["invitationpublication", "invitationPublication"],
     ["invitationpublicationmedia", "invitationPublicationMedia"],
+    ["draftmediaprovision", "draftMediaProvision"],
   ] as const) {
     if (!lowerNames.includes(table)) continue;
     const delegate = client[key];

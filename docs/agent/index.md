@@ -9,6 +9,8 @@ This directory index is the entry point for programmer agents and reviewers. For
 | `AGENTS.md` | Mandatory repository-wide agent rules and handoff format. |
 | `docs/superpowers/specs/2026-10-21-ayawarta-refactor-cloudinary-prisma-design.md` | Approved product and technical specification. |
 | `docs/superpowers/plans/2026-10-21-ayawarta-refactor-cloudinary-prisma-plan.md` | Approved implementation ordering and file-level plan. |
+| `docs/superpowers/specs/2026-10-29-ayawarta-admin-panel-design.md` | Approved administrator workflow and release boundaries. |
+| `docs/superpowers/plans/2026-10-29-ayawarta-admin-panel-plan.md` | Reviewed admin stages A1–A6 and their gates. |
 | `docs/architecture.md` | Current and target system architecture, boundaries, and data flow. |
 | `docs/design.md` | UI preservation rules, design tokens, components, and accessibility constraints. |
 | `docs/database-schema.md` | Target Prisma entities, relationships, constraints, and seed rules. |
@@ -17,6 +19,8 @@ This directory index is the entry point for programmer agents and reviewers. For
 | `docs/deployment.md` | Local, Vercel, and future Neon operational model. |
 | `docs/deployment-aiven-vercel.md` | Current local commands and the separately authorized Neon/Vercel production cutover sequence. |
 | `docs/media-management.md` | Current Cloudinary catalog, verification commands, and future upload boundaries. |
+| `docs/admin-operations.md` | Administrator draft, upload, recovery, and publication procedures. |
+| `docs/runbooks/admin-a5-production-activation.md` | Separately authorized A5 migration, deployment, activation, and recovery steps. |
 | `docs/agent-workflow.md` | Current fixed-role Codex orchestration and historical stage assignments. |
 | `docs/agent/prompts.md` | Historical Antigravity copy-ready prompts; not standing instructions. |
 | `docs/agent/skills.md` | Skill-selection rules and historical stage routing. |

@@ -28,7 +28,7 @@ describe("Public Route Cutover — Live Database Integration Tests", () => {
 
       expect(page).toBeDefined();
       expect(page.props.invitationSlug).toBe("rika-fauzi");
-      expect(page.props.themeConfig.colors.primary).toBe("#D9AD65");
+      expect(page.props.themeConfig.colors.primary).toBe("#e4bd79");
       expect(page.props.data.couple.groom.name).toBe("Moch Fauzi Febriana");
       expect(page.props.data.couple.bride.name).toBe("Rika Widiarti");
       expect(page.props.data.couple.heroImage).toMatch(
@@ -44,7 +44,7 @@ describe("Public Route Cutover — Live Database Integration Tests", () => {
 
       expect(page).toBeDefined();
       expect(page.props.invitationSlug).toBe("shidqi-mita");
-      expect(page.props.themeConfig.colors.primary).toBe("#D9AD65");
+      expect(page.props.themeConfig.colors.primary).toBe("#e4bd79");
       expect(page.props.data.couple.groom.name).toBe("Shidqi Nurpermadi");
       expect(page.props.data.couple.bride.name).toBe("Mita Ali Tifta");
     });
@@ -56,7 +56,7 @@ describe("Public Route Cutover — Live Database Integration Tests", () => {
 
       expect(page).toBeDefined();
       expect(page.props.invitationSlug).toBe("dudi-aini");
-      expect(page.props.themeConfig.colors.primary).toBe("#A57C4E");
+      expect(page.props.themeConfig.colors.primary).toBe("#8c6839");
       expect(page.props.data.couple.groom.name).toBe("Dudi");
       expect(page.props.data.couple.bride.name).toBe("Aini Sri Lutami");
     });
@@ -148,7 +148,7 @@ describe("Public Route Cutover — Live Database Integration Tests", () => {
       });
 
       expect(page.props.invitationSlug).toBe("default-preview");
-      expect(page.props.themeConfig.colors.primary).toBe("#7B9557");
+      expect(page.props.themeConfig.colors.primary).toBe("#4c6537");
       expect(page.props.data.couple.groom.name).toBe("Bima Mahendra");
     });
 

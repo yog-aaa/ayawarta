@@ -174,10 +174,12 @@ describe("admin draft editor", () => {
 
   it("shows linked field errors and retains input after a failed save", async () => {
     const initial = createEmptyDraftPayload();
+    initial.meta = null;
     initial.events = [{ key: "event-1", name: "", displayDate: "", displayTime: "", location: "", address: "", mapUrl: "" }];
     mocks.create.mockResolvedValue({ ok: false, code: "validation", message: "Periksa isi draf.", fieldErrors: {
       slug: ["Slug tidak valid."],
       "meta.theme": ["Tema tidak valid."],
+      "meta.variant": ["Varian tidak valid."],
       "events.0.name": ["Nama acara wajib diisi."],
       "events.0.key": ["Kunci baris tidak unik."],
     } });
@@ -190,10 +192,26 @@ describe("admin draft editor", () => {
     expect(slug.getAttribute("aria-invalid")).toBe("true");
     expect(slug.getAttribute("aria-describedby")).toContain("draft-slug-error");
     expect(container.querySelector('a[href="#draft-slug"]')).not.toBeNull();
-    for (const path of ["draft-meta-theme", "draft-events-0-name", "draft-events"]) {
+    for (const path of ["draft-meta-theme", "draft-meta-variant", "draft-events-0-name", "draft-events"]) {
       expect(container.querySelector(`a[href="#${path}"]`)).not.toBeNull();
       expect(container.querySelector(`#${path}`)).not.toBeNull();
     }
+    const scrollToSlug = vi.fn();
+    slug.scrollIntoView = scrollToSlug;
+    const slugLink = container.querySelector<HTMLAnchorElement>('a[href="#draft-slug"]')!;
+    slugLink.focus();
+    await act(async () => slugLink.click());
+    expect(document.activeElement).toBe(slug);
+    expect(scrollToSlug).toHaveBeenCalledWith({ block: "start" });
+    expect(slug.classList.contains("scroll-mt-24")).toBe(true);
+
+    const identity = container.querySelector<HTMLElement>("#draft-identity")!;
+    const scrollToIdentity = vi.fn();
+    identity.scrollIntoView = scrollToIdentity;
+    await act(async () => container.querySelector<HTMLAnchorElement>('a[href="#draft-meta-variant"]')!.click());
+    expect(document.activeElement).toBe(identity); // variant is disabled until a theme is selected
+    expect(scrollToIdentity).toHaveBeenCalledWith({ block: "start" });
+    expect(container.querySelector("#draft-meta-variant-error")).not.toBeNull();
     expect(container.textContent).toContain("Slug tidak valid");
     expect(mocks.replace).not.toHaveBeenCalled();
   });

@@ -27,9 +27,10 @@ Partner 0..* ──────── 1 MediaAsset
 Invitation 1 ──────── 0..1 InvitationDraft
 Invitation 1 ──────── 0..* InvitationPublication
 InvitationPublication 1 ─── 0..* InvitationPublicationMedia ─── 1 MediaAsset
+InvitationDraft 1 ─────── 0..* DraftMediaProvision ─── 0..1 MediaAsset
 ```
 
-Each invitation references exactly one hero asset. `heroAssetId` is indexed but not unique, so the database can represent reuse; the proposed admin editor restricts new media choices to assets already associated with the same invitation. A hero may also appear in that invitation's gallery.
+Each invitation references exactly one hero asset. `heroAssetId` is indexed but not unique, so the database can represent reuse; the implemented admin editor restricts existing-invitation choices to associated assets and new-draft choices to verified assets owned by that draft. A hero may also appear in that invitation's gallery.
 
 Because `Invitation` has both hero and music relations to `MediaAsset`, both Prisma relation pairs must use distinct explicit relation names. Naming the existing music relation must remain a Prisma metadata-only change and must not recreate its existing database column or foreign key.
 
@@ -41,12 +42,12 @@ Because `Invitation` has both hero and music relations to `MediaAsset`, both Pri
 | --- | --- |
 | `id` | Generated stable primary key. |
 | `slug` | Unique, normalized public route key. |
-| `theme`, `variant` | Persisted pair. The typed domain currently accepts Classic Rose with its six color variants or Siger Priangan with `ivory`; public rendering still supports Classic Rose only. |
+| `theme`, `variant` | Persisted pair. The typed domain and public route accept Classic Rose with its six color variants or Siger Priangan with `ivory`; no production invitation has been converted to Siger. First publication of a new draft is gated to Classic Rose. |
 | `weddingDate` | Canonical timestamp used by countdowns. |
 | `heroAssetId` | Required Cloudinary media relation for `couple.heroImage`. |
 | `galleryVideoUrl` | Optional external gallery-video embed URL; empty legacy values normalize to `null`. |
 | `greeting`, `prayer` | New nullable content fields; map to empty strings for legacy public reads. No religious default. |
-| `publishedVersion` | New non-null publication version with default `1`; the authored migration does not rewrite invitation content. |
+| `publishedVersion` | Non-null publication version with default `1`; the applied A2/T2 migration did not rewrite invitation content. |
 | `musicAssetId` | Optional media relation. |
 | `ownerId` | Optional admin relation during initial migration. |
 | timestamps | Created and updated timestamps. |
@@ -140,7 +141,7 @@ Hero media is a first-class required invitation relation. Gallery membership and
 
 ### InvitationDraft
 
-`InvitationDraft` has a stable ID, nullable unique `invitationId`, `proposedSlug`, JSON `payload`, `schemaVersion`, optimistic `draftVersion`, nullable `basePublishedVersion`, creator/updater references, and timestamps. A new draft has no published invitation row and no base published version. An existing invitation may have one active draft and must reference a positive base version. The SQL migration checks those version/state invariants; `invitationId`, creator, and updater use restrictive foreign keys. The service validates a version-1 payload with Zod, permits incomplete content on save, rejects theme/variant mismatches and duplicate row keys, and scopes every media ID to the same invitation. The authenticated admin editor invokes these writes.
+`InvitationDraft` has a stable ID, nullable unique `invitationId`, `proposedSlug`, JSON `payload`, `schemaVersion`, optimistic `draftVersion`, nullable `basePublishedVersion`, creator/updater references, and timestamps. A new draft has no published invitation row and no base published version. An existing invitation may have one active draft and must reference a positive base version. The SQL migration checks those version/state invariants; `invitationId`, creator, and updater use restrictive foreign keys. The service validates a version-1 payload with Zod, permits incomplete content on save, and rejects theme/variant mismatches and duplicate row keys. Existing-draft media must be associated with that invitation; new-draft media must have a verified `DraftMediaProvision` owned by the same draft. The authenticated admin editor invokes these writes.
 
 ### DraftMediaProvision (A5, pending Neon migration)
 
@@ -150,7 +151,7 @@ Hero media is a first-class required invitation relation. Gallery membership and
 
 `InvitationPublication` records a unique `(invitationId, version)`, `BASELINE` or `PUBLISH` source, complete JSON snapshot, schema version, SHA-256 content digest, optional change summary/actor, and timestamp. The snapshot captures the invitation's content, visibility flags, ordered child rows, and full referenced media identities. `InvitationPublicationMedia` pins each referenced `MediaAsset` with a composite primary key. Restrictive foreign keys prevent deletion of a referenced publication, actor, invitation, or media asset. SQL triggers reject update or delete of publication and pin rows; history is append-only.
 
-Before an existing invitation can be opened for drafting, `draft-repository.ts` requires a verified version-1 baseline snapshot and an exact match between snapshot, media pins, and current published content. The 2026-10-30 read-only preflight found 0 matching and 4 missing; the separately approved `prod:baseline --execute` activation then wrote the four baselines, and a subsequent read-only check found **4 matching and 0 missing**. The migration itself did **not** create baseline records. No snapshot or pinned media should be automatically deleted before a separate retention and recovery policy is approved.
+Before a published invitation can be opened for drafting, `draft-repository.ts` verifies its version-1 publication and the exact match between snapshot, media pins, and current published content. The four seeded legacy slugs require `BASELINE`; a newly first-published invitation requires actor-attributed `PUBLISH` and retained verified media owned by its original draft. The 2026-10-30 read-only preflight found 0 matching and 4 missing legacy baselines; the separately approved `prod:baseline --execute` activation then wrote those four baselines, and a subsequent read-only check found **4 matching and 0 missing**. The migration itself did **not** create baseline records. No snapshot or pinned media should be automatically deleted before a separate retention and recovery policy is approved.
 
 ### User
 
@@ -202,13 +203,13 @@ The invitation repository returns:
 
 The repository returns `null` for a missing slug. It does not substitute `default-preview`.
 
-The public repository still uses the compact `publicInvitationSelect` projection; the mapper defaults optional Siger content to empty strings and derives `Gallery.images` from ordered gallery items for Classic Rose. The full include is used by admin draft/snapshot operations, subject to baseline activation.
+The public repository still uses the compact `publicInvitationSelect` projection; the mapper defaults optional Siger content to empty strings and derives `Gallery.images` from ordered gallery items for Classic Rose. The full include is used by admin draft/snapshot operations; all four initial baselines are verified. New-draft media queries require the separate A5 migration and feature gate, which are not active on Neon.
 
 ## Migration Discipline
 
 - Create committed Prisma migrations for schema changes.
 - Use only an explicitly verified isolated non-production database for new integration tests; the operator's current local `DATABASE_URL` points to production Neon.
 - Do not run `db push` against production.
-- Do not run a Neon migration until the production-cutover stage is explicitly assigned.
-- Production draft edits and publication require the verified baseline, scoped media, and a separate explicit publish action; do not rerun the canonical seed on this populated database.
+- Do not run any further Neon migration without an explicitly assigned operation and target approval; the A5 migration remains pending.
+- Published-invitation edits require verified version-1 provenance (`BASELINE` for legacy slugs, `PUBLISH` with actor and retained draft-owned media for newly created invitations), scoped media, and a separate explicit publish action; do not rerun the canonical seed on this populated database.
 - Backward-incompatible schema changes require a new reviewed plan.

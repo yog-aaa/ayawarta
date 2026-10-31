@@ -21,6 +21,7 @@ The implementation is in `src/auth.ts`, `src/auth.config.ts`, `src/proxy.ts`, an
 | `/admin/login` | Public; redirects authenticated administrators to `/admin`. |
 | `/admin` | Authenticated active `ADMIN` or `SUPER_ADMIN`. |
 | `/admin/invitations`, `/admin/invitations/new`, `/admin/invitations/[id]/edit`, `/admin/invitations/[id]/preview` | Protected by the same authorization rule; edit and preview IDs identify drafts. |
+| `/admin/api/drafts/[id]/media` | Admin-only Node.js image upload route; also requires the default-disabled A5 target gate, same request origin, and a saved new-draft version. |
 | Other `/admin/*` routes | Protected by the same authorization rule. |
 | `/api/auth/*` | Auth.js handlers. |
 
@@ -76,7 +77,7 @@ Authentication proves identity; authorization checks an active admin role. A val
 
 `src/app/admin/actions.ts` exposes create, open, save, read-only publication review, and explicit publish operations. The server-only draft and publish services recheck `requireAdminSession` for every read and mutation and return typed results rather than Prisma rows. The private preview reloads only a saved draft under the same authorization, with dynamic rendering and guest submission disabled. Publishing requires another authorization check, validated version tokens, and an exact slug confirmation; saving or previewing never publishes. The draft tables and four version-1 publication baselines were verified on Neon on 2026-10-30. No invitation content was changed by the baseline operation.
 
-The A5 image upload route independently rechecks the current admin, rejects a mismatched request origin, and caps the streamed request body before decoding. It also requires a saved new-draft version and an explicit server-side feature gate bound to the approved Cloudinary account. A client-supplied image URL or media ID does not grant access to an asset. The feature is disabled by default and its database migration is not yet on Neon; A4 admin operations remain available without querying the A5 table.
+The A5 image upload route independently rechecks the current admin, rejects a mismatched request origin, and caps the streamed request body before decoding. It also requires a saved new-draft version and an explicit server-side feature gate bound to the approved Cloudinary account. Recovery and first publication recheck the admin and A5 gate. A client-supplied image URL or media ID does not grant access to an asset. The feature is disabled by default and its database migration is not yet on Neon; A4 admin operations remain available without querying the A5 table. First publication is limited to a new Classic Rose draft with verified draft-owned images and no new music upload.
 
 ## Bootstrap
 
@@ -127,6 +128,7 @@ Adding any deferred feature requires a separate reviewed design.
 - unauthenticated create/save actions and direct edit/preview requests are rejected;
 - active `ADMIN` and legacy `SUPER_ADMIN` can access the same draft operations;
 - draft preview never mounts a guest submission adapter.
+- A5 upload and recovery reject inactive/unauthenticated admins, disabled feature gates, and wrong draft/version; the upload route also rejects a mismatched request origin.
 
 ## Review Checklist
 

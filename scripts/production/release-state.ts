@@ -11,9 +11,11 @@ const BASE_TABLES = [
   "User", "MediaAsset", "Invitation", "InvitationSections", "Partner",
   "Event", "GalleryItem", "LoveStory", "GiftAccount",
 ];
-const BOOTSTRAP_TABLES = [
-  ...BASE_TABLES, "InvitationDraft", "InvitationPublication", "InvitationPublicationMedia",
-];
+const ADMIN_MIGRATION = "20261030060000_add_admin_drafts_and_siger_fields";
+const ADMIN_TABLES = ["InvitationDraft", "InvitationPublication", "InvitationPublicationMedia"];
+const BOOTSTRAP_TABLES = [...BASE_TABLES, ...ADMIN_TABLES];
+const A5_MIGRATION = "20261031060000_add_draft_media_provenance";
+const A5_TABLE = "DraftMediaProvision";
 
 type MigrationRow = {
   migration_name: string;
@@ -41,6 +43,7 @@ export interface ReleaseStateClient {
   invitationDraft: { count(): Promise<number> };
   invitationPublication: { count(): Promise<number> };
   invitationPublicationMedia: { count(): Promise<number> };
+  draftMediaProvision: { count(): Promise<number> };
 }
 
 export function committedMigrations(root = process.cwd()): CommittedMigration[] {
@@ -100,6 +103,18 @@ export async function inspectReleaseState(
       throw new Error("Migration history is incomplete or ambiguous.");
     }
   }
+  const adminApplied = ledger.some((row) => row.migration_name === ADMIN_MIGRATION);
+  if (adminApplied && ADMIN_TABLES.some((name) => !names.includes(name))) {
+    throw new Error("Admin migration and required draft/publication tables disagree.");
+  }
+  const a5Applied = ledger.some((row) => row.migration_name === A5_MIGRATION);
+  if (names.includes(A5_TABLE) !== a5Applied) {
+    throw new Error("A5 migration and draft-media table disagree.");
+  }
+  const a5Count = a5Applied ? await client.draftMediaProvision.count() : 0;
+  if (!Number.isSafeInteger(a5Count) || a5Count < 0) {
+    throw new Error("Draft-media provenance row count is invalid.");
+  }
 
   const counts = await Promise.all([
     client.user.count(), client.mediaAsset.count(), client.invitation.count(),
@@ -111,16 +126,17 @@ export async function inspectReleaseState(
   }
 
   if (counts.every((count) => count === 0)) {
-    if (ledger.length !== migrations.length || names.length !== BOOTSTRAP_TABLES.length + 1 ||
-        BOOTSTRAP_TABLES.some((name) => !names.includes(name))) {
+    const expectedTables = a5Applied ? [...BOOTSTRAP_TABLES, A5_TABLE] : BOOTSTRAP_TABLES;
+    if (ledger.length !== migrations.length || names.length !== expectedTables.length + 1 ||
+        expectedTables.some((name) => !names.includes(name))) {
       throw new Error("Empty schema is not an exact completed bootstrap schema.");
     }
     const adminCounts = await Promise.all([
       client.invitationDraft.count(), client.invitationPublication.count(),
       client.invitationPublicationMedia.count(),
     ]);
-    if (adminCounts.some((count) => count !== 0)) {
-      throw new Error("Empty schema contains admin draft or publication data.");
+    if (adminCounts.some((count) => count !== 0) || a5Count !== 0) {
+      throw new Error("Empty schema contains admin draft, publication, or media provenance data.");
     }
     return "seed-ready";
   }

@@ -14,13 +14,17 @@ function Assert-That([bool]$Condition, [string]$Message) {
 function Invoke-Scenario {
     param([string]$Mode, [string]$State, [bool]$Resume = $false,
           [bool]$Attest = $true, [bool]$PreflightFails = $false,
-          [bool]$SeedFails = $false,
+          [bool]$SeedFails = $false, [bool]$PostflightFails = $false,
+          [string]$PostState = "seeded",
           [bool]$ExpectSuccess = $true)
     $global:releaseEvents = [System.Collections.Generic.List[string]]::new()
     $global:releaseState = $State
     $global:releaseAttest = $Attest
     $global:releasePreflightFails = $PreflightFails
     $global:releaseSeedFails = $SeedFails
+    $global:releasePostflightFails = $PostflightFails
+    $global:releasePostState = $PostState
+    $global:releaseStateCalls = 0
     $global:LASTEXITCODE = 0
 
     function git {
@@ -41,8 +45,14 @@ function Invoke-Scenario {
         $global:LASTEXITCODE = 0
         if ($key -eq "--version") { "10.34.7" }
         if ($key -eq "prod:verify --release-state --execute") {
-            if ($global:releasePreflightFails) { $global:LASTEXITCODE = 1; return }
-            "[Prod Verify] Release state: $global:releaseState"
+            $global:releaseStateCalls++
+            if ($global:releaseStateCalls -eq 1) {
+                if ($global:releasePreflightFails) { $global:LASTEXITCODE = 1; return }
+                "[Prod Verify] Release state: $global:releaseState"
+            } else {
+                if ($global:releasePostflightFails) { $global:LASTEXITCODE = 1; return }
+                "[Prod Verify] Release state: $global:releasePostState"
+            }
         }
         if ($key -eq "prod:seed --execute" -and $global:releaseSeedFails) {
             $global:LASTEXITCODE = 1
@@ -64,6 +74,11 @@ function Invoke-Scenario {
             $output.Contains("Vercel Ready for this SHA: unverified")) "Deploy status must remain unverified."
     } catch {
         if ($ExpectSuccess) { throw }
+        if ($PreflightFails -or $PostflightFails) {
+            $errorText = [string]$_.Exception.Message
+            Assert-That ($errorText.Contains("Release stopped; inspect Neon state before retrying.") -and
+                -not $errorText.Contains("No migration, seed, or push was started.")) "Release-state errors must be valid before and after migration."
+        }
     } finally {
         Set-Location -LiteralPath $fixture
     }
@@ -75,6 +90,8 @@ function Invoke-Scenario {
     $push = @($events | Where-Object { $_ -eq "git push origin main:main" }).Count
     if ($SeedFails) {
         Assert-That ($migrate -eq 1 -and $seed -eq 1 -and $push -eq 0) "Seed failure must stop before push."
+    } elseif ($PostflightFails -or $PostState -cne "seeded") {
+        Assert-That ($migrate -eq 1 -and $seed -eq 0 -and $push -eq 0) "Post-migration failure must stop before push."
     } elseif (-not $ExpectSuccess) {
         Assert-That ($migrate -eq 0 -and $seed -eq 0 -and $push -eq 0) "Mutation escaped a failed preflight."
     } elseif ($Mode -eq "Update") {
@@ -87,8 +104,12 @@ function Invoke-Scenario {
     if ($ExpectSuccess) {
         $attestIndex = [array]::IndexOf($events, "attestation")
         $stateIndex = [array]::IndexOf($events, "pnpm prod:verify --release-state --execute")
+        $postStateIndex = [array]::LastIndexOf($events, "pnpm prod:verify --release-state --execute")
+        $migrateIndex = [array]::IndexOf($events, "pnpm prod:migrate --execute")
         $pushIndex = [array]::IndexOf($events, "git push origin main:main")
-        Assert-That ($attestIndex -ge 0 -and $stateIndex -gt $attestIndex -and $pushIndex -gt $stateIndex) "Gate order is wrong."
+        Assert-That ($attestIndex -ge 0 -and $stateIndex -gt $attestIndex -and
+            $postStateIndex -gt $migrateIndex -and $pushIndex -gt $postStateIndex -and
+            $global:releaseStateCalls -eq 2) "Gate order is wrong."
     }
 }
 
@@ -110,9 +131,17 @@ try {
     Invoke-Scenario -Mode Bootstrap -State seeded -Resume $true -ExpectSuccess $false
     Invoke-Scenario -Mode Update -State seeded -Attest $false -ExpectSuccess $false
     Invoke-Scenario -Mode Update -State seeded -PreflightFails $true -ExpectSuccess $false
+    Invoke-Scenario -Mode Update -State seeded -PostflightFails $true -ExpectSuccess $false
+    Invoke-Scenario -Mode Update -State seeded -PostState seed-ready -ExpectSuccess $false
     Invoke-Scenario -Mode Bootstrap -State uninitialized -SeedFails $true -ExpectSuccess $false
-    Write-Host "PASS: 11 hermetic release scenarios and default dry-run."
+    Write-Host "PASS: 13 hermetic release scenarios and default dry-run."
 } finally {
     Set-Location $originalLocation
+    $temporaryRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+    $fixturePath = [System.IO.Path]::GetFullPath($fixture)
+    if (-not $fixturePath.StartsWith($temporaryRoot, [System.StringComparison]::OrdinalIgnoreCase) -or
+        -not (Split-Path -Leaf $fixturePath).StartsWith("ayawarta-release-test-")) {
+        throw "Refusing to remove a test fixture outside the intended temporary directory."
+    }
     Remove-Item -LiteralPath $fixture -Recurse -Force
 }

@@ -34,10 +34,19 @@ import { AdminNavigation } from "./AdminNavigation";
 describe("admin navigation", () => {
   let container: HTMLDivElement;
   let root: Root;
+  let desktopMatches = false;
+  let onDesktopChange: (() => void) | null = null;
 
   beforeEach(() => {
     pathname.current = "/admin";
     linkStatus.pendingHref = null;
+    desktopMatches = false;
+    onDesktopChange = null;
+    vi.stubGlobal("matchMedia", vi.fn(() => ({
+      get matches() { return desktopMatches; },
+      addEventListener: (_type: string, listener: () => void) => { onDesktopChange = listener; },
+      removeEventListener: (_type: string, listener: () => void) => { if (onDesktopChange === listener) onDesktopChange = null; },
+    })));
     HTMLDialogElement.prototype.showModal = function () {
       this.setAttribute("open", "");
     };
@@ -53,6 +62,7 @@ describe("admin navigation", () => {
   afterEach(() => {
     act(() => root.unmount());
     container.remove();
+    vi.unstubAllGlobals();
     vi.useRealTimers();
   });
 
@@ -87,6 +97,21 @@ describe("admin navigation", () => {
     expect(dialog.hasAttribute("open")).toBe(false);
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it("closes the modal and focuses desktop navigation when the viewport crosses lg", async () => {
+    pathname.current = "/admin/invitations";
+    await act(async () => root.render(<AdminNavigation adminName="Rani" />));
+    const trigger = container.querySelector('button[aria-label="Buka navigasi admin"]') as HTMLButtonElement;
+    const dialog = container.querySelector("dialog") as HTMLDialogElement;
+    await act(async () => trigger.click());
+    expect(dialog.hasAttribute("open")).toBe(true);
+
+    desktopMatches = true;
+    await act(async () => onDesktopChange?.());
+    expect(dialog.hasAttribute("open")).toBe(false);
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(container.querySelector('aside nav a[aria-current="page"]'));
   });
 
   it("shows a delayed mobile header status and clears it after failure or completion", async () => {

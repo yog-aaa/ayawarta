@@ -1,6 +1,6 @@
 # AyaWarta Environment and Deployment Guide
 
-Neon schema migration and the one-time canonical seed completed on 2026-10-30 for the approved `ep-mute-water-azaf9oyl:ayawarta:neondb_owner` target. Read-only verification confirmed 12 application tables, 86 seed rows across the original nine data tables, four invitation slugs, 31 canonical media records, and release state `seeded`. Vercel deployment and production environment parity were not changed or verified. For current commands and guards, use [the operational guide](deployment-aiven-vercel.md). Do not rerun the initial seed on this populated database.
+Neon schema migration and the one-time canonical seed completed on 2026-10-30 for the approved `ep-mute-water-azaf9oyl:ayawarta:neondb_owner` target. Read-only verification confirmed 12 application tables, 86 seed rows across the original nine data tables, four invitation slugs, 31 canonical media records, and release state `seeded`. The additive A5 `DraftMediaProvision` migration has **not** been applied to Neon. Vercel deployment and production environment parity were not changed or verified. For current commands and guards, use [the operational guide](deployment-aiven-vercel.md). Do not rerun the initial seed on this populated database.
 
 ## Environments
 
@@ -30,6 +30,8 @@ Neon schema migration and the one-time canonical seed completed on 2026-10-30 fo
 - `ADMIN_PASSWORD`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
+- `APPROVED_NEON_TARGET_FINGERPRINT` (approved endpoint/database/role identifier for guarded production tooling)
+- `AYAWARTA_A5_MEDIA` and `AYAWARTA_A5_APPROVED_CLOUD` (optional A5 activation switches; absent by default)
 
 ### Public client configuration
 
@@ -72,18 +74,15 @@ On Vercel Production (`VERCEL_ENV=production`), the application runtime strictly
 - **Honest Protection Boundary**: The Prisma configuration guard prevents accidental execution of repository scripts (such as `npx prisma migrate dev` or `prisma db push`) against remote databases. It is an internal guardrail for repository tooling, not an absolute sandbox against an operator with local shell access creating external scripts or custom configs.
 - **Piped Output Capture**: `pnpm prod:migrate` executes migrations through child processes with `stdio: "pipe"`, suppressing raw command output and driver errors to ensure connection strings, queries, and passwords are never leaked to logs.
 
-## Vercel Preparation
+## Initial Neon cutover and later releases
 
-Before cutover:
+The guarded Neon migration, one-time canonical seed, and strict `pnpm prod:verify --execute` check completed on 2026-10-30. Those were **initial bootstrap** operations, not steps to repeat on the populated target. In particular, rerunning the seed could replace ordered invitation children and reset administrator credentials. The local `prisma:seed` and `seed:verify` commands deliberately reject Neon.
 
-1. Plan Vercel Production and Preview variable scopes; keep preview deployments away from production writes.
-2. The current local `prisma:seed` and `seed:verify` commands deliberately reject Neon before connecting. Use the dedicated production tooling (`pnpm prod:migrate`, `pnpm prod:seed`, `pnpm prod:verify`) which validates direct and pooled Neon targets, enforces TLS (`sslmode=require`), and enforces target identity approval.
-3. Apply migrations to Neon using `pnpm prod:migrate --execute` after authorization, then run `pnpm prod:seed --execute` and `pnpm prod:verify --execute`. Direct Prisma CLI migration execution targeting Neon is blocked by default `prisma.config.ts`.
-4. Configure production variables in Vercel using its secure settings, supplying both `DATABASE_URL` (direct) and `DATABASE_URL_POOLED` (pooled).
-5. Build using the committed `pnpm-lock.yaml`; `package-lock.json` must not exist.
-6. Deploy without deleting the previous healthy deployment.
+For a later release, use the reviewed `Update` path in [the operational guide](deployment-aiven-vercel.md#reusable-release-wrapper-windows-powershell). It validates the approved direct/pooled target and committed migration history, applies pending migrations, and never reruns seed. Keep Vercel Production and Preview variable scopes separate, build from the committed `pnpm-lock.yaml`, and retain the previous healthy deployment. The [A5 activation runbook](runbooks/admin-a5-production-activation.md) separates the additive migration/code release from enabling new image uploads and first publication.
 
 ## Production Cutover Checklist
+
+This checklist records the **initial** Neon bootstrap and the still-unverified Vercel cutover. It is not an A5 activation checklist.
 
 - [x] Direct and pooled connection URLs verified via preflight target guard (`assertNeonDatabaseTargets`) with TLS enforced and approved target identity verified.
 - [x] Neon database state inspected and confirmed uninitialized / empty before migration (`pnpm prod:verify --check-empty --execute`).

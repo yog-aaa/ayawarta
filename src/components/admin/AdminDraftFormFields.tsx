@@ -24,7 +24,7 @@ export type AdminImageUploadControls = {
 };
 
 const fieldId = (path: string) => `draft-${path.replace(/[^a-z0-9-]/gi, "-")}`;
-const inputClass = "focus-ring min-h-11 w-full rounded-xl border border-brand-secondary/15 bg-white px-3.5 py-2.5 text-sm text-brand-secondary placeholder:text-muted disabled:bg-brand-soft disabled:text-muted-foreground";
+const inputClass = "focus-ring scroll-mt-24 min-h-11 w-full rounded-xl border border-brand-secondary/15 bg-white px-3.5 py-2.5 text-sm text-brand-secondary placeholder:text-muted disabled:bg-brand-soft disabled:text-muted-foreground";
 
 function Field({
   path, label, value, onChange, errors, disabled, maxLength, type = "text", placeholder,
@@ -242,11 +242,12 @@ export function AdminDraftFormFields({ payload, onChange, errors, mediaChoices, 
           </div>
           <div className="min-w-0 space-y-2">
             <label htmlFor={fieldId("meta.variant")} className="block text-sm font-semibold text-brand-secondary">Varian</label>
-            <select id={fieldId("meta.variant")} value={payload.meta?.variant ?? ""} disabled={!payload.meta} onChange={(event) => update((next) => { if (next.meta?.theme === "classic-rose") next.meta = { theme: "classic-rose", variant: event.target.value as ClassicRoseVariant }; })} className={inputClass}>
+            <select id={fieldId("meta.variant")} value={payload.meta?.variant ?? ""} disabled={!payload.meta} onChange={(event) => update((next) => { if (next.meta?.theme === "classic-rose") next.meta = { theme: "classic-rose", variant: event.target.value as ClassicRoseVariant }; })} aria-invalid={Boolean(errors["meta.variant"])} aria-describedby={errors["meta.variant"] ? `${fieldId("meta.variant")}-error` : undefined} className={inputClass}>
               {!payload.meta && <option value="">Pilih tema terlebih dahulu</option>}
               {payload.meta?.theme === "siger-priangan" && <option value="ivory">Ivory</option>}
               {payload.meta?.theme === "classic-rose" && (["red", "green", "blue", "orange", "black", "white"] as const).map((variant) => <option key={variant} value={variant}>{variant}</option>)}
             </select>
+            {errors["meta.variant"] && <p id={`${fieldId("meta.variant")}-error`} className="text-xs text-destructive">{errors["meta.variant"].join(" ")}</p>}
           </div>
         </div>
         <MediaSelect path="heroAssetId" label="Foto sampul" value={payload.heroAssetId} onChange={(value) => update((next) => { next.heroAssetId = value; })} errors={errors} choices={mediaChoices} resourceType="IMAGE" imageUpload={imageUpload} uploadSlot={imageUpload ? "hero" : undefined} />

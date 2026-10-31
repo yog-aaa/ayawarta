@@ -60,6 +60,7 @@ Stop immediately if the target check fails or points to a non-local host. Severa
 ## Production cutover: separate authorization required
 
 The production target is Vercel plus Neon serverless PostgreSQL.
+The initial Neon migration and one-time seed below were completed on 2026-10-30. Keep those steps as the historical bootstrap contract; do not run them again on the populated target. For the later admin release, use the [A5 production activation runbook](runbooks/admin-a5-production-activation.md) and [administrator operations](admin-operations.md).
 
 ### Direct vs Pooled Connections
 
@@ -75,7 +76,7 @@ Both URLs may use one `sslmode`, optional `channel_binding=require`, and optiona
 
 Default `prisma.config.ts` is strictly local-only, rejecting all remote database hosts and forged boolean markers. The shell marker `AYAWARTA_EXECUTION_CONTEXT=production_migration_wrapper` is not trusted alone; when present, `prisma.config.ts` performs full on-load validation of direct URL, pooled URL, TLS enforcement, and the approved target tuple. Honestly noted: this prevents accidental execution of repository scripts (such as `npx prisma migrate dev` or `prisma db push`) against remote databases; it does not and cannot prevent an operator with local shell access from executing arbitrary custom scripts or separate Prisma configurations.
 
-The authorized cutover sequence:
+The initial bootstrap sequence, completed on Neon but not verified as a Vercel deployment:
 
 1. **Verify Neon targets**: Ensure `.env.production` contains valid direct `DATABASE_URL` and pooled `DATABASE_URL_POOLED` matching the same Neon project, region, database, and role with TLS enforced (`sslmode=require`) and approved target identity verified (gate status transitions from `UNPROVEN` to `verified`).
 2. **Inspect database state**: Run `pnpm prod:verify --check-empty --execute` to verify that the target Neon database is uninitialized (0 tables in `public` schema) before initial migration. Note: database emptiness, connection success, and Vercel variables are not assumed in advance and must be verified in this live cutover step.
@@ -98,7 +99,7 @@ The dry run prints the plan and runs no external commands. Every live invocation
 | Read-only release state | `Bootstrap` | `Bootstrap -ResumeBootstrap` | `Update` |
 | --- | --- | --- | --- |
 | `uninitialized`: no public tables or residual enum/view/sequence | Migrate, seed once, exact baseline verification, push | Stop | Stop |
-| `seed-ready`: all committed migrations applied; exactly the twelve current AyaWarta tables plus migration ledger; all application tables empty | Stop | Seed once, exact baseline verification, push | Stop |
+| `seed-ready`: all committed migrations applied; exactly the tables implied by that ledger (12 before A5, 13 with A5) plus migration ledger; all application tables empty | Stop | Seed once, exact baseline verification, push | Stop |
 | `seeded`: approved invitation slugs, canonical media IDs, admin, sections, and partner roles exist | Stop | Stop | Migrate pending changes, skip seed, push |
 | Partial data, missing table, failed/unknown migration, or ambiguous state | Stop | Stop | Stop |
 
@@ -124,7 +125,7 @@ For later releases:
 ./scripts/production/release.ps1 -Mode Update -ApprovedCommit '<new-40-character-reviewed-commit>' -Execute
 ```
 
-`Update` requires evidence of a prior bootstrap without enforcing exactly 86 rows. New application tables and records are permitted when the migration ledger is coherent. It never repeats the seed: doing so would replace invitation child collections and might overwrite admin-managed content. All three live paths stop before mutation unless the operator verifies that the linked Vercel project's **Production** `DATABASE_URL` is direct Neon and `DATABASE_URL_POOLED` is the matching pooled Neon connection, both matching the approved local target, and confirms the Production Git branch is `main`. The wrapper asks for an exact SHA-bound attestation; it does not read Vercel variable values. If either value is marked Secret and cannot be independently checked against the approved secret source, stop rather than attest. Do not paste either URL into a command, chat, log, or report. Vercel documents that `env ls` lists variable names, while `env pull` writes values to a file and unreadable Secret values become placeholders; the wrapper intentionally uses neither for parity claims ([Vercel CLI environment variables](https://vercel.com/docs/cli/env)).
+`Update` requires evidence of a prior bootstrap without enforcing exactly 86 rows. New application tables and records are permitted when the migration ledger is coherent. The release-state verifier requires the three admin draft/publication tables whenever the A2 migration is recorded and requires `DraftMediaProvision` exactly when the A5 migration is recorded, including an empty table for `seed-ready`; it accepts A5 rows in `seeded` state. After migration, the wrapper reruns that read-only verifier and stops before push unless the result is `seeded`. It never repeats the seed: doing so would replace invitation child collections and might overwrite admin-managed content. All three live paths stop before mutation unless the operator verifies that the linked Vercel project's **Production** `DATABASE_URL` is direct Neon and `DATABASE_URL_POOLED` is the matching pooled Neon connection, both matching the approved local target, and confirms the Production Git branch is `main`. The wrapper asks for an exact SHA-bound attestation; it does not read Vercel variable values. If either value is marked Secret and cannot be independently checked against the approved secret source, stop rather than attest. Do not paste either URL into a command, chat, log, or report. Vercel documents that `env ls` lists variable names, while `env pull` writes values to a file and unreadable Secret values become placeholders; the wrapper intentionally uses neither for parity claims ([Vercel CLI environment variables](https://vercel.com/docs/cli/env)).
 
 After push, the wrapper confirms only that `origin/main` points to the reviewed SHA. It reports the Vercel trigger and Ready state as **unverified**. In the linked Vercel project's Production deployments, confirm a deployment with that exact SHA was created and reached Ready; then run the post-deploy smoke checklist. A prior production URL responding successfully proves neither fact. An operator with an already authenticated, linked Vercel CLI may locate a deployment by `githubCommitSha` metadata, but this wrapper does not require new Vercel credentials or claim automated Ready verification ([Vercel deployment list](https://vercel.com/docs/cli/list)). If no deployment appears, or it is not Ready, stop and investigate without rerunning seed or assuming database rollback. If the Git integration does not deploy from `main`, stop and review the release process.
 
@@ -138,7 +139,7 @@ The four seeded invitations started at `publishedVersion = 1` without publicatio
 
 ### A5 media provisioning is not activated
 
-The additive `20261031060000_add_draft_media_provenance` migration is authored and tested on an isolated database only. It has not run on Neon. Upload and first publication of a new invitation require both `AYAWARTA_A5_MEDIA=enabled` and `AYAWARTA_A5_APPROVED_CLOUD=uhwi7xvb`, with the configured public Cloudinary cloud matching that exact name. Both switches are absent by default. Keep them absent until an exact migration, target, asset, and rollback review is approved. Uploading to the production Cloudinary account or publishing customer content is a separate operation from merging code; this stage performed neither. The four legacy invitations retain their A4 publication path while A5 is off.
+The additive `20261031060000_add_draft_media_provenance` migration is authored and tested on an isolated database only. It has not run on Neon. Upload and first publication of a new invitation require both `AYAWARTA_A5_MEDIA=enabled` and `AYAWARTA_A5_APPROVED_CLOUD=uhwi7xvb`, with the configured public Cloudinary cloud matching that exact name. Both switches are absent by default. Keep them absent until an exact migration, target, asset, and rollback review is approved. Uploading to the production Cloudinary account or publishing customer content is a separate operation from merging code; this stage performed neither. The four legacy invitations retain their A4 publication path while A5 is off. The ordinary `pnpm prod:verify --execute` remains a strict original-seed verifier and is unsuitable after admin edits or uploads; use the read-only `--release-state` mode and the [A5 runbook](runbooks/admin-a5-production-activation.md) for update releases.
 
 ## Rollback and Database Recovery
 

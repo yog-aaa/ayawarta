@@ -100,6 +100,7 @@ function LogoutButton({ mobile = false }: { mobile?: boolean }) {
 
 export function AdminNavigation({ adminName }: { adminName: string }) {
   const pathname = usePathname();
+  const desktopNavRef = useRef<HTMLElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -118,12 +119,27 @@ export function AdminNavigation({ adminName }: { adminName: string }) {
 
   const handleClose = () => {
     setIsOpen(false);
-    triggerRef.current?.focus();
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      (desktopNavRef.current?.querySelector<HTMLAnchorElement>('nav a[aria-current="page"]') ?? desktopNavRef.current?.querySelector<HTMLAnchorElement>("nav a"))?.focus();
+    } else {
+      triggerRef.current?.focus();
+    }
   };
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const closeOnDesktop = () => {
+      if (desktop.matches && dialogRef.current?.open) closeMenu();
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    closeOnDesktop();
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
 
   return (
     <>
       <aside
+        ref={desktopNavRef}
         className="sticky top-0 hidden h-svh w-[260px] shrink-0 flex-col border-r border-brand-secondary/10 bg-white px-4 py-6 lg:flex"
         aria-label="Panel admin"
       >

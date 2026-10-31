@@ -50,7 +50,7 @@ function withSelectedImage(payload: DraftPayloadV1, slot: string, assetId: strin
 }
 
 function fieldTarget(path: string): string {
-  let target = "form";
+  let target = "identity";
   if (path === "meta" || path === "meta.theme" || path === "meta.variant") target = path === "meta" ? "identity" : path;
   else if (["slug", "weddingDate", "heroAssetId", "galleryVideoUrl", "musicAssetId", "greeting", "prayer"].includes(path)) target = path;
   else if (/^partners\.(groom|bride)\.(name|parents|instagram|photoAssetId)$/.test(path)) target = path;
@@ -58,13 +58,23 @@ function fieldTarget(path: string): string {
   else if (/^galleryItems\.\d+\.(assetId|altText|caption)$/.test(path)) target = path;
   else if (/^loveStories\.\d+\.(title|content)$/.test(path)) target = path;
   else if (/^giftAccounts\.\d+\.(platform|accountHolder|accountNumber|logoPath)$/.test(path)) target = path;
-  else if (/^partners\./.test(path)) target = "partners";
+  else if (path === "partners" || /^partners\./.test(path)) target = "partners";
   else if (/^events/.test(path)) target = "events";
   else if (/^galleryItems/.test(path)) target = "galleryItems";
   else if (/^loveStories/.test(path)) target = "loveStories";
   else if (/^giftAccounts/.test(path)) target = "giftAccounts";
   else if (/^sections/.test(path)) target = "sections";
   return `draft-${target.replace(/[^a-z0-9-]/gi, "-")}`;
+}
+
+function focusFieldError(path: string) {
+  const target = document.getElementById(fieldTarget(path));
+  if (!target) return;
+  const focusTarget = target.matches(":disabled")
+    ? target.closest<HTMLElement>('section[tabindex="-1"]') ?? target
+    : target;
+  focusTarget.scrollIntoView?.({ block: "start" });
+  focusTarget.focus({ preventScroll: true });
 }
 
 function fieldLabel(path: string): string {
@@ -364,7 +374,10 @@ export function AdminDraftEditor({
               <ul className="mt-2 list-disc space-y-1 pl-5">
                 {errorEntries.map(([path, messages]) => (
                   <li key={path}>
-                    <a href={`#${fieldTarget(path)}`} className="focus-ring underline underline-offset-2">{fieldLabel(path)}: {messages.join(" ")}</a>
+                    <a href={`#${fieldTarget(path)}`} onClick={(event) => {
+                      event.preventDefault();
+                      focusFieldError(path);
+                    }} className="focus-ring underline underline-offset-2">{fieldLabel(path)}: {messages.join(" ")}</a>
                   </li>
                 ))}
               </ul>

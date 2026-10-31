@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This document records the implemented architecture and the separately planned production topology.
+This document records the implemented architecture and the remaining production activation boundaries.
 
-The approved refactor specification and implementation plan in `docs/superpowers/` record why the architecture was chosen. This page describes the current source tree; [deployment operations](deployment.md) describes the still separate production cutover.
+The approved refactor specification and implementation plan in `docs/superpowers/` record why the architecture was chosen. This page describes the current source tree; [deployment operations](deployment.md) records the completed Neon database setup and the remaining Vercel/runtime cutover checks.
 
 ## Current Architecture
 
@@ -30,7 +30,7 @@ The approved refactor specification and implementation plan in `docs/superpowers
 
 ### Media Ingestion and Image Preparation
 
-The server-only image preparation primitive was built for the completed migration and a future admin workflow. No admin upload screen or routine customer-media upload CLI exists yet. The separate `scripts/upload-classic-rose-assets.mjs` handles only the fixed, Git-tracked static theme asset set. Browser code never receives Cloudinary API credentials.
+The server-only image preparation primitive served the completed media migration. A5 now adds an admin image upload control and server route for saved **new** drafts; both are default-disabled pending the separately reviewed A5 Neon migration and feature activation. There is no routine customer-media upload CLI. The separate `scripts/upload-classic-rose-assets.mjs` handles only the fixed, Git-tracked static theme asset set. Browser code never receives Cloudinary API credentials.
 
 The preparation pipeline must:
 
@@ -42,13 +42,13 @@ The preparation pipeline must:
 - return output bytes, format, dimensions, byte size, and content digest for upload verification;
 - fail without creating a database media record when preparation, upload, or post-upload verification fails.
 
-Stage 5B used the primitive to remediate an oversized JPEG. Oversized PNG and WebP inputs currently fail closed. A future admin upload and persistence workflow should reuse the primitive rather than implement a second compressor.
+Stage 5B used the primitive to remediate an oversized JPEG. A5 reuses it, then creates slot-sized WebP derivatives capped at 3 MiB from bounded JPEG, PNG, or WebP inputs. The standalone preparation primitive still fails closed for oversized PNG and WebP without the A5 derivative step.
 
 ### Authentication
 
 Auth.js Credentials provides admin-only login. `/admin` is protected; `/admin/login` remains accessible for recovery from stale sessions.
 
-The admin workspace has a real invitation summary and searchable, paginated published list. A3 adds a separate list of new private drafts, `/admin/invitations/new`, `/admin/invitations/[id]/edit`, and a saved-draft-only `/admin/invitations/[id]/preview`; `[id]` is a draft ID on the edit and preview routes. Server actions create and save drafts with version checks. A4 adds a separate review and confirmed publish action for existing invitations. Opening an existing published invitation requires its verified version-1 baseline snapshot; all four initial Neon baselines were written and verified on 2026-10-30.
+The admin workspace has a real invitation summary and searchable, paginated published list. A3 adds a separate list of new private drafts, `/admin/invitations/new`, `/admin/invitations/[id]/edit`, and a saved-draft-only `/admin/invitations/[id]/preview`; `[id]` is a draft ID on the edit and preview routes. Server actions create and save drafts with version checks. A4 adds a separate review and confirmed publish action for existing invitations. Opening a published invitation requires verified version-1 provenance: `BASELINE` for the four seeded legacy slugs, or actor-attributed `PUBLISH` plus retained draft-owned media for an A5 first publication. The four legacy Neon baselines were written and verified on 2026-10-30.
 
 ### Pricing configuration
 
@@ -63,14 +63,14 @@ Browser
   │    ├─ Server Component loads invitation through repository
   │    └─ Client islands handle opening, motion, audio, and Firestore wishes ── Firestore
   ├─ Cloudinary delivery URLs for invitation media and Classic Rose artwork ── Cloudinary
-  └─ Admin login / protected workspace, draft editor, and saved preview
+  └─ Admin login / protected workspace, draft editor, saved preview, and gated media upload
           │
           ▼
 Next.js server (local development or existing Vercel deployment)
   ├─ Invitation repository and mapper
   ├─ Auth.js Credentials authorization
   ├─ Prisma Client
-  └─ Cloudinary server utilities and canonical media catalog
+  └─ Cloudinary server utilities, canonical catalog, and gated draft media service
           │
           ├──────── PostgreSQL
           │          ├─ invitations and child content
@@ -142,7 +142,7 @@ The generated Prisma client is under `src/generated/prisma`; generated code must
 | Theme previews | `src/app/(templates)/wedding/classic-rose/[variant]/page.tsx`, `siger-priangan/[variant]/page.tsx` | Classic Rose loads the explicit `slug` query parameter, defaulting to `default-preview`; Siger accepts only `ivory` and renders an illustrative read-only sample. |
 | Invitation domain | `src/features/invitations/repository.ts`, `query.ts`, `mapper.ts`, `types.ts` | Keep Prisma payloads on the server and map them to template data. |
 | Authentication | `src/auth.ts`, `src/proxy.ts`, `src/features/auth/` | Credentials sign-in, route protection, current-admin validation, and lockout state. |
-| Admin workspace | `src/app/admin/(workspace)/`, `src/app/admin/(preview)/`, `src/app/admin/actions.ts`, `src/features/admin/` | Published list, private draft editor and saved preview, scoped media choices, versioned saves, and explicit confirmed publication for existing invitations. |
+| Admin workspace | `src/app/admin/(workspace)/`, `src/app/admin/(preview)/`, `src/app/admin/actions.ts`, `src/app/admin/api/drafts/[id]/media/route.ts`, `src/features/admin/` | Published list, private draft editor and saved preview, scoped media choices, versioned saves, confirmed publication, and default-disabled new-draft image provisioning. |
 | Real-time wishes | `src/features/wishes/` and `src/lib/firebase.ts` | Browser-only Firestore subscription, validation, and submission. |
 | Media | `src/features/media/` | Canonical catalog, preparation and verification primitives, and server-only Cloudinary access. |
 | Database | `prisma/schema.prisma`, `prisma/migrations/`, `src/lib/server/db.ts` | Relational schema, migrations, and Prisma Client through `@prisma/adapter-pg`. |
@@ -161,13 +161,13 @@ The domain and draft schemas recognize two exact theme/variant pairs: Classic Ro
 
 ## Draft and publication boundary
 
-`src/features/admin/draft-schema.ts` validates versioned private payloads. `draft-repository.ts` stores one draft per existing published invitation, checks optimistic versions, and requires a verified version-1 baseline before opening an existing invitation for editing. `publication-snapshot.ts` captures the complete published aggregate and media identities, hashes it, and derives media pins. A4 `publish-repository.ts` rechecks the saved draft, live version, scoped media, and current snapshot inside a serializable transaction, then updates the public aggregate, writes an immutable versioned snapshot with media pins, and synchronizes the retained draft to the newly published version. A post-commit route verification failure is reported distinctly so an operator does not retry blindly. New invitation drafts remain unpublishable until their own media can be provisioned.
+`src/features/admin/draft-schema.ts` validates versioned private payloads. `draft-repository.ts` stores one draft per published invitation, checks optimistic versions, and verifies its version-1 publication provenance before editing: a `BASELINE` for the four legacy slugs, or an actor-attributed `PUBLISH` with retained draft-owned media for a newly first-published invitation. `publication-snapshot.ts` captures the complete published aggregate and media identities, hashes it, and derives media pins. A4 `publish-repository.ts` rechecks the saved draft, live version, scoped media, and current snapshot inside a serializable transaction, then updates the public aggregate, writes an immutable versioned snapshot with media pins, and synchronizes the retained draft to the newly published version. A post-commit route verification failure is reported distinctly so an operator does not retry blindly. A5 adds a guarded first-publication branch for new Classic Rose drafts with their own verified images.
 
 The A3 editor saves partially complete drafts through authenticated server actions. The private preview reloads the **saved** draft, has `force-dynamic`/zero revalidation, and either shows field-level incompleteness or renders the matching theme with a draft banner. Missing required photos may appear as placeholders for preview, but they remain publish blockers. Classic Rose omits its wishes component in draft mode; Siger shows a read-only wishes notice without loading its live Firestore adapter. Media choices for existing invitations are limited to deliverable assets already associated with that same invitation, with resource-type checks; an asset also shared with another invitation can only remain in its original published slot. New drafts have no selectable customer media before A5 activation. A draft is never returned by the public invitation repository. The four initial published invitations now have verified baselines; customer edits still require an explicit admin save and publish action.
 
 Stage A5 adds a separate, default-disabled path for **new** drafts. The upload route checks the current admin, same-origin request, saved draft version, bounded image bytes, signature, and decoded dimensions. `DraftMediaProvision` reserves a draft-owned deterministic public ID before a Cloudinary write. After a metadata and content readback, its verified receipt links a `MediaAsset`; a failed link remains recoverable through the reservation. The editor may select only verified images owned by that exact draft, and selection still requires an explicit draft save. No public invitation row is written by an upload or save. The A5 source and migration are not yet active on production Neon; existing A4 pages avoid querying the new table while the feature gate is off.
 
-First publication of a new Classic Rose invitation preflights every referenced Cloudinary image, then uses one serializable transaction to create the invitation, ordered children, version-1 `PUBLISH` snapshot and media pins, and to link/rebase the retained draft. A failed transaction leaves the public aggregate absent and the draft unchanged. The four seeded invitations retain their version-1 `BASELINE` provenance; a newly created invitation requires version-1 `PUBLISH` with an actor and verified draft-owned media. Once linked, its editor follows the same associated-media rules as other published invitations. Production activation requires a separate reviewed migration and target approval.
+First publication of a new Classic Rose invitation preflights every referenced Cloudinary image, then uses one serializable transaction to create the invitation, ordered children, version-1 `PUBLISH` snapshot and media pins, and to link/rebase the retained draft. A failed transaction leaves the public aggregate absent and the draft unchanged. The four seeded invitations retain their version-1 `BASELINE` provenance; a newly created invitation requires version-1 `PUBLISH` with an actor and verified draft-owned media. This branch rejects Siger and new-draft music; after first publication, the editor follows the associated-media rules of other published invitations. Production activation requires a separate reviewed migration and target approval.
 
 ## Wishes and RSVP Data Flow
 
@@ -198,10 +198,10 @@ PostgreSQL must not be introduced into this real-time path during the refactor.
 - Dynamic production media uses the new Cloudinary account.
 - Firestore remains connected to the existing project.
 
-### Production database target
+### Production database and runtime target
 
 - The application is already deployed on Vercel.
-- The planned PostgreSQL cutover uses Neon with TLS. Migrations and seed use the direct `DATABASE_URL`; the Neon-backed Vercel Production runtime requires `DATABASE_URL_POOLED`.
+- The approved PostgreSQL migration and seed are on Neon with TLS. Migrations and seed use the direct `DATABASE_URL`; a Neon-backed Vercel Production runtime requires `DATABASE_URL_POOLED`. Vercel environment parity and application cutover remain separately unverified.
 - Cloudinary serves production invitation media and Classic Rose runtime artwork.
 - Firestore serves real-time wishes and RSVP.
 

@@ -41,11 +41,11 @@ function Invoke-Checked {
 function Get-ReleaseState {
     $output = @(& pnpm.cmd prod:verify --release-state --execute 2>&1)
     if ($LASTEXITCODE -ne 0) {
-        throw "Neon release-state preflight failed. No migration, seed, or push was started."
+        throw "Neon release-state check failed. Release stopped; inspect Neon state before retrying."
     }
     $markers = @($output | Where-Object { $_ -cmatch '^\[Prod Verify\] Release state: (uninitialized|seed-ready|seeded)$' })
     if ($markers.Count -ne 1) {
-        throw "Neon release-state preflight was ambiguous. No migration, seed, or push was started."
+        throw "Neon release-state check was ambiguous. Release stopped; inspect Neon state before retrying."
     }
     return ([regex]::Match([string]$markers[0], '^\[Prod Verify\] Release state: (uninitialized|seed-ready|seeded)$')).Groups[1].Value
 }
@@ -151,6 +151,12 @@ try {
     } else {
         Write-Host "Seed skipped: update releases preserve database content managed after bootstrap."
     }
+
+    $postState = Get-ReleaseState
+    if ($postState -cne "seeded") {
+        throw "Post-migration Neon release state is not seeded. No Git push was started."
+    }
+    Write-Host "PASS: post-migration Neon release state is seeded."
 
     Invoke-Checked "push approved commit to origin/main" "git" @("push", "origin", "main:main")
 
