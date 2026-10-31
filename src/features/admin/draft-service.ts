@@ -5,6 +5,8 @@ import { requireAdminSession } from "@/features/auth/service";
 import { parseInvitationMeta } from "@/features/invitations/mapper";
 import type { InvitationDetailPayload } from "@/features/invitations/query";
 import { loadAssociatedMedia } from "./editor-media";
+import { isA5Enabled } from "./a5-feature";
+import { createDraftMediaRepository, verifyDraftMediaReceipt } from "./draft-media-repository";
 import {
   createDraftRepository,
   DraftPersistenceError,
@@ -32,6 +34,10 @@ export type AdminDraftResult<T> =
       code: AdminDraftErrorCode;
       message: string;
       fieldErrors?: DraftFieldErrors;
+      /** Publication committed, but a post-commit route check did not complete. */
+      committedUnverified?: true;
+      /** Safe reservation ID for an upload that may need recovery. */
+      recoveryId?: string;
     };
 
 export interface AdminDraftDto {
@@ -104,7 +110,8 @@ function toDto(row: DraftRow): AdminDraftDto | null {
   };
 }
 
-function draftFromPublished(row: InvitationDetailPayload): DraftPayloadV1 {
+/** Rehydrates stable editor row keys from the persisted aggregate. */
+export function draftFromPublished(row: InvitationDetailPayload): DraftPayloadV1 {
   const groom = row.partners.find((partner) => partner.role === "GROOM");
   const bride = row.partners.find((partner) => partner.role === "BRIDE");
   if (!row.sections || !groom || !bride) throw new Error("Published invitation is incomplete");
@@ -199,11 +206,24 @@ function preservesPublishedSlot(
 async function validateMediaScope(
   payload: DraftPayloadV1,
   invitationId: string | null,
+  draftId: string | null,
   repo: ReturnType<typeof createDraftRepository>
 ): Promise<AdminDraftResult<never> | null> {
   const refs = referencedMedia(payload);
   if (refs.length === 0) return null;
   const media = invitationId ? await loadAssociatedMedia(invitationId) : [];
+  if (!invitationId && draftId && isA5Enabled()) {
+    const verified = await createDraftMediaRepository().listVerifiedForDraft(draftId);
+    for (const row of verified) {
+      if (!verifyDraftMediaReceipt(row, "uhwi7xvb") || !row.mediaAsset) continue;
+      if (media.some((item) => item.id === row.mediaAsset!.id)) continue;
+      media.push({
+        id: row.mediaAsset.id, url: row.mediaAsset.secureUrl, resourceType: "IMAGE",
+        width: row.width, height: row.height, label: row.mediaAsset.originalName || "Foto undangan",
+        shared: false, deliverable: true,
+      });
+    }
+  }
   const byId = new Map(media.map((item) => [item.id, item]));
   const live = invitationId && media.some((item) => item.shared)
     ? await repo.findPublishedById(invitationId)
@@ -233,7 +253,7 @@ export async function createAdminNewDraft(input: unknown): Promise<AdminDraftRes
     const parsed = parseDraftForSave(input);
     if (!parsed.ok) return failure("validation", "Periksa isi draf.", parsed.fieldErrors);
     const repo = createDraftRepository();
-    const mediaError = await validateMediaScope(parsed.payload, null, repo);
+    const mediaError = await validateMediaScope(parsed.payload, null, null, repo);
     if (mediaError) return mediaError;
     const row = await repo.createNewDraft({
       proposedSlug: parsed.payload.slug,
@@ -262,7 +282,7 @@ export async function createAdminDraftForPublished(input: {
     }
     const parsed = parseDraftForSave(draftFromPublished(live));
     if (!parsed.ok) return failure("validation", "Periksa isi draf.", parsed.fieldErrors);
-    const mediaError = await validateMediaScope(parsed.payload, input.invitationId, repo);
+    const mediaError = await validateMediaScope(parsed.payload, input.invitationId, null, repo);
     if (mediaError) return mediaError;
     const row = await repo.createDraftForPublished({
       invitationId: input.invitationId,
@@ -304,7 +324,7 @@ export async function saveAdminDraft(input: {
     const repo = createDraftRepository();
     const prior = await repo.findDraftById(input.id);
     if (!prior) return failure("not_found", "Draf tidak ditemukan.");
-    const mediaError = await validateMediaScope(parsed.payload, prior.invitationId, repo);
+    const mediaError = await validateMediaScope(parsed.payload, prior.invitationId, prior.id, repo);
     if (mediaError) return mediaError;
     const row = await repo.saveDraftIfVersion({
       id: input.id,

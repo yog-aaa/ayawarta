@@ -1,17 +1,24 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PrismaClient } from "@/generated/prisma/client";
+import { findVerifiedDraftMedia, verifyDraftMediaReceipt } from "./draft-media-repository";
 import { createDraftRepository, DraftPersistenceError } from "./draft-repository";
 import { buildPublicationSnapshot, digestPublicationSnapshot, publicationMediaIds } from "./publication-snapshot";
 import { publishedFixture } from "./testing/published-fixture";
 
-function fakeDatabase() {
+vi.mock("./draft-media-repository", () => ({
+  findVerifiedDraftMedia: vi.fn(), verifyDraftMediaReceipt: vi.fn(),
+}));
+
+function fakeDatabase(slug = "rika-fauzi") {
   const live = publishedFixture();
+  live.slug = slug;
   const snapshot = buildPublicationSnapshot(live);
   const publication = {
     id: "publication-1",
     invitationId: live.id,
     version: 1,
     source: "BASELINE" as const,
+    actorId: null as string | null,
     schemaVersion: 1,
     snapshot,
     contentDigest: digestPublicationSnapshot(snapshot),
@@ -36,6 +43,7 @@ function fakeDatabase() {
 }
 
 describe("draft repository", () => {
+  beforeEach(() => vi.clearAllMocks());
   it("allows a partial new draft with an empty proposed slug", async () => {
     const { repository, tx } = fakeDatabase();
     await repository.createNewDraft({ proposedSlug: "", payload: { slug: "" }, actorId: "admin-1" });
@@ -76,6 +84,60 @@ describe("draft repository", () => {
       payload: { slug: "changed" },
       actorId: "admin-1",
     })).rejects.toMatchObject({ code: "invalid_state" });
+  });
+
+  it("reopens a retained first-publication draft only with actor and same-draft verified media", async () => {
+    const { repository, live, publication, tx } = fakeDatabase("sample");
+    publication.source = "PUBLISH" as "BASELINE";
+    publication.actorId = "admin-1";
+    tx.invitationDraft.findUnique.mockResolvedValue({
+      id: "draft-1", invitationId: live.id, draftVersion: 2,
+      basePublishedVersion: 1, proposedSlug: live.slug,
+    });
+    const mediaIds = publicationMediaIds(publication.snapshot);
+    vi.mocked(findVerifiedDraftMedia).mockResolvedValue(mediaIds.map((mediaAssetId) => ({ mediaAssetId })) as never);
+    vi.mocked(verifyDraftMediaReceipt).mockReturnValue(true);
+    await expect(repository.createDraftForPublished({
+      invitationId: live.id, expectedPublishedVersion: 1,
+      payload: { slug: live.slug }, actorId: "admin-1",
+    })).resolves.toMatchObject({ id: "draft-1", draftVersion: 2 });
+    expect(findVerifiedDraftMedia).toHaveBeenCalledWith(tx, "draft-1", mediaIds);
+    expect(tx.invitationDraft.create).not.toHaveBeenCalled();
+
+    vi.mocked(findVerifiedDraftMedia).mockResolvedValueOnce([]);
+    await expect(repository.createDraftForPublished({
+      invitationId: live.id, expectedPublishedVersion: 1,
+      payload: { slug: live.slug }, actorId: "admin-1",
+    })).rejects.toMatchObject({ code: "baseline_required" });
+  });
+
+  it("rejects forged first-publication history and keeps legacy slugs baseline-only", async () => {
+    const { repository, live, publication, tx } = fakeDatabase("sample");
+    publication.source = "PUBLISH" as "BASELINE";
+    tx.invitationDraft.findUnique.mockResolvedValue({
+      id: "draft-1", invitationId: live.id, draftVersion: 2,
+      basePublishedVersion: 1, proposedSlug: live.slug,
+    });
+    await expect(repository.createDraftForPublished({
+      invitationId: live.id, expectedPublishedVersion: 1,
+      payload: { slug: live.slug }, actorId: "admin-1",
+    })).rejects.toMatchObject({ code: "baseline_required" });
+    publication.actorId = "admin-1";
+    live.slug = "rika-fauzi";
+    await expect(repository.createDraftForPublished({
+      invitationId: live.id, expectedPublishedVersion: 1,
+      payload: { slug: live.slug }, actorId: "admin-1",
+    })).rejects.toMatchObject({ code: "baseline_required" });
+    expect(findVerifiedDraftMedia).not.toHaveBeenCalled();
+  });
+
+  it("rejects a BASELINE publication on a new nonlegacy slug", async () => {
+    const { repository, live } = fakeDatabase("sample");
+    await expect(repository.createDraftForPublished({
+      invitationId: live.id, expectedPublishedVersion: 1,
+      payload: { slug: live.slug }, actorId: "admin-1",
+    })).rejects.toMatchObject({ code: "baseline_required" });
+    expect(findVerifiedDraftMedia).not.toHaveBeenCalled();
   });
 
   it("rejects stale saves and published slug changes before writing", async () => {

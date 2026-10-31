@@ -48,7 +48,7 @@ For documentation-only work, compare factual claims with the current source, che
 
 ### A2/T2 authored schema gate
 
-The following checks describe the prepared draft/Siger contract. The migration is authored but **not applied to production Neon**. Do not connect to the operator's local `DATABASE_URL`, which points to production, to complete this checklist. Use an explicitly verified isolated target for any integration checks.
+The following checks describe the draft/Siger contract. The migration and four version-1 baselines were applied to the separately approved production Neon target on 2026-10-30. Do not connect to the operator's local `DATABASE_URL`, which points to production, to complete integration tests. Use an explicitly verified isolated target.
 
 - [ ] New draft, publication, pin, greeting/prayer, caption, and published-version columns match `prisma/schema.prisma` and the reviewed additive migration.
 - [ ] One active draft per existing invitation uses optimistic `draftVersion` and `basePublishedVersion` checks; a new draft does not create a public `Invitation` row.
@@ -57,13 +57,13 @@ The following checks describe the prepared draft/Siger contract. The migration i
 - [ ] Draft media IDs are limited to assets belonging to the same existing invitation; a new draft cannot reuse another customer's media.
 - [ ] The public repository's legacy select excludes new columns until the production schema is migrated; the four published slugs still reconstruct without reading drafts.
 - [ ] Only exact Classic Rose/color and Siger Priangan/ivory theme pairs parse; optional greeting/prayer and gallery alt/caption preserve Classic Rose behavior. Illustrative Siger copy and defaults remain religion-neutral.
-- [ ] Admin editor and private preview are not mistaken for production activation: the Neon migration and four verified baselines are still required, and no publish action exists.
+- [ ] Admin editor and private preview do not publish automatically; the explicit A4 review and confirmed publish action is separate. The four initial baselines were verified on Neon.
 
 **Isolated database evidence (2026-10-30):** All five migrations were applied to a temporary PostgreSQL 18.2 cluster at `127.0.0.1:55432/ayawarta_a2`. Database tests verified baseline idempotency, compare-and-swap conflict rejection, immutable publication triggers, draft-version `CHECK` constraints, publication-media `Restrict` foreign keys, and baseline/seed lock visibility across two connections. This is local verification only: no Neon migration or customer invitation write occurred. The temporary cluster and database were stopped and removed, with port 55432 closed and the temporary path absent; these results do not authorize production draft editing, publication, or Siger customer activation.
 
 ### A3/T3 editor and static template gate
 
-The A3/T3 code gates below have automated and visual evidence, but live admin editing and public-customer smoke remain pending an isolated migrated environment. The isolated A2 database evidence above does not verify the new UI or routes.
+The A3/T3 code gates below have automated and visual evidence, but live admin editing and public-customer smoke remain pending an isolated migrated environment. The isolated A2 database evidence above does not verify the new UI or routes; the later Neon baseline activation verified only snapshots and pins.
 
 - [ ] `/admin/invitations/new` creates only a private draft; existing edit opens only after a verified baseline and published slug stays read-only.
 - [ ] Draft save uses the expected version, rejects stale concurrent writes, retains partially complete content, and never mutates the public invitation.
@@ -73,9 +73,37 @@ The A3/T3 code gates below have automated and visual evidence, but live admin ed
 - [ ] `/wedding/siger-priangan/ivory` renders the illustrative read-only sample; invalid variants and unknown invitation slugs return 404 without sample fallback.
 - [ ] `/{slug}` dispatches only exact theme/variant pairs; existing Classic Rose slugs retain their behavior, and Siger public rendering uses published records only.
 - [ ] Siger static CSS, placeholder media, section visibility, long content, focus, and narrow/wide viewport behavior are reviewed; T4 motion and verified runtime artwork remain a later gate.
-- [ ] No production Neon migration, customer invitation write, Cloudinary upload, theme activation, or publish action is inferred from the A3/T3 source.
+- [ ] No customer invitation write, Cloudinary upload, theme activation, or publish action is inferred from A3/T3 source, the Neon migration, or baseline activation.
 
 **A3/T3 implementation evidence (2026-10-30):** Hermetic Vitest passed 57 files and 772 tests, including admin action/auth/media/preview tests, Siger route and initial-HTML checks, neutral Siger invite-link copy, and read-only preview gateway assertions for both themes. TypeScript, full ESLint, `git diff --check`, and Next.js production build passed with a process-local loopback `DATABASE_URL`. The build generated the new admin editor/preview and Siger routes. Browser inspection of the illustrative Siger route covered cover and all sections at 390 and 1280 px; overflow checks passed at 360, 390, 430, 768, 1280, and 1440 px. The browser also confirmed event details exist before opening the invitation. The local public-customer smoke at `/default-preview` was blocked by the repository's database-host guard because the running dev server targets non-loopback Neon; no guard bypass, Neon migration, seed, or customer-content write was performed. Admin browser save/Back/Forward checks await an isolated migrated database. The pinned pnpm frozen-install gate was not rerun: the sandboxed shim could not create its AppData link and Corepack could not fetch the pinned version; installed local Node binaries ran the code checks. This build is not deployment evidence.
+
+### A4 explicit publication gate
+
+- [ ] A read-only review verifies the saved draft, current live version, complete baseline/current snapshots, media pins, and a guest-visible change summary.
+- [ ] Only one authenticated admin role is needed. Publishing requires the expected draft/live versions and exact slug confirmation; a new invitation draft and Siger Priangan remain unpublishable in this stage.
+- [x] The serializable transaction updates live content, ordered children, immutable publication history, pins, and a rebased retained draft atomically. A failed transaction leaves the previous public version and draft intact.
+- [ ] Pre-commit failures remain retryable after correction; a post-commit public read failure is marked `committedUnverified` and prevents a blind retry.
+- [ ] A synchronized retained draft is labeled separately from a draft with unpublished changes; guest-visible no-op publication is rejected.
+- [x] The guarded Neon baseline run was separately authorized for `ep-mute-water-azaf9oyl:ayawarta:neondb_owner`. The 2026-10-30 write reported 4 of 4 matching, and a later read-only check reported **4 matching, 0 missing**. This operation did not edit live invitation content.
+- [ ] Customer-content publication has not been exercised on Neon; perform editor and public-route smoke only with a separately authorized customer change or isolated fixture.
+
+The A4 media gate checks invitation ownership, resource type, the original slot for shared assets, and a canonical Cloudinary HTTPS delivery URL. It does not make a fresh network request to Cloudinary before each publish, so this gate cannot detect an asset deleted externally after catalog verification. New media provisioning remains outside A4.
+
+**A4 isolated transaction evidence (2026-10-30):** Five migration SQL files were applied to a separate temporary PostgreSQL 18.2 database at `127.0.0.1:55433/ayawarta_a4`. The opt-in `publish-repository.db.test.ts` injected a failure at publication creation after the live aggregate rewrite and verified that the full snapshot digest, public version, and draft remained unchanged. It then verified a successful version-2 publication with ordered children, immutable snapshot and media pins, a rebased retained draft, and rejection of a repeat no-op publish. This test used an injected Prisma client against the isolated database; it did not connect to Neon. The temporary cluster was stopped and removed afterward; port 55433 is closed.
+
+**A4 final code checks (2026-10-30):** Frozen pnpm install, Prisma format/validate/generate, TypeScript, ESLint, production build, and `git diff --check` passed. Hermetic Vitest passed 61 files and 815 tests; the opt-in isolated PostgreSQL test passed separately (one test). The Cloudinary report verified 31/31 assets and 4/4 hero/audio records. Read-only route smoke on temporary localhost port 3002 passed the four published invitations, invite-link and template routes, and unknown-slug 404 cases. The login page returned HTTP 200 and unauthenticated admin list redirected to login; an authenticated A4 browser publish was not exercised against customer data.
+
+### A5 new-draft media and first-publication gate
+
+- [x] Upload is disabled by default and refuses a mismatched target cloud. A4 existing-invitation editing stays available before the A5 database migration.
+- [x] Every image upload checks bounded input bytes, file signature, decoded dimensions/pixels, a slot-sized derivative, and server-only credentials. No submitted URL or media ID is trusted.
+- [x] A draft-owned reservation precedes Cloudinary upload. Repeating the same idempotency key and image returns the same verified asset; changing its bytes or slot is a conflict. A remote success followed by database failure remains recoverable without deleting the asset.
+- [x] Only a verified asset owned by the exact draft can enter its saved payload, preview, and first publication. Cross-draft and legacy customer media IDs are rejected.
+- [x] A new draft stays private on create/save/upload. Confirmed first publication atomically creates the public aggregate, ordered children, version-1 `PUBLISH` snapshot and pins, and a rebased retained draft. Fault injection rolls all database writes back.
+- [x] Legacy version-1 `BASELINE` protection, A4 publication, all four public slugs, Siger publication block, Firestore read-only preview, and unknown-slug 404 remain intact.
+- [ ] Mobile picker, upload/recovery states, keyboard/focus, reduced motion, image payload/dimensions, and sanitized errors are checked. No production upload, Neon migration, or customer publication is inferred from local evidence.
+
+**A5 source verification (2026-10-31):** Frozen pnpm install, Prisma format/validate/generate, TypeScript, ESLint, production build, and `git diff --check` passed. Hermetic Vitest passed 69 files and 864 tests (two opt-in database files skipped in that run). Three opt-in A4/A5 tests passed on disposable PostgreSQL 18.2 at `127.0.0.1:55434/ayawarta_a5`: provenance constraints, late first-publication rollback/retry/reopen, and legacy A4 publication. The cluster was stopped and removed afterward. Fake Cloudinary tests cover readback, missing remote content, and preflight order; no live image upload occurred. The offline media report passed 31/31. Read-only AyaWarta smoke on localhost port 3001 passed ten public routes, login HTTP 200, and unauthenticated admin redirects. The full first run's two timing failures passed when rerun with two workers; the complete two-worker run passed. The remaining unchecked item requires an isolated migrated browser session and visual/mobile review after activation planning; it does not imply that Neon was migrated or A5 enabled.
 
 ## Cloudinary
 

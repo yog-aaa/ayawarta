@@ -28,6 +28,11 @@ enum PublicationSource {
   PUBLISH
 }
 
+enum DraftMediaState {
+  RESERVED
+  VERIFIED
+}
+
 model User {
   id               String                  @id @default(cuid())
   email            String                  @unique
@@ -43,6 +48,7 @@ model User {
   draftsCreated    InvitationDraft[]       @relation("DraftCreatedBy")
   draftsUpdated    InvitationDraft[]       @relation("DraftUpdatedBy")
   publications     InvitationPublication[] @relation("PublicationActor")
+  draftMedia       DraftMediaProvision[]
 }
 
 model MediaAsset {
@@ -63,6 +69,7 @@ model MediaAsset {
   heroInvitations  Invitation[]                 @relation("InvitationHeroAsset")
   musicInvitations Invitation[]                 @relation("InvitationMusicAsset")
   publicationMedia InvitationPublicationMedia[]
+  draftProvision   DraftMediaProvision?
 }
 
 model Invitation {
@@ -154,20 +161,21 @@ model GalleryItem {
 }
 
 model InvitationDraft {
-  id                   String      @id @default(cuid())
-  invitationId         String?     @unique
+  id                   String                @id @default(cuid())
+  invitationId         String?               @unique
   proposedSlug         String
   payload              Json
-  schemaVersion        Int         @default(1)
-  draftVersion         Int         @default(1)
+  schemaVersion        Int                   @default(1)
+  draftVersion         Int                   @default(1)
   basePublishedVersion Int?
   createdById          String
   updatedById          String
-  createdAt            DateTime    @default(now())
-  updatedAt            DateTime    @updatedAt
-  invitation           Invitation? @relation(fields: [invitationId], references: [id], onDelete: Restrict)
-  createdBy            User        @relation("DraftCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  updatedBy            User        @relation("DraftUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  invitation           Invitation?           @relation(fields: [invitationId], references: [id], onDelete: Restrict)
+  createdBy            User                  @relation("DraftCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy            User                  @relation("DraftUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  mediaProvisions      DraftMediaProvision[]
 
   @@index([proposedSlug])
   @@index([createdById])
@@ -201,6 +209,33 @@ model InvitationPublicationMedia {
 
   @@id([publicationId, mediaAssetId])
   @@index([mediaAssetId])
+}
+
+model DraftMediaProvision {
+  id                String          @id
+  draftId           String
+  slot              String
+  idempotencyKey    String          @db.VarChar(36)
+  preparedSha256    String          @db.Char(64)
+  publicId          String          @unique
+  format            String          @db.VarChar(16)
+  bytes             Int
+  width             Int
+  height            Int
+  state             DraftMediaState @default(RESERVED)
+  cloudinaryAssetId String?         @unique
+  mediaAssetId      String?         @unique
+  createdById       String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  verifiedAt        DateTime?
+  draft             InvitationDraft @relation(fields: [draftId], references: [id], onDelete: Restrict)
+  mediaAsset        MediaAsset?     @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+  createdBy         User            @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([draftId, idempotencyKey])
+  @@index([draftId, state])
+  @@index([createdById])
 }
 
 model LoveStory {

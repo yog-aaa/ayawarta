@@ -16,11 +16,13 @@ vi.mock("@/features/auth/service", () => ({ requireAdminSession: mocks.requireAd
 vi.mock("@/features/admin/editor-loader", () => ({ loadAdminEditor: mocks.loadEditor, loadAdminPreview: mocks.loadPreview }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect, notFound: mocks.notFound }));
 vi.mock("@/components/admin/AdminDraftEditor", () => ({
-  AdminDraftEditor: ({ initialPayload, initialDraft, mediaChoices }: {
+  AdminDraftEditor: ({ initialPayload, initialDraft, mediaChoices, mediaUploadEnabled, pendingMedia }: {
     initialPayload: { slug: string };
     initialDraft?: { id: string };
     mediaChoices: Array<{ id: string }>;
-  }) => <div data-draft-id={initialDraft?.id ?? "new"} data-slug={initialPayload.slug} data-media-count={mediaChoices.length} />,
+    mediaUploadEnabled?: boolean;
+    pendingMedia?: Array<{ provisionId: string }>;
+  }) => <div data-draft-id={initialDraft?.id ?? "new"} data-slug={initialPayload.slug} data-media-count={mediaChoices.length} data-upload-enabled={String(Boolean(mediaUploadEnabled))} data-pending-count={pendingMedia?.length ?? 0} />,
 }));
 vi.mock("@/app/(templates)/wedding/classic-rose/[variant]/components/ClassicRoseClientView", () => ({
   default: ({ invitationSlug, isDraftPreview }: { invitationSlug: string; isDraftPreview?: boolean }) => (
@@ -58,7 +60,7 @@ const previewData: InvitationData = {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.requireAdminSession.mockResolvedValue({ id: "admin-1" });
-  mocks.loadEditor.mockResolvedValue({ ok: true, data: { draft, mediaChoices: [{ id: "own-1" }] } });
+  mocks.loadEditor.mockResolvedValue({ ok: true, data: { draft, mediaChoices: [{ id: "own-1" }], mediaUploadEnabled: false, pendingMedia: [] } });
   mocks.loadPreview.mockResolvedValue({ ok: true, data: {
     kind: "ready", draftId: "draft-1", slug: "default-preview",
     meta: { theme: "classic-rose", variant: "red" }, data: previewData,
@@ -79,6 +81,17 @@ describe("admin editor routes", () => {
     expect(mocks.loadEditor).toHaveBeenCalledWith("draft-1");
     expect(html).toContain('data-draft-id="draft-1"');
     expect(html).toContain('data-media-count="1"');
+    expect(html).toContain('data-upload-enabled="false"');
+  });
+
+  it("passes A5 upload gate and recoverable pending media to a new draft editor", async () => {
+    mocks.loadEditor.mockResolvedValue({ ok: true, data: {
+      draft: { ...draft, invitationId: null, basePublishedVersion: null }, mediaChoices: [], mediaUploadEnabled: true,
+      pendingMedia: [{ provisionId: "pending-1", slot: "hero", idempotencyKey: "same-key", createdAt: "2026-10-31T01:00:00.000Z" }],
+    } });
+    const html = renderToStaticMarkup(await EditAdminInvitationPage({ params: Promise.resolve({ id: "draft-1" }) }));
+    expect(html).toContain('data-upload-enabled="true"');
+    expect(html).toContain('data-pending-count="1"');
   });
 
   it("renders an uncached, read-only preview of the exact saved draft", async () => {

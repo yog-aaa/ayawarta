@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import type { DraftFieldErrors, DraftPayloadV1 } from "@/features/admin/draft-schema";
 import type { ClassicRoseVariant } from "@/features/invitations/types";
+import { AdminImageUploader, type ImageUploadOutcome } from "./AdminImageUploader";
 
 export type AdminEditorMediaChoice = {
   id: string;
@@ -14,6 +15,12 @@ export type AdminEditorMediaChoice = {
   height: number | null;
   label: string;
   selectable: boolean;
+};
+
+export type AdminImageUploadControls = {
+  enabled: boolean;
+  pendingSlots: ReadonlySet<string>;
+  onUpload: (slot: string, file: File, idempotencyKey: string) => Promise<ImageUploadOutcome>;
 };
 
 const fieldId = (path: string) => `draft-${path.replace(/[^a-z0-9-]/gi, "-")}`;
@@ -63,7 +70,7 @@ function Field({
 }
 
 function MediaSelect({
-  path, label, value, onChange, errors, choices, resourceType, disabled,
+  path, label, value, onChange, errors, choices, resourceType, disabled, imageUpload, uploadSlot,
 }: {
   path: string;
   label: string;
@@ -73,6 +80,8 @@ function MediaSelect({
   choices: readonly AdminEditorMediaChoice[];
   resourceType: "IMAGE" | "AUDIO";
   disabled?: boolean;
+  imageUpload?: AdminImageUploadControls;
+  uploadSlot?: string;
 }) {
   const id = fieldId(path);
   const error = errors[path]?.join(" ");
@@ -104,13 +113,14 @@ function MediaSelect({
           ? selected && !selected.selectable
             ? "Media lama ini dipertahankan, tetapi tidak dapat dipilih untuk kolom lain."
             : "Hanya media yang sudah terhubung dengan undangan ini dapat dipilih."
-          : "Media baru dapat ditambahkan setelah alur penyediaan media tersedia."}
+          : uploadSlot ? "Unggah foto untuk undangan ini, lalu pilih media yang terverifikasi." : "Musik baru belum dapat diunggah di editor ini."}
       </p>
       {selected && resourceType === "IMAGE" && (
         <div className="relative h-36 w-36 overflow-hidden rounded-xl border border-brand-secondary/10 bg-brand-soft">
           <Image src={selected.url} alt={`Pratinjau ${label.toLowerCase()}`} fill sizes="144px" className="object-cover" />
         </div>
       )}
+      {imageUpload && uploadSlot && <AdminImageUploader slot={uploadSlot} label={label} disabled={!imageUpload.enabled || Boolean(disabled)} hasPending={imageUpload.pendingSlots.has(uploadSlot)} onUpload={imageUpload.onUpload} />}
       {error && <p id={`${id}-error`} className="text-xs font-medium text-destructive">{error}</p>}
     </div>
   );
@@ -193,13 +203,14 @@ function jakartaDateTime(iso: string | null): string {
   return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
 }
 
-export function AdminDraftFormFields({ payload, onChange, errors, mediaChoices, slugLocked, disabled }: {
+export function AdminDraftFormFields({ payload, onChange, errors, mediaChoices, slugLocked, disabled, imageUpload }: {
   payload: DraftPayloadV1;
   onChange: (payload: DraftPayloadV1) => void;
   errors: DraftFieldErrors;
   mediaChoices: readonly AdminEditorMediaChoice[];
   slugLocked: boolean;
   disabled: boolean;
+  imageUpload?: AdminImageUploadControls;
 }) {
   const update = (change: (next: DraftPayloadV1) => void) => {
     const next = structuredClone(payload);
@@ -238,7 +249,7 @@ export function AdminDraftFormFields({ payload, onChange, errors, mediaChoices, 
             </select>
           </div>
         </div>
-        <MediaSelect path="heroAssetId" label="Foto sampul" value={payload.heroAssetId} onChange={(value) => update((next) => { next.heroAssetId = value; })} errors={errors} choices={mediaChoices} resourceType="IMAGE" />
+        <MediaSelect path="heroAssetId" label="Foto sampul" value={payload.heroAssetId} onChange={(value) => update((next) => { next.heroAssetId = value; })} errors={errors} choices={mediaChoices} resourceType="IMAGE" imageUpload={imageUpload} uploadSlot={imageUpload ? "hero" : undefined} />
       </Group>
 
       <Group id="partners" eyebrow="02 / Mempelai" title="Cerita pasangan">
@@ -248,7 +259,7 @@ export function AdminDraftFormFields({ payload, onChange, errors, mediaChoices, 
             <Field path={`partners.${role}.name`} label="Nama" value={payload.partners[role].name} onChange={(value) => update((next) => { next.partners[role].name = value; })} errors={errors} maxLength={160} />
             <Field path={`partners.${role}.instagram`} label="Nama pengguna Instagram" value={payload.partners[role].instagram} onChange={(value) => update((next) => { next.partners[role].instagram = value; })} errors={errors} maxLength={120} placeholder="tanpa @" />
             <Field path={`partners.${role}.parents`} label="Keterangan orang tua" value={payload.partners[role].parents} onChange={(value) => update((next) => { next.partners[role].parents = value; })} errors={errors} maxLength={500} multiline />
-            <MediaSelect path={`partners.${role}.photoAssetId`} label="Foto mempelai" value={payload.partners[role].photoAssetId} onChange={(value) => update((next) => { next.partners[role].photoAssetId = value; })} errors={errors} choices={mediaChoices} resourceType="IMAGE" />
+            <MediaSelect path={`partners.${role}.photoAssetId`} label="Foto mempelai" value={payload.partners[role].photoAssetId} onChange={(value) => update((next) => { next.partners[role].photoAssetId = value; })} errors={errors} choices={mediaChoices} resourceType="IMAGE" imageUpload={imageUpload} uploadSlot={imageUpload ? role : undefined} />
           </div>
         </div>)}
       </Group>
@@ -267,7 +278,7 @@ export function AdminDraftFormFields({ payload, onChange, errors, mediaChoices, 
       <Group id="galleryItems" eyebrow="04 / Media" title="Galeri dan video" error={errors.galleryItems?.join(" ")}>
         <Field path="galleryVideoUrl" label="Tautan video HTTPS (opsional)" value={payload.galleryVideoUrl} onChange={(value) => update((next) => { next.galleryVideoUrl = value; })} errors={errors} maxLength={2000} type="url" />
         <OrderedRows title="Foto galeri" items={payload.galleryItems} limit={60} onAdd={() => update((next) => { next.galleryItems.push({ key: newKey(), assetId: null, altText: "", caption: "" }); })} onRemove={(index) => update((next) => { next.galleryItems.splice(index, 1); })} onMove={(index, offset) => update((next) => { next.galleryItems = move(next.galleryItems, index, offset); })} render={(_item, index) => <>
-          <MediaSelect path={`galleryItems.${index}.assetId`} label="Foto" value={payload.galleryItems[index].assetId} onChange={(value) => update((next) => { next.galleryItems[index].assetId = value; })} errors={errors} choices={mediaChoices} resourceType="IMAGE" />
+          <MediaSelect path={`galleryItems.${index}.assetId`} label="Foto" value={payload.galleryItems[index].assetId} onChange={(value) => update((next) => { next.galleryItems[index].assetId = value; })} errors={errors} choices={mediaChoices} resourceType="IMAGE" imageUpload={imageUpload} uploadSlot={imageUpload ? `gallery:${payload.galleryItems[index].key}` : undefined} />
           <Field path={`galleryItems.${index}.altText`} label="Deskripsi foto" value={payload.galleryItems[index].altText} onChange={(value) => update((next) => { next.galleryItems[index].altText = value; })} errors={errors} maxLength={300} help="Jelaskan isi foto untuk pembaca layar." />
           <Field path={`galleryItems.${index}.caption`} label="Keterangan (opsional)" value={payload.galleryItems[index].caption} onChange={(value) => update((next) => { next.galleryItems[index].caption = value; })} errors={errors} maxLength={500} />
         </>} />

@@ -5,6 +5,8 @@ import { DraftPersistenceError } from "./draft-repository";
 import { loadAssociatedMedia } from "./editor-media";
 import { validateDraftForPreview, type DraftFieldErrors, type DraftPayloadV1 } from "./draft-schema";
 import { getAdminDraft, type AdminDraftDto, type AdminDraftResult } from "./draft-service";
+import { isA5Enabled } from "./a5-feature";
+import { createDraftMediaRepository, verifyDraftMediaReceipt } from "./draft-media-repository";
 
 export interface AdminMediaChoice {
   id: string;
@@ -19,6 +21,8 @@ export interface AdminMediaChoice {
 export interface AdminEditorData {
   draft: AdminDraftDto;
   mediaChoices: AdminMediaChoice[];
+  mediaUploadEnabled: boolean;
+  pendingMedia: Array<{ provisionId: string; slot: string; idempotencyKey: string; createdAt: string }>;
 }
 
 export type AdminDraftPreview =
@@ -66,7 +70,33 @@ export async function loadAdminEditor(draftId: string): Promise<AdminDraftResult
   const loaded = await getAdminDraft(draftId);
   if (!loaded.ok) return loaded;
   try {
-    return { ok: true, data: { draft: loaded.data, mediaChoices: await scopedMediaChoices(loaded.data.invitationId) } };
+    const a5Enabled = isA5Enabled();
+    const mediaUploadEnabled = !loaded.data.invitationId && a5Enabled;
+    const mediaChoices = await scopedMediaChoices(loaded.data.invitationId);
+    let pendingMedia: AdminEditorData["pendingMedia"] = [];
+    if (mediaUploadEnabled) {
+      const repo = createDraftMediaRepository();
+      const [verified, pending] = await Promise.all([
+        repo.listVerifiedForDraft(loaded.data.id),
+        repo.listPendingForDraft(loaded.data.id),
+      ]);
+      for (const row of verified) {
+        if (!verifyDraftMediaReceipt(row, "uhwi7xvb") || !row.mediaAsset) throw new Error("Invalid draft media receipt");
+        if (mediaChoices.some((choice) => choice.id === row.mediaAsset!.id)) continue;
+        mediaChoices.push({
+          id: row.mediaAsset.id, url: row.mediaAsset.secureUrl, resourceType: "IMAGE",
+          width: row.width, height: row.height,
+          label: `${row.slot === "cover" ? "Foto sampul" : row.slot === "groom" ? "Foto mempelai pria" :
+            row.slot === "bride" ? "Foto mempelai wanita" : "Foto galeri"} · ${row.id.slice(0, 8)}`,
+          selectable: true,
+        });
+      }
+      pendingMedia = pending.map((row) => ({
+        provisionId: row.id, slot: row.slot === "cover" ? "hero" : row.slot,
+        idempotencyKey: row.idempotencyKey, createdAt: row.createdAt.toISOString(),
+      }));
+    }
+    return { ok: true, data: { draft: loaded.data, mediaChoices, mediaUploadEnabled, pendingMedia } };
   } catch (error) {
     return readFailure(error);
   }

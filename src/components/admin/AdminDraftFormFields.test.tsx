@@ -95,4 +95,20 @@ describe("admin draft fields", () => {
     expect(groom.querySelector<HTMLOptionElement>('option[value="shared-image"]')?.disabled).toBe(true);
     expect(groom.querySelector<HTMLOptionElement>('option[value="own-image"]')?.disabled).toBe(false);
   });
+
+  it("places upload controls only in new-draft image slots with stable gallery keys", () => {
+    const initial = createEmptyDraftPayload();
+    initial.galleryItems = [{ key: "stable-gallery-row", assetId: null, altText: "", caption: "" }];
+    function Harness() {
+      const [payload, setPayload] = useState(initial);
+      return <AdminDraftFormFields payload={payload} onChange={setPayload} errors={{}} mediaChoices={[]} slugLocked={false} disabled={false} imageUpload={{ enabled: false, pendingSlots: new Set(), onUpload: vi.fn() }} />;
+    }
+    act(() => root.render(<Harness />));
+
+    for (const slot of ["hero", "groom", "bride", "gallery-stable-gallery-row"]) {
+      expect(container.querySelector<HTMLInputElement>(`#upload-${slot}`)).not.toBeNull();
+    }
+    expect(container.querySelector("#upload-music")).toBeNull();
+    expect(container.querySelector<HTMLInputElement>("#upload-hero")?.disabled).toBe(true);
+  });
 });

@@ -4,9 +4,13 @@ import { createEmptyDraftPayload } from "./draft-schema";
 import { getAdminDraft } from "./draft-service";
 import { loadAssociatedMedia } from "./editor-media";
 import { loadAdminEditor, loadAdminPreview } from "./editor-loader";
+import { isA5Enabled } from "./a5-feature";
+import { createDraftMediaRepository, verifyDraftMediaReceipt } from "./draft-media-repository";
 
 vi.mock("./draft-service", () => ({ getAdminDraft: vi.fn() }));
 vi.mock("./editor-media", () => ({ loadAssociatedMedia: vi.fn() }));
+vi.mock("./a5-feature", () => ({ isA5Enabled: vi.fn() }));
+vi.mock("./draft-media-repository", () => ({ createDraftMediaRepository: vi.fn(), verifyDraftMediaReceipt: vi.fn() }));
 
 function draft(complete = false) {
   const payload = createEmptyDraftPayload();
@@ -18,7 +22,7 @@ function draft(complete = false) {
     payload.partners.bride = { name: "Raras", parents: "", instagram: "", photoAssetId: "bride" };
     payload.events = [{
       key: "event-1", name: "Upacara Pernikahan", displayDate: "12 Juni 2027", displayTime: "09.00 WIB",
-      location: "", address: "Bandung", mapUrl: "",
+      location: "", address: "Bandung", mapUrl: "https://maps.google.com/?q=Bandung",
     }];
   }
   return {
@@ -38,6 +42,7 @@ describe("private admin editor loader", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(loadAssociatedMedia).mockResolvedValue(media);
+    vi.mocked(isA5Enabled).mockReturnValue(false);
   });
 
   it("does not query media after an authorization failure", async () => {
@@ -80,10 +85,38 @@ describe("private admin editor loader", () => {
     vi.mocked(getAdminDraft).mockResolvedValueOnce({ ok: true, data: newDraft });
     const result = await loadAdminPreview("draft-1");
     expect(loadAssociatedMedia).not.toHaveBeenCalled();
+    expect(createDraftMediaRepository).not.toHaveBeenCalled();
     expect(result).toMatchObject({ ok: true, data: { kind: "ready", guestInteractions: "read-only", missingMediaFields: [
       "heroAssetId", "partners.groom.photoAssetId", "partners.bride.photoAssetId",
     ] } });
     if (result.ok && result.data.kind === "ready") expect(result.data.data.couple.heroImage).toBe("");
+  });
+
+  it("returns verified draft-owned media and normalized pending slots only when A5 is enabled", async () => {
+    vi.mocked(isA5Enabled).mockReturnValue(true);
+    vi.mocked(getAdminDraft).mockResolvedValueOnce({ ok: true, data: { ...draft(), invitationId: null, basePublishedVersion: null } });
+    const provision = { id: "provision-1", width: 800, height: 1000, mediaAsset: {
+      id: "draft-image-1", secureUrl: "https://res.cloudinary.com/uhwi7xvb/image/upload/v1/example.webp", originalName: "Foto sampul.webp",
+    } };
+    vi.mocked(verifyDraftMediaReceipt).mockReturnValue(true);
+    vi.mocked(createDraftMediaRepository).mockReturnValue({
+      listVerifiedForDraft: vi.fn().mockResolvedValue([provision]),
+      listPendingForDraft: vi.fn().mockResolvedValue([{ id: "pending-1", slot: "cover", idempotencyKey: "key-1", createdAt: new Date("2026-10-30T00:00:00.000Z") }]),
+    } as unknown as ReturnType<typeof createDraftMediaRepository>);
+    const result = await loadAdminEditor("draft-1");
+    expect(result).toMatchObject({ ok: true, data: { mediaUploadEnabled: true,
+      mediaChoices: [{ id: "draft-image-1", selectable: true }],
+      pendingMedia: [{ provisionId: "pending-1", slot: "hero", idempotencyKey: "key-1" }],
+    } });
+  });
+
+  it("keeps retained published drafts on associated A4 media choices even with A5 enabled", async () => {
+    vi.mocked(isA5Enabled).mockReturnValue(true);
+    vi.mocked(getAdminDraft).mockResolvedValueOnce({ ok: true, data: draft() });
+    const result = await loadAdminEditor("draft-1");
+    expect(result).toMatchObject({ ok: true, data: { mediaUploadEnabled: false, pendingMedia: [] } });
+    if (result.ok) expect(result.data.mediaChoices.map((choice) => choice.id)).toEqual(["hero", "groom", "bride"]);
+    expect(createDraftMediaRepository).not.toHaveBeenCalled();
   });
 
   it("returns field errors for incomplete saved content without rendering a broken invitation", async () => {

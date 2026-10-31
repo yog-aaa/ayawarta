@@ -1,9 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { AdminInvitationSummary } from "@/features/admin/invitation-list";
 import { AdminInvitationList } from "./AdminInvitationList";
 import { AdminListError } from "./AdminListError";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }));
 
 const invitation: AdminInvitationSummary = {
   id: "inv-1",
@@ -37,6 +39,18 @@ describe("admin invitation presentation", () => {
 
     expect(html).toContain('href="/a%2Fb%3Fc"');
     expect(html).not.toContain('href="/a/b?c"');
+  });
+
+  it("distinguishes synchronized retained drafts from unpublished changes", () => {
+    const synced = renderToStaticMarkup(<AdminInvitationList items={[invitation]} showEditorActions linkedDrafts={{ "inv-1": { draftId: "draft-1", hasUnpublishedChanges: false } }} />);
+    const changed = renderToStaticMarkup(<AdminInvitationList items={[invitation]} showEditorActions linkedDrafts={{ "inv-1": { draftId: "draft-1", hasUnpublishedChanges: true } }} />);
+
+    expect(synced).toContain("Draf sinkron");
+    expect(synced).not.toContain("Draf belum terbit");
+    expect(changed).toContain("Draf belum terbit");
+    expect(changed).not.toContain("Draf sinkron");
+    expect(synced).toContain('href="/admin/invitations/draft-1/edit"');
+    expect(changed).toContain('href="/admin/invitations/draft-1/edit"');
   });
 
   it("distinguishes an empty database from an empty search result", () => {

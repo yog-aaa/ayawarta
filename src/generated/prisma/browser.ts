@@ -68,6 +68,11 @@ export type InvitationPublication = Prisma.InvitationPublicationModel
  */
 export type InvitationPublicationMedia = Prisma.InvitationPublicationMediaModel
 /**
+ * Model DraftMediaProvision
+ *
+ */
+export type DraftMediaProvision = Prisma.DraftMediaProvisionModel
+/**
  * Model LoveStory
  *
  */

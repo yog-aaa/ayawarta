@@ -11,12 +11,18 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   save: vi.fn(),
+  review: vi.fn(),
+  publish: vi.fn(),
+  recover: vi.fn(),
   push: vi.fn(),
   replace: vi.fn(),
 }));
 vi.mock("@/app/admin/actions", () => ({
   createInvitationDraftAction: mocks.create,
   saveInvitationDraftAction: mocks.save,
+  reviewInvitationDraftAction: mocks.review,
+  publishInvitationDraftAction: mocks.publish,
+  recoverDraftMediaAction: mocks.recover,
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push, replace: mocks.replace }) }));
 vi.mock("next/link", () => ({
@@ -84,6 +90,86 @@ describe("admin draft editor", () => {
     expect(mocks.replace).toHaveBeenCalledWith("/admin/invitations/draft-123/edit");
     expect(container.textContent).toContain("Semua perubahan tersimpan");
     expect(container.querySelector('a[href="/admin/invitations/draft-123/preview"]')).not.toBeNull();
+    expect(container.textContent).not.toContain("Tinjau penerbitan");
+  });
+
+  it("offers publication only for a saved existing invitation and suspends review after edits", async () => {
+    const payload = createEmptyDraftPayload();
+    payload.slug = "dudi-aini";
+    const draft: AdminDraftDto = {
+      id: "draft-existing", invitationId: "inv-existing", proposedSlug: "dudi-aini",
+      payload, draftVersion: 5, basePublishedVersion: 3,
+      createdAt: "2026-10-30T01:00:00.000Z", updatedAt: "2026-10-30T01:00:00.000Z",
+    };
+    await act(async () => root.render(<AdminDraftEditor initialPayload={payload} initialDraft={draft} mediaChoices={[]} />));
+    const reviewButton = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Tinjau penerbitan"))!;
+    expect(reviewButton.disabled).toBe(false);
+    expect(mocks.review).not.toHaveBeenCalled();
+    expect(mocks.publish).not.toHaveBeenCalled();
+
+    await act(async () => changeValue(container.querySelector<HTMLInputElement>("#draft-weddingDate")!, "2026-11-01T12:00"));
+    expect(container.textContent).toContain("Perubahan belum disimpan");
+    expect(Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Tinjau penerbitan"))?.disabled).toBe(true);
+    expect(mocks.review).not.toHaveBeenCalled();
+  });
+
+  it("locks editor changes during upload, then selects verified media for an explicit save", async () => {
+    const payload = createEmptyDraftPayload();
+    payload.slug = "rani-bima";
+    const draft: AdminDraftDto = {
+      id: "new-draft", invitationId: null, proposedSlug: "rani-bima", payload,
+      draftVersion: 2, basePublishedVersion: null,
+      createdAt: "2026-10-31T01:00:00.000Z", updatedAt: "2026-10-31T01:00:00.000Z",
+    };
+    let finishFetch!: (value: unknown) => void;
+    const fetch = vi.fn().mockReturnValue(new Promise((resolve) => { finishFetch = resolve; }));
+    vi.stubGlobal("fetch", fetch);
+    await act(async () => root.render(<AdminDraftEditor initialPayload={payload} initialDraft={draft} mediaChoices={[]} mediaUploadEnabled />));
+    const input = container.querySelector<HTMLInputElement>("#upload-hero")!;
+    const file = new File(["image bytes"], "hero.jpg", { type: "image/jpeg" });
+    Object.defineProperty(input, "files", { configurable: true, value: [file] });
+    await act(async () => input.dispatchEvent(new Event("change", { bubbles: true })));
+    const upload = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Unggah foto"))!;
+    await act(async () => upload.click());
+    expect(container.textContent).toContain("Tunggu sampai pemeriksaan foto selesai");
+    expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(true);
+    expect(mocks.save).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledWith("/admin/api/drafts/new-draft/media", expect.objectContaining({
+      method: "POST", body: file, headers: expect.objectContaining({
+        "X-AyaWarta-Media-Slot": "hero", "X-AyaWarta-Draft-Version": "2", "Content-Type": "image/jpeg",
+      }),
+    }));
+
+    await act(async () => finishFetch({ ok: true, json: async () => ({ ok: true, data: {
+      state: "verified", provisionId: "provision-1", asset: { id: "asset-1", url: "https://res.cloudinary.com/example/image/upload/v1/hero.webp", width: 900, height: 1200, format: "webp" },
+    } }) }));
+    expect(container.querySelector<HTMLSelectElement>("#draft-heroAssetId")?.value).toBe("asset-1");
+    expect(container.textContent).toContain("Perubahan belum disimpan");
+    expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled).toBe(false);
+    expect(mocks.save).not.toHaveBeenCalled();
+  });
+
+  it("recovers a pending upload after reload and selects the verified draft-owned asset", async () => {
+    const payload = createEmptyDraftPayload();
+    payload.slug = "rani-bima";
+    const draft: AdminDraftDto = {
+      id: "new-draft", invitationId: null, proposedSlug: "rani-bima", payload,
+      draftVersion: 2, basePublishedVersion: null,
+      createdAt: "2026-10-31T01:00:00.000Z", updatedAt: "2026-10-31T01:00:00.000Z",
+    };
+    mocks.recover.mockResolvedValue({ ok: true, data: {
+      state: "verified", provisionId: "pending-1", asset: { id: "asset-1", url: "https://res.cloudinary.com/example/image/upload/v1/hero.webp", width: 900, height: 1200, format: "webp" },
+    } });
+    await act(async () => root.render(<AdminDraftEditor initialPayload={payload} initialDraft={draft} mediaChoices={[]} mediaUploadEnabled pendingMedia={[{
+      provisionId: "pending-1", slot: "hero", idempotencyKey: "same-key", createdAt: "2026-10-31T01:00:00.000Z",
+    }]} />));
+    expect(container.textContent).toContain("Unggahan menunggu pemulihan");
+    await act(async () => Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Pulihkan foto"))!.click());
+    expect(mocks.recover).toHaveBeenCalledWith({ draftId: "new-draft", provisionId: "pending-1", expectedDraftVersion: 2 });
+    expect(container.querySelector<HTMLSelectElement>("#draft-heroAssetId")?.value).toBe("asset-1");
+    expect(container.textContent).not.toContain("Unggahan menunggu pemulihan");
+    expect(container.textContent).toContain("Perubahan belum disimpan");
+    expect(mocks.save).not.toHaveBeenCalled();
   });
 
   it("shows linked field errors and retains input after a failed save", async () => {

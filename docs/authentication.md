@@ -26,7 +26,7 @@ The implementation is in `src/auth.ts`, `src/auth.config.ts`, `src/proxy.ts`, an
 
 There is no registration route.
 
-`ADMIN` and the legacy `SUPER_ADMIN` value have the same product permission: read the workspace, create and edit drafts, and, when the publish stage is implemented, publish invitations. The retained enum supports existing sessions and records; it does not create a separate approval tier or distinct UI. No role-removal migration is part of the current work.
+`ADMIN` and the legacy `SUPER_ADMIN` value have the same product permission: read the workspace, create and edit drafts, and explicitly publish invitations. The retained enum supports existing sessions and records; it does not create a separate approval tier or distinct UI. No role-removal migration is part of the current work.
 
 ## Credential Flow
 
@@ -74,7 +74,9 @@ Authentication proves identity; authorization checks an active admin role. A val
 
 `src/proxy.ts` matches `/admin/:path*` and `src/auth.config.ts` handles login versus protected-route redirects. Protected server pages also call `requireAdminSession`, which reloads the current user and rejects deleted, inactive, locked, or role-revoked accounts. Every future admin mutation must perform authorization on the server. Hiding navigation in the UI is not sufficient.
 
-`src/app/admin/actions.ts` exposes create, open, and save operations for the A3 editor. The server-only draft service rechecks `requireAdminSession` for reads, writes, publication history, and publishability preflight, and returns typed results rather than Prisma rows. The private preview reloads only a saved draft under the same authorization, with dynamic rendering and guest submission disabled. There is no publish action. The draft tables were migrated to Neon on 2026-10-30, but editing existing invitations still requires separate verified publication baselines.
+`src/app/admin/actions.ts` exposes create, open, save, read-only publication review, and explicit publish operations. The server-only draft and publish services recheck `requireAdminSession` for every read and mutation and return typed results rather than Prisma rows. The private preview reloads only a saved draft under the same authorization, with dynamic rendering and guest submission disabled. Publishing requires another authorization check, validated version tokens, and an exact slug confirmation; saving or previewing never publishes. The draft tables and four version-1 publication baselines were verified on Neon on 2026-10-30. No invitation content was changed by the baseline operation.
+
+The A5 image upload route independently rechecks the current admin, rejects a mismatched request origin, and caps the streamed request body before decoding. It also requires a saved new-draft version and an explicit server-side feature gate bound to the approved Cloudinary account. A client-supplied image URL or media ID does not grant access to an asset. The feature is disabled by default and its database migration is not yet on Neon; A4 admin operations remain available without querying the A5 table.
 
 ## Bootstrap
 

@@ -21,12 +21,12 @@ function previewHref(slug: string): string {
 export function AdminInvitationList({
   items,
   searchQuery,
-  draftIds = {},
+  linkedDrafts = {},
   showEditorActions = false,
 }: {
   items: readonly AdminInvitationSummary[];
   searchQuery?: string;
-  draftIds?: Readonly<Record<string, string>>;
+  linkedDrafts?: Readonly<Record<string, { draftId: string; hasUnpublishedChanges: boolean }>>;
   showEditorActions?: boolean;
 }) {
   if (items.length === 0) {
@@ -55,7 +55,7 @@ export function AdminInvitationList({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="break-words text-base font-bold text-brand-secondary">{item.coupleName}</p>
-                {showEditorActions && <p className="mt-1 text-[11px] font-semibold text-brand-primary">Terbit{draftIds[item.id] ? " · Draf tersimpan" : ""}</p>}
+                {showEditorActions && <p className="mt-1 text-[11px] font-semibold text-brand-primary">Terbit{linkedDrafts[item.id] ? linkedDrafts[item.id].hasUnpublishedChanges ? " · Draf belum terbit" : " · Draf sinkron" : ""}</p>}
                 <p className="mt-1 break-all text-xs text-muted-foreground">/{item.slug}</p>
               </div>
               <Link
@@ -82,7 +82,7 @@ export function AdminInvitationList({
                 <dd className="mt-1 font-semibold text-brand-secondary">{dateLabel(item.updatedAt)}</dd>
               </div>
             </dl>
-            {showEditorActions && <div className="mt-4 flex justify-end border-t border-brand-secondary/10 pt-3"><AdminOpenDraftButton invitationId={item.id} draftId={draftIds[item.id]} /></div>}
+            {showEditorActions && <div className="mt-4 flex justify-end border-t border-brand-secondary/10 pt-3"><AdminOpenDraftButton invitationId={item.id} draftId={linkedDrafts[item.id]?.draftId} /></div>}
           </li>
         ))}
       </ul>
@@ -103,7 +103,7 @@ export function AdminInvitationList({
               <tr key={item.id} className="align-middle">
                 <td className="max-w-[240px] px-5 py-4 sm:px-7">
                   <p className="break-words font-bold text-brand-secondary">{item.coupleName}</p>
-                  {showEditorActions && <p className="mt-1 text-[11px] font-semibold text-brand-primary">Terbit{draftIds[item.id] ? " · Draf tersimpan" : ""}</p>}
+                  {showEditorActions && <p className="mt-1 text-[11px] font-semibold text-brand-primary">Terbit{linkedDrafts[item.id] ? linkedDrafts[item.id].hasUnpublishedChanges ? " · Draf belum terbit" : " · Draf sinkron" : ""}</p>}
                   <p className="mt-1 break-all text-xs text-muted-foreground">/{item.slug}</p>
                 </td>
                 <td className="px-4 py-4 capitalize text-brand-secondary">
@@ -116,7 +116,7 @@ export function AdminInvitationList({
                 <td className="whitespace-nowrap px-4 py-4 text-muted-foreground">{dateLabel(item.updatedAt)}</td>
                 <td className="px-5 py-4 text-right sm:px-7">
                   <div className="flex flex-wrap justify-end gap-1">
-                  {showEditorActions && <AdminOpenDraftButton invitationId={item.id} draftId={draftIds[item.id]} />}
+                  {showEditorActions && <AdminOpenDraftButton invitationId={item.id} draftId={linkedDrafts[item.id]?.draftId} />}
                   <Link
                     href={previewHref(item.slug)}
                     target="_blank"

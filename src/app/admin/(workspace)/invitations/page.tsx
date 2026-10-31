@@ -75,8 +75,8 @@ export default async function AdminInvitationsPage({
     page: draftPage,
   });
   if (!draftIndex.ok && (draftIndex.code === "unauthorized" || draftIndex.code === "forbidden")) redirect("/admin/login");
-  const draftIds = draftIndex.ok
-    ? Object.fromEntries(draftIndex.data.linked.map((item) => [item.invitationId, item.draftId]))
+  const linkedDrafts = draftIndex.ok
+    ? Object.fromEntries(draftIndex.data.linked.map((item) => [item.invitationId, { draftId: item.draftId, hasUnpublishedChanges: item.hasUnpublishedChanges }]))
     : {};
 
   return (
@@ -134,7 +134,7 @@ export default async function AdminInvitationsPage({
           </div>
         </div>
 
-        <AdminInvitationList items={invitations.items} searchQuery={query} draftIds={draftIds} showEditorActions={draftIndex.ok} />
+        <AdminInvitationList items={invitations.items} searchQuery={query} linkedDrafts={linkedDrafts} showEditorActions={draftIndex.ok} />
 
         {invitations.pageCount > 1 && (
           <nav aria-label="Halaman daftar undangan" className="flex flex-wrap items-center justify-between gap-3 border-t border-brand-secondary/10 px-5 py-4 sm:px-7">

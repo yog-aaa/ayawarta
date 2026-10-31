@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { requireAdminSession } from "@/features/auth/service";
 import { createDraftRepository, DraftPersistenceError } from "./draft-repository";
 import { loadAssociatedMedia } from "./editor-media";
+import { isA5Enabled } from "./a5-feature";
+import { createDraftMediaRepository, verifyDraftMediaReceipt } from "./draft-media-repository";
 import { createEmptyDraftPayload } from "./draft-schema";
 import {
   createAdminDraftForPublished,
@@ -19,6 +21,8 @@ vi.mock("./draft-repository", () => ({
   },
 }));
 vi.mock("./editor-media", () => ({ loadAssociatedMedia: vi.fn() }));
+vi.mock("./a5-feature", () => ({ isA5Enabled: vi.fn() }));
+vi.mock("./draft-media-repository", () => ({ createDraftMediaRepository: vi.fn(), verifyDraftMediaReceipt: vi.fn() }));
 
 function mockRow() {
   return {
@@ -51,6 +55,7 @@ describe("authenticated draft service", () => {
     vi.clearAllMocks();
     vi.mocked(requireAdminSession).mockResolvedValue({ id: "admin-1", email: "admin@example.com", name: "Admin", role: "ADMIN" });
     vi.mocked(createDraftRepository).mockReturnValue(repo as unknown as ReturnType<typeof createDraftRepository>);
+    vi.mocked(isA5Enabled).mockReturnValue(false);
     repo.findDraftById.mockResolvedValue(mockRow());
     repo.saveDraftIfVersion.mockResolvedValue({ ...mockRow(), draftVersion: 2 });
     repo.createNewDraft.mockResolvedValue({ ...mockRow(), invitationId: null, proposedSlug: "", payload: createEmptyDraftPayload(), basePublishedVersion: null });
@@ -90,6 +95,38 @@ describe("authenticated draft service", () => {
     const result = await getAdminDraft("draft-1");
     expect(result).toMatchObject({ ok: false, code: "unauthorized" });
     expect(createDraftRepository).not.toHaveBeenCalled();
+  });
+
+  it("never queries A5 media while disabled and rejects foreign new-draft IDs", async () => {
+    repo.findDraftById.mockResolvedValueOnce({ ...mockRow(), invitationId: null, basePublishedVersion: null });
+    const payload = createEmptyDraftPayload();
+    payload.heroAssetId = "foreign";
+    expect(await saveAdminDraft({ id: "draft-1", expectedDraftVersion: 1, payload })).toMatchObject({ ok: false, code: "validation" });
+    expect(createDraftMediaRepository).not.toHaveBeenCalled();
+  });
+
+  it("accepts only verified media owned by the saved new draft when A5 is enabled", async () => {
+    vi.mocked(isA5Enabled).mockReturnValue(true);
+    repo.findDraftById.mockResolvedValue({ ...mockRow(), invitationId: null, basePublishedVersion: null });
+    vi.mocked(createDraftMediaRepository).mockReturnValue({
+      listVerifiedForDraft: vi.fn().mockResolvedValue([{ mediaAsset: {
+        id: "own-new-photo", secureUrl: "https://res.cloudinary.com/uhwi7xvb/image/upload/v1/own.webp", originalName: "Foto.webp",
+      }, width: 800, height: 900 }]),
+    } as unknown as ReturnType<typeof createDraftMediaRepository>);
+    vi.mocked(verifyDraftMediaReceipt).mockReturnValue(true);
+    const payload = createEmptyDraftPayload();
+    payload.heroAssetId = "own-new-photo";
+    expect((await saveAdminDraft({ id: "draft-1", expectedDraftVersion: 1, payload })).ok).toBe(true);
+    payload.heroAssetId = "another-draft-photo";
+    expect(await saveAdminDraft({ id: "draft-1", expectedDraftVersion: 1, payload })).toMatchObject({ ok: false, code: "validation" });
+  });
+
+  it("rejects unused draft-owned media after first publication under existing A4 edit rules", async () => {
+    vi.mocked(isA5Enabled).mockReturnValue(true);
+    const payload = { ...mockRow().payload, heroAssetId: "unused-draft-photo" };
+    expect(await saveAdminDraft({ id: "draft-1", expectedDraftVersion: 1, payload })).toMatchObject({ ok: false, code: "validation" });
+    expect(createDraftMediaRepository).not.toHaveBeenCalled();
+    expect(repo.saveDraftIfVersion).not.toHaveBeenCalled();
   });
 
   it("authorizes a mutation before persisting any draft", async () => {

@@ -94,6 +94,42 @@ describe("draft payload v1", () => {
     }
   });
 
+  it("validates media for persisted gallery rows even when the section is hidden", () => {
+    const payload = completeDraft();
+    payload.sections.gallery = false;
+    payload.galleryItems = [{ key: "gallery-1", assetId: null, altText: "", caption: "" }];
+    const allowedMediaAssetIds = new Set(["asset-hero", "asset-groom", "asset-bride"]);
+    const missing = validateDraftForPublish(payload, { allowedMediaAssetIds });
+    expect(missing).toMatchObject({ ok: false, fieldErrors: { "galleryItems.0.assetId": expect.any(Array) } });
+    payload.galleryItems[0].assetId = "foreign-photo";
+    const foreign = validateDraftForPublish(payload, { allowedMediaAssetIds });
+    expect(foreign).toMatchObject({ ok: false, fieldErrors: { "galleryItems.0.assetId": expect.any(Array) } });
+  });
+
+  it("requires guest-visible map links and supported YouTube videos", () => {
+    const payload = completeDraft();
+    const allowedMediaAssetIds = new Set(["asset-hero", "asset-groom", "asset-bride"]);
+    payload.events[0].mapUrl = "";
+    payload.galleryVideoUrl = "https://example.com/watch?v=dQw4w9WgXcQ";
+    const invalid = validateDraftForPublish(payload, { allowedMediaAssetIds });
+    expect(invalid).toMatchObject({ ok: false, fieldErrors: {
+      "events.0.mapUrl": expect.any(Array), galleryVideoUrl: expect.any(Array),
+    } });
+    payload.events[0].mapUrl = "https://maps.app.goo.gl/example";
+    payload.galleryVideoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+    expect(validateDraftForPublish(payload, { allowedMediaAssetIds }).ok).toBe(true);
+  });
+
+  it("accepts only approved local payment logos", () => {
+    const payload = completeDraft();
+    const allowedMediaAssetIds = new Set(["asset-hero", "asset-groom", "asset-bride"]);
+    payload.sections.gifts = true;
+    payload.giftAccounts = [{ key: "gift-1", platform: "BCA", accountHolder: "Bima", accountNumber: "123", logoPath: "https://evil.example/logo.png" }];
+    expect(validateDraftForPublish(payload, { allowedMediaAssetIds })).toMatchObject({ ok: false, fieldErrors: { "giftAccounts.0.logoPath": expect.any(Array) } });
+    payload.giftAccounts[0].logoPath = "/images/landing/payments/BCA.png";
+    expect(validateDraftForPublish(payload, { allowedMediaAssetIds }).ok).toBe(true);
+  });
+
   it("allows missing required portraits in preview while still rejecting foreign media", () => {
     const payload = completeDraft();
     payload.heroAssetId = null;

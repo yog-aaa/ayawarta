@@ -3,6 +3,8 @@ import "server-only";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { invitationDetailInclude } from "@/features/invitations/query";
 import { mapPrismaToInvitation } from "@/features/invitations/mapper";
+import { CANONICAL_TARGET_CLOUD_NAME } from "@/features/media/canonical-catalog";
+import { findVerifiedDraftMedia, verifyDraftMediaReceipt } from "./draft-media-repository";
 import {
   buildPublicationSnapshot,
   digestPublicationSnapshot,
@@ -64,17 +66,25 @@ function assertPositiveVersion(value: number, label: string): void {
   }
 }
 
-function assertVerifiedBaseline(
+const LEGACY_BASELINE_SLUGS = new Set(["rika-fauzi", "shidqi-mita", "dudi-aini", "default-preview"]);
+
+async function assertVerifiedBaseline(
   publication: {
     source: "BASELINE" | "PUBLISH";
+    actorId: string | null;
     schemaVersion: number;
     snapshot: Prisma.JsonValue;
     contentDigest: string;
     media: Array<{ mediaAssetId: string }>;
   } | null,
-  invitationId: string
-): void {
-  if (!publication || publication.source !== "BASELINE" || publication.schemaVersion !== 1 ||
+  invitationId: string,
+  slug: string,
+  draftId: string | null,
+  db: Prisma.TransactionClient,
+): Promise<void> {
+  if (!publication || (LEGACY_BASELINE_SLUGS.has(slug) ? publication.source !== "BASELINE" :
+      publication.source !== "PUBLISH" || !publication.actorId) ||
+      publication.schemaVersion !== 1 ||
       !verifyPublicationSnapshot(publication.snapshot, publication.contentDigest, invitationId, 1)) {
     throw new DraftPersistenceError("baseline_required", "Verified publication baseline is required before editing");
   }
@@ -82,6 +92,13 @@ function assertVerifiedBaseline(
   const referenced = publicationMediaIds(publication.snapshot);
   if (JSON.stringify(pinned) !== JSON.stringify(referenced)) {
     throw new DraftPersistenceError("baseline_required", "Publication baseline media pins are incomplete");
+  }
+  if (publication.source === "PUBLISH") {
+    if (!draftId) throw new DraftPersistenceError("baseline_required", "First publication draft provenance is missing");
+    const owned = await findVerifiedDraftMedia(db, draftId, referenced);
+    if (owned.length !== referenced.length || owned.some((row) => !verifyDraftMediaReceipt(row, CANONICAL_TARGET_CLOUD_NAME))) {
+      throw new DraftPersistenceError("baseline_required", "First publication media provenance is invalid");
+    }
   }
 }
 
@@ -126,7 +143,8 @@ export function createDraftRepository(customDb?: Database) {
           where: { invitationId_version: { invitationId: live.id, version: 1 } },
           include: { media: { select: { mediaAssetId: true } } },
         });
-        assertVerifiedBaseline(baseline, live.id);
+        const existing = await tx.invitationDraft.findUnique({ where: { invitationId: live.id } });
+        await assertVerifiedBaseline(baseline, live.id, live.slug, existing?.id ?? null, tx);
 
         const currentPublication = live.publishedVersion === 1 ? baseline :
           await tx.invitationPublication.findUnique({
@@ -146,7 +164,6 @@ export function createDraftRepository(customDb?: Database) {
           throw new DraftPersistenceError("conflict", "Published content differs from its verified publication snapshot");
         }
 
-        const existing = await tx.invitationDraft.findUnique({ where: { invitationId: live.id } });
         if (existing) {
           if (existing.basePublishedVersion !== live.publishedVersion || existing.proposedSlug !== live.slug) {
             throw new DraftPersistenceError("conflict", "Existing draft was based on another published version");

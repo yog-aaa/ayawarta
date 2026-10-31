@@ -3,13 +3,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { requireAdminSession } from "@/features/auth/service";
 import { getAdminDraftIndex, listAdminDraftIndex } from "./draft-index";
 import { createEmptyDraftPayload } from "./draft-schema";
+import { draftFromPublished } from "./draft-service";
+import { publishedFixture } from "./testing/published-fixture";
 
 vi.mock("@/features/auth/service", () => ({ requireAdminSession: vi.fn() }));
 
 function mockDb(total = 1) {
+  const live = publishedFixture();
+  const linkedRow = { id: "linked-draft", invitationId: "inv-1", draftVersion: 2, basePublishedVersion: 1,
+    payload: draftFromPublished(live), updatedAt: new Date("2026-10-30T00:00:00.000Z") };
   const count = vi.fn().mockResolvedValue(total);
   const findMany = vi.fn()
-    .mockResolvedValueOnce([{ id: "linked-draft", invitationId: "inv-1", draftVersion: 2, updatedAt: new Date("2026-10-30T00:00:00.000Z") }])
+    .mockResolvedValueOnce([linkedRow])
     .mockResolvedValueOnce([{ id: "new-draft", proposedSlug: "new-couple", payload: {
       ...createEmptyDraftPayload(), slug: "new-couple",
       partners: {
@@ -17,7 +22,8 @@ function mockDb(total = 1) {
         bride: { name: "Raras", parents: "", instagram: "", photoAssetId: null },
       },
     }, draftVersion: 1, updatedAt: new Date("2026-10-30T01:00:00.000Z") }]);
-  return { db: { invitationDraft: { count, findMany } } as unknown as Parameters<typeof listAdminDraftIndex>[0], count, findMany };
+  const findLive = vi.fn().mockResolvedValue([live]);
+  return { db: { invitationDraft: { count, findMany }, invitation: { findMany: findLive } } as unknown as Parameters<typeof listAdminDraftIndex>[0], count, findMany, findLive, linkedRow };
 }
 
 describe("admin draft index", () => {
@@ -26,11 +32,23 @@ describe("admin draft index", () => {
   it("returns linked draft markers and a separate bounded page of new drafts", async () => {
     const { db, findMany } = mockDb();
     const result = await listAdminDraftIndex(db, { publishedInvitationIds: ["inv-1"], q: "Raras", page: 1 });
-    expect(result.linked).toEqual([{ invitationId: "inv-1", draftId: "linked-draft", draftVersion: 2, updatedAt: "2026-10-30T00:00:00.000Z" }]);
+    expect(result.linked).toEqual([{ invitationId: "inv-1", draftId: "linked-draft", draftVersion: 2, updatedAt: "2026-10-30T00:00:00.000Z", hasUnpublishedChanges: false }]);
     expect(result.newDrafts[0]).toMatchObject({ id: "new-draft", coupleName: "Damar & Raras", valid: true });
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { invitationId: { in: ["inv-1"] } }, take: 12 }));
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 12, skip: 0 }));
     expect(findMany.mock.calls[1][0].where.OR[2].payload.path).toEqual(["partners", "bride", "name"]);
+  });
+
+  it("distinguishes edited and invalid drafts from synchronized retained drafts", async () => {
+    const changed = mockDb();
+    changed.linkedRow.payload.partners.groom.name = "Nama baru";
+    expect((await listAdminDraftIndex(changed.db, { publishedInvitationIds: ["inv-1"] })).linked[0].hasUnpublishedChanges).toBe(true);
+    const stale = mockDb();
+    stale.linkedRow.basePublishedVersion = 0;
+    expect((await listAdminDraftIndex(stale.db, { publishedInvitationIds: ["inv-1"] })).linked[0].hasUnpublishedChanges).toBe(true);
+    const invalid = mockDb();
+    invalid.linkedRow.payload.slug = "";
+    expect((await listAdminDraftIndex(invalid.db, { publishedInvitationIds: ["inv-1"] })).linked[0].hasUnpublishedChanges).toBe(true);
   });
 
   it("caps pagination and refuses an unbounded published ID list", async () => {

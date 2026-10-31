@@ -407,6 +407,7 @@ export const ModelName = {
   InvitationDraft: 'InvitationDraft',
   InvitationPublication: 'InvitationPublication',
   InvitationPublicationMedia: 'InvitationPublicationMedia',
+  DraftMediaProvision: 'DraftMediaProvision',
   LoveStory: 'LoveStory',
   GiftAccount: 'GiftAccount'
 } as const
@@ -424,7 +425,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "mediaAsset" | "invitation" | "invitationSections" | "partner" | "event" | "galleryItem" | "invitationDraft" | "invitationPublication" | "invitationPublicationMedia" | "loveStory" | "giftAccount"
+    modelProps: "user" | "mediaAsset" | "invitation" | "invitationSections" | "partner" | "event" | "galleryItem" | "invitationDraft" | "invitationPublication" | "invitationPublicationMedia" | "draftMediaProvision" | "loveStory" | "giftAccount"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1168,6 +1169,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    DraftMediaProvision: {
+      payload: Prisma.$DraftMediaProvisionPayload<ExtArgs>
+      fields: Prisma.DraftMediaProvisionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DraftMediaProvisionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DraftMediaProvisionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DraftMediaProvisionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DraftMediaProvisionPayload>
+        }
+        findFirst: {
+          args: Prisma.DraftMediaProvisionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DraftMediaProvisionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DraftMediaProvisionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DraftMediaProvisionPayload>
+        }
+        findMany: {
+          args: Prisma.DraftMediaProvisionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DraftMediaProvisionPayload>[]
+        }
+        create: {
+          args: Prisma.DraftMediaProvisionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DraftMediaProvisionPayload>
+        }
+        createMany: {
+          args: Prisma.DraftMediaProvisionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DraftMediaProvisionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DraftMediaProvisionPayload>[]
+        }
+        delete: {
+          args: Prisma.DraftMediaProvisionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DraftMediaProvisionPayload>
+        }
+        update: {
+          args: Prisma.DraftMediaProvisionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DraftMediaProvisionPayload>
+        }
+        deleteMany: {
+          args: Prisma.DraftMediaProvisionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DraftMediaProvisionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DraftMediaProvisionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DraftMediaProvisionPayload>[]
+        }
+        upsert: {
+          args: Prisma.DraftMediaProvisionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DraftMediaProvisionPayload>
+        }
+        aggregate: {
+          args: Prisma.DraftMediaProvisionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDraftMediaProvision>
+        }
+        groupBy: {
+          args: Prisma.DraftMediaProvisionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DraftMediaProvisionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DraftMediaProvisionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DraftMediaProvisionCountAggregateOutputType> | number
+        }
+      }
+    }
     LoveStory: {
       payload: Prisma.$LoveStoryPayload<ExtArgs>
       fields: Prisma.LoveStoryFieldRefs
@@ -1504,6 +1579,29 @@ export const InvitationPublicationMediaScalarFieldEnum = {
 export type InvitationPublicationMediaScalarFieldEnum = (typeof InvitationPublicationMediaScalarFieldEnum)[keyof typeof InvitationPublicationMediaScalarFieldEnum]
 
 
+export const DraftMediaProvisionScalarFieldEnum = {
+  id: 'id',
+  draftId: 'draftId',
+  slot: 'slot',
+  idempotencyKey: 'idempotencyKey',
+  preparedSha256: 'preparedSha256',
+  publicId: 'publicId',
+  format: 'format',
+  bytes: 'bytes',
+  width: 'width',
+  height: 'height',
+  state: 'state',
+  cloudinaryAssetId: 'cloudinaryAssetId',
+  mediaAssetId: 'mediaAssetId',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  verifiedAt: 'verifiedAt'
+} as const
+
+export type DraftMediaProvisionScalarFieldEnum = (typeof DraftMediaProvisionScalarFieldEnum)[keyof typeof DraftMediaProvisionScalarFieldEnum]
+
+
 export const LoveStoryScalarFieldEnum = {
   id: 'id',
   invitationId: 'invitationId',
@@ -1694,6 +1792,20 @@ export type ListEnumPublicationSourceFieldRefInput<$PrismaModel> = FieldRefInput
 
 
 /**
+ * Reference to a field of type 'DraftMediaState'
+ */
+export type EnumDraftMediaStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DraftMediaState'>
+
+
+
+/**
+ * Reference to a field of type 'DraftMediaState[]'
+ */
+export type ListEnumDraftMediaStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DraftMediaState[]'>
+
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -1867,6 +1979,7 @@ export type GlobalOmitConfig = {
   invitationDraft?: Prisma.InvitationDraftOmit
   invitationPublication?: Prisma.InvitationPublicationOmit
   invitationPublicationMedia?: Prisma.InvitationPublicationMediaOmit
+  draftMediaProvision?: Prisma.DraftMediaProvisionOmit
   loveStory?: Prisma.LoveStoryOmit
   giftAccount?: Prisma.GiftAccountOmit
 }

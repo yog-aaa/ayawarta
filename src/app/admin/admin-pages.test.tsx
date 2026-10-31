@@ -56,7 +56,7 @@ beforeEach(() => {
   mocks.requireAdminSession.mockResolvedValue({ name: "Administrator" });
   mocks.getAdminInvitationList.mockResolvedValue(list);
   mocks.getAdminDraftIndex.mockResolvedValue({ ok: true, data: {
-    linked: [{ invitationId: "inv-1", draftId: "draft-1", draftVersion: 2, updatedAt: "2026-10-30T01:00:00.000Z" }],
+    linked: [{ invitationId: "inv-1", draftId: "draft-1", draftVersion: 2, updatedAt: "2026-10-30T01:00:00.000Z", hasUnpublishedChanges: false }],
     newDrafts: [{ id: "new-1", proposedSlug: "nina-raka", coupleName: "Nina & Raka", theme: "classic-rose", variant: "red", updatedAt: "2026-10-30T01:00:00.000Z", draftVersion: 1, valid: true }],
     total: 1, page: 1, pageSize: 12, pageCount: 1,
   } });
@@ -113,6 +113,7 @@ describe("admin server pages", () => {
     expect(html).toContain("Halaman");
     expect(html).toContain("Draf baru");
     expect(html).toContain("Sunting draf");
+    expect(html).toContain("Draf sinkron");
     expect(html).toContain("Nina &amp; Raka");
   });
 

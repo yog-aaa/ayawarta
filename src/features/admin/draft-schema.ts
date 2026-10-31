@@ -90,6 +90,21 @@ function validHttpsUrl(value: string): boolean {
   }
 }
 
+function validYoutubeVideoUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return false;
+    const id = url.hostname === "youtu.be" ? url.pathname.slice(1) :
+      ["youtube.com", "www.youtube.com", "m.youtube.com"].includes(url.hostname) ? url.searchParams.get("v") : null;
+    return Boolean(id && /^[A-Za-z0-9_-]{11}$/.test(id));
+  } catch { return false; }
+}
+
+const approvedGiftLogos = new Set([
+  "BCA.png", "BNI.png", "BRI.png", "Dana.png", "Gopay.png", "Mandiri.png",
+  "Mastercard.png", "Ovo.png", "Permata.png", "QRIS.png", "ShopeePay.png", "Visa.png",
+].map((name) => `/images/landing/payments/${name}`));
+
 function addError(errors: DraftFieldErrors, field: string, message: string): void {
   (errors[field] ??= []).push(message);
 }
@@ -173,23 +188,23 @@ export function validateDraftForPublish(input: unknown, context: PublishDraftCon
     for (const field of ["name", "displayDate", "displayTime", "address"] as const) {
       if (!nonempty(event[field])) addError(errors, `events.${index}.${field}`, "Kolom ini wajib diisi.");
     }
-    if (event.mapUrl && !validHttpsUrl(event.mapUrl)) addError(errors, `events.${index}.mapUrl`, "Gunakan URL HTTPS yang valid.");
+    if (!validHttpsUrl(event.mapUrl)) addError(errors, `events.${index}.mapUrl`, "Tautan lokasi HTTPS wajib diisi.");
   });
   if (payload.sections.gallery && payload.galleryItems.length === 0) addError(errors, "galleryItems", "Tambahkan setidaknya satu foto galeri.");
   payload.galleryItems.forEach((item, index) => {
-    if (!payload.sections.gallery) return;
     checkAsset(item.assetId, `galleryItems.${index}.assetId`, true);
-    if (!nonempty(item.altText)) addError(errors, `galleryItems.${index}.altText`, "Deskripsi foto wajib diisi.");
+    if (payload.sections.gallery && !nonempty(item.altText)) addError(errors, `galleryItems.${index}.altText`, "Deskripsi foto wajib diisi.");
   });
-  if (payload.galleryVideoUrl && !validHttpsUrl(payload.galleryVideoUrl)) addError(errors, "galleryVideoUrl", "Gunakan URL HTTPS yang valid.");
+  if (payload.galleryVideoUrl && !validYoutubeVideoUrl(payload.galleryVideoUrl)) addError(errors, "galleryVideoUrl", "Gunakan tautan video YouTube HTTPS yang valid.");
   if (payload.sections.loveStory) payload.loveStories.forEach((story, index) => {
     if (!nonempty(story.title)) addError(errors, `loveStories.${index}.title`, "Judul cerita wajib diisi.");
     if (!nonempty(story.content)) addError(errors, `loveStories.${index}.content`, "Isi cerita wajib diisi.");
   });
-  if (payload.sections.gifts) payload.giftAccounts.forEach((gift, index) => {
-    for (const field of ["platform", "accountHolder", "accountNumber"] as const) {
+  payload.giftAccounts.forEach((gift, index) => {
+    if (payload.sections.gifts) for (const field of ["platform", "accountHolder", "accountNumber"] as const) {
       if (!nonempty(gift[field])) addError(errors, `giftAccounts.${index}.${field}`, "Kolom ini wajib diisi.");
     }
+    if (!approvedGiftLogos.has(gift.logoPath)) addError(errors, `giftAccounts.${index}.logoPath`, "Pilih logo pembayaran yang tersedia.");
   });
   return Object.keys(errors).length ? { ok: false, fieldErrors: errors } : { ok: true, payload };
 }

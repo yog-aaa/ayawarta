@@ -130,6 +130,16 @@ After push, the wrapper confirms only that `origin/main` points to the reviewed 
 
 The approved initial Neon migration and seed were performed on 2026-10-30. No Vercel production deployment or Git push was performed in that operation.
 
+### Admin publication baseline activation
+
+The four seeded invitations started at `publishedVersion = 1` without publication snapshots. The A4 editor refuses to open an existing invitation for drafting until an exact version-1 baseline and its media pins are present. `pnpm prod:baseline` is a no-connection dry run. `pnpm prod:baseline --check --execute` validates the approved direct/pooled Neon target, reconstructs all four complete invitation snapshots, and reports matching/missing baselines without writing. The 2026-10-30 preflight found **0 matching and 4 missing**.
+
+`pnpm prod:baseline --execute` writes only missing baselines through a transaction-protected repository method and verifies all four after the writes. It does not change public invitation content. The owner separately authorized this operation for `ep-mute-water-azaf9oyl:ayawarta:neondb_owner`; it completed on 2026-10-30. A subsequent read-only `--check --execute` reported **4 matching and 0 missing**. If a future run fails after a partial write, stop, run the read-only check, and review the remaining state before any retry. Never rerun the canonical seed on this populated database to prepare baselines.
+
+### A5 media provisioning is not activated
+
+The additive `20261031060000_add_draft_media_provenance` migration is authored and tested on an isolated database only. It has not run on Neon. Upload and first publication of a new invitation require both `AYAWARTA_A5_MEDIA=enabled` and `AYAWARTA_A5_APPROVED_CLOUD=uhwi7xvb`, with the configured public Cloudinary cloud matching that exact name. Both switches are absent by default. Keep them absent until an exact migration, target, asset, and rollback review is approved. Uploading to the production Cloudinary account or publishing customer content is a separate operation from merging code; this stage performed neither. The four legacy invitations retain their A4 publication path while A5 is off.
+
 ## Rollback and Database Recovery
 
 If the production deployment fails:

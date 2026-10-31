@@ -4,7 +4,9 @@
 
 PostgreSQL stores invitation content, media metadata, and administrators. Firestore wishes and RSVP are outside this schema.
 
-The authored schema is `prisma/schema.prisma`. Four historical migrations precede `prisma/migrations/20261030060000_add_admin_drafts_and_siger_fields/`, an additive A2/T2 migration applied to the approved production Neon target on 2026-10-30. The three admin tables and new columns now exist; version-1 publication baseline records have not yet been written.
+The authored schema is `prisma/schema.prisma`. Four historical migrations precede `prisma/migrations/20261030060000_add_admin_drafts_and_siger_fields/`, an additive A2/T2 migration applied to the approved production Neon target on 2026-10-30. The three admin tables and new columns now exist. All four version-1 publication baselines and their media pins were written and verified on 2026-10-30.
+
+The additive A5 `20261031060000_add_draft_media_provenance` migration is authored and tested only on an isolated local PostgreSQL database. It has **not** been applied to Neon. A5 upload and first publication remain disabled by default until a separate reviewed activation.
 
 ## Relationship Overview
 
@@ -136,15 +138,19 @@ Do not infer resource type only from a URL extension.
 
 Hero media is a first-class required invitation relation. Gallery membership and ordering are independent from the hero relation, even when the same Cloudinary asset is intentionally reused in both places.
 
-### InvitationDraft (authored, pending migration)
+### InvitationDraft
 
-`InvitationDraft` has a stable ID, nullable unique `invitationId`, `proposedSlug`, JSON `payload`, `schemaVersion`, optimistic `draftVersion`, nullable `basePublishedVersion`, creator/updater references, and timestamps. A new draft has no published invitation row and no base published version. An existing invitation may have one active draft and must reference a positive base version. The SQL migration adds a check for those version/state invariants; `invitationId`, creator, and updater use restrictive foreign keys. The service validates a version-1 payload with Zod, permits incomplete content on save, rejects theme/variant mismatches and duplicate row keys, and scopes every media ID to the same invitation. No editor route currently invokes these writes.
+`InvitationDraft` has a stable ID, nullable unique `invitationId`, `proposedSlug`, JSON `payload`, `schemaVersion`, optimistic `draftVersion`, nullable `basePublishedVersion`, creator/updater references, and timestamps. A new draft has no published invitation row and no base published version. An existing invitation may have one active draft and must reference a positive base version. The SQL migration checks those version/state invariants; `invitationId`, creator, and updater use restrictive foreign keys. The service validates a version-1 payload with Zod, permits incomplete content on save, rejects theme/variant mismatches and duplicate row keys, and scopes every media ID to the same invitation. The authenticated admin editor invokes these writes.
 
-### InvitationPublication and media pins (authored, pending migration)
+### DraftMediaProvision (A5, pending Neon migration)
+
+`DraftMediaProvision` records a draft-owned image upload before Cloudinary receives it. Its immutable draft ID, slot, idempotency key, prepared SHA-256, size, dimensions, format, and deterministic public ID form a retry and recovery receipt. A `RESERVED` row has no `MediaAsset`; a `VERIFIED` row requires the Cloudinary asset identity, a unique `MediaAsset` relation, and verification time. The database enforces status consistency, positive dimensions/bytes, unique `(draftId, idempotencyKey)` and public ID, restrictive foreign keys, and a trigger that permits only the one-way reservation-to-verification transition. There is no automatic deletion. Existing canonical `MediaAsset` records are unchanged; new uploads use this database-backed provenance rather than editing the Git catalog per image.
+
+### InvitationPublication and media pins
 
 `InvitationPublication` records a unique `(invitationId, version)`, `BASELINE` or `PUBLISH` source, complete JSON snapshot, schema version, SHA-256 content digest, optional change summary/actor, and timestamp. The snapshot captures the invitation's content, visibility flags, ordered child rows, and full referenced media identities. `InvitationPublicationMedia` pins each referenced `MediaAsset` with a composite primary key. Restrictive foreign keys prevent deletion of a referenced publication, actor, invitation, or media asset. SQL triggers reject update or delete of publication and pin rows; history is append-only.
 
-Before an existing invitation can be opened for drafting, `draft-repository.ts` requires a verified version-1 baseline snapshot and an exact match between snapshot, media pins, and current published content. The four production invitations need those baselines written and verified in a separately authorized production operation before editing is enabled. This migration file does **not** create baseline records by itself. No snapshot or pinned media should be automatically deleted before a separate retention and recovery policy is approved.
+Before an existing invitation can be opened for drafting, `draft-repository.ts` requires a verified version-1 baseline snapshot and an exact match between snapshot, media pins, and current published content. The 2026-10-30 read-only preflight found 0 matching and 4 missing; the separately approved `prod:baseline --execute` activation then wrote the four baselines, and a subsequent read-only check found **4 matching and 0 missing**. The migration itself did **not** create baseline records. No snapshot or pinned media should be automatically deleted before a separate retention and recovery policy is approved.
 
 ### User
 
@@ -204,5 +210,5 @@ The public repository still uses the compact `publicInvitationSelect` projection
 - Use only an explicitly verified isolated non-production database for new integration tests; the operator's current local `DATABASE_URL` points to production Neon.
 - Do not run `db push` against production.
 - Do not run a Neon migration until the production-cutover stage is explicitly assigned.
-- Do not run the A2/T2 baseline writer or enable draft editing on production until the new migration, four complete snapshots, and media pins are verified under an exact approved target procedure.
+- Production draft edits and publication require the verified baseline, scoped media, and a separate explicit publish action; do not rerun the canonical seed on this populated database.
 - Backward-incompatible schema changes require a new reviewed plan.

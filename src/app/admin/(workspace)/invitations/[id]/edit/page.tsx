@@ -16,5 +16,5 @@ export default async function EditAdminInvitationPage({ params }: { params: Prom
     return <AdminListError retryHref={`/admin/invitations/${encodeURIComponent(id)}/edit`} title="Editor belum dapat dimuat" headingLevel="h1" />;
   }
 
-  return <AdminDraftEditor initialDraft={result.data.draft} initialPayload={result.data.draft.payload} mediaChoices={result.data.mediaChoices} />;
+  return <AdminDraftEditor initialDraft={result.data.draft} initialPayload={result.data.draft.payload} mediaChoices={result.data.mediaChoices} pendingMedia={result.data.pendingMedia} mediaUploadEnabled={result.data.mediaUploadEnabled} />;
 }
