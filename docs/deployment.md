@@ -1,6 +1,6 @@
 # AyaWarta Environment and Deployment Guide
 
-Neon schema migration and the one-time canonical seed completed on 2026-10-30 for the approved `ep-mute-water-azaf9oyl:ayawarta:neondb_owner` target. Read-only verification confirmed 12 application tables, 86 seed rows across the original nine data tables, four invitation slugs, 31 canonical media records, and release state `seeded`. The additive A5 `DraftMediaProvision` migration has **not** been applied to Neon. Vercel deployment and production environment parity were not changed or verified. For current commands and guards, use [the operational guide](deployment-aiven-vercel.md). Do not rerun the initial seed on this populated database.
+Neon schema migration and the one-time canonical seed completed on 2026-10-30 for the approved `ep-mute-water-azaf9oyl:ayawarta:neondb_owner` target. That initial verification confirmed 12 application tables, 86 seed rows across the original nine data tables, four invitation slugs, 31 canonical media records, and release state `seeded`. The additive A5 `DraftMediaProvision` migration was applied to the same approved target on 2026-10-31 after the owner verified a manual production snapshot. The postcheck found six finished migrations, zero `DraftMediaProvision` rows, release state `seeded`, and four matching baselines with none missing. A5 feature switches remain off; no upload, seed, customer invitation write, Vercel change, deployment, or Git push occurred in that operation. For current commands and guards, use [the operational guide](deployment-aiven-vercel.md). Do not rerun the initial seed on this populated database.
 
 ## Environments
 
@@ -78,7 +78,9 @@ On Vercel Production (`VERCEL_ENV=production`), the application runtime strictly
 
 The guarded Neon migration, one-time canonical seed, and strict `pnpm prod:verify --execute` check completed on 2026-10-30. Those were **initial bootstrap** operations, not steps to repeat on the populated target. In particular, rerunning the seed could replace ordered invitation children and reset administrator credentials. The local `prisma:seed` and `seed:verify` commands deliberately reject Neon.
 
-For a later release, use the reviewed `Update` path in [the operational guide](deployment-aiven-vercel.md#reusable-release-wrapper-windows-powershell). It validates the approved direct/pooled target and committed migration history, applies pending migrations, and never reruns seed. Keep Vercel Production and Preview variable scopes separate, build from the committed `pnpm-lock.yaml`, and retain the previous healthy deployment. The [A5 activation runbook](runbooks/admin-a5-production-activation.md) separates the additive migration/code release from enabling new image uploads and first publication.
+For a later release, use the reviewed `Update` path in [the operational guide](deployment-aiven-vercel.md#reusable-release-wrapper-windows-powershell). It validates the approved direct/pooled target and committed migration history, applies pending migrations, and never reruns seed. Keep Vercel Production and Preview variable scopes separate, build from the committed `pnpm-lock.yaml`, and retain the previous healthy deployment. The [A5 activation runbook](runbooks/admin-a5-production-activation.md) records the completed additive schema migration and separates the pending code release from enabling new image uploads and first publication.
+
+The A5 schema step is complete on Neon. The remaining A5 release steps are code/deployment verification and a separately approved feature activation; the mocked-provider browser gate remains open. The 2026-10-31 schema operation did not perform either step.
 
 ## Production Cutover Checklist
 

@@ -1,6 +1,6 @@
 # AyaWarta local operations and Neon/Vercel production cutover
 
-This guide describes the local workflow and Neon/Vercel operations. The approved Neon migration and one-time seed completed on 2026-10-30; release state is `seeded`. Vercel deployment remains separate. The bootstrap commands below are historical recovery guidance and must not be repeated on the seeded database. [`docs/deployment.md`](deployment.md) is the short environment overview.
+This guide describes the local workflow and Neon/Vercel operations. The approved initial Neon migration and one-time seed completed on 2026-10-30; the additive A5 migration completed on 2026-10-31. Release state remains `seeded`, while A5 upload and first publication remain disabled by default. Vercel deployment remains separate. The bootstrap commands below are historical recovery guidance and must not be repeated on the seeded database. [`docs/deployment.md`](deployment.md) is the short environment overview.
 
 ## Data ownership
 
@@ -139,7 +139,7 @@ The four seeded invitations started at `publishedVersion = 1` without publicatio
 
 ### A5 media provisioning is not activated
 
-The additive `20261031060000_add_draft_media_provenance` migration is authored and tested on an isolated database only. It has not run on Neon. Upload and first publication of a new invitation require both `AYAWARTA_A5_MEDIA=enabled` and `AYAWARTA_A5_APPROVED_CLOUD=uhwi7xvb`, with the configured public Cloudinary cloud matching that exact name. Both switches are absent by default. Keep them absent until an exact migration, target, asset, and rollback review is approved. Uploading to the production Cloudinary account or publishing customer content is a separate operation from merging code; this stage performed neither. The four legacy invitations retain their A4 publication path while A5 is off. The ordinary `pnpm prod:verify --execute` remains a strict original-seed verifier and is unsuitable after admin edits or uploads; use the read-only `--release-state` mode and the [A5 runbook](runbooks/admin-a5-production-activation.md) for update releases.
+The additive `20261031060000_add_draft_media_provenance` migration was applied on 2026-10-31 to the approved `ep-mute-water-azaf9oyl:ayawarta:neondb_owner` target after the owner verified a manual production snapshot from 09:36:15 UTC with no expiry. Read-only postcheck found six finished migrations, zero `DraftMediaProvision` rows, release state `seeded`, and four matching publication baselines with none missing. That operation did not seed, upload, write customer invitation content, change Vercel, deploy, or push Git. Upload and first publication of a new invitation require both `AYAWARTA_A5_MEDIA=enabled` and `AYAWARTA_A5_APPROVED_CLOUD=uhwi7xvb`, with the configured public Cloudinary cloud matching that exact name. Both switches are absent by default. Keep them absent until the separate activation review and its browser mocked-provider gate are complete. The four legacy invitations retain their A4 publication path while A5 is off. The ordinary `pnpm prod:verify --execute` remains a strict original-seed verifier and is unsuitable after admin edits or uploads; use the read-only `--release-state` mode and the [A5 runbook](runbooks/admin-a5-production-activation.md) for update releases.
 
 ## Rollback and Database Recovery
 

@@ -14,7 +14,7 @@ The four seeded invitations require their sealed version-1 `BASELINE` plus media
 
 ## Image upload for a new invitation
 
-The A5 upload controls are disabled by default until the reviewed Neon migration and Vercel activation in the [production runbook](runbooks/admin-a5-production-activation.md). While enabled, they appear only on a saved, unchanged **new** draft for cover, groom, bride, and gallery slots. Save a gallery row before uploading its image. New audio uploads are not available; music is optional.
+The A5 schema migration was applied to the approved Neon target on 2026-10-31, but upload controls remain disabled by default. The separate Vercel release, browser mocked-provider gate, and feature activation are tracked in the [production runbook](runbooks/admin-a5-production-activation.md). When enabled, the controls appear only on a saved, unchanged **new** draft for cover, groom, bride, and gallery slots. Save a gallery row before uploading its image. New audio uploads are not available; music is optional.
 
 - Select a JPEG, PNG, or WebP of at most 15 MiB. The server validates the file and prepares a slot-sized WebP of at most 3 MiB before upload. Uploading may take time; the form prevents another save or publication until it finishes.
 - A successful upload verifies Cloudinary metadata and delivered content, then selects the media locally. Press **Simpan** to persist that choice in the draft. The guest page is unchanged until **Terbitkan** succeeds. The Cloudinary delivery URL itself is an unlisted public URL, so do not upload access-controlled content.

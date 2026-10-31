@@ -6,7 +6,7 @@ PostgreSQL stores invitation content, media metadata, and administrators. Firest
 
 The authored schema is `prisma/schema.prisma`. Four historical migrations precede `prisma/migrations/20261030060000_add_admin_drafts_and_siger_fields/`, an additive A2/T2 migration applied to the approved production Neon target on 2026-10-30. The three admin tables and new columns now exist. All four version-1 publication baselines and their media pins were written and verified on 2026-10-30.
 
-The additive A5 `20261031060000_add_draft_media_provenance` migration is authored and tested only on an isolated local PostgreSQL database. It has **not** been applied to Neon. A5 upload and first publication remain disabled by default until a separate reviewed activation.
+The additive A5 `20261031060000_add_draft_media_provenance` migration was applied on 2026-10-31 to the separately approved Neon target after the owner verified a manual production snapshot. The read-only postcheck found six finished migrations, an empty `DraftMediaProvision` table, release state `seeded`, and four matching baselines with none missing. This schema operation did not seed, upload media, change invitation content, deploy code, or enable A5 upload and first publication; those feature switches remain off by default.
 
 ## Relationship Overview
 
@@ -143,7 +143,7 @@ Hero media is a first-class required invitation relation. Gallery membership and
 
 `InvitationDraft` has a stable ID, nullable unique `invitationId`, `proposedSlug`, JSON `payload`, `schemaVersion`, optimistic `draftVersion`, nullable `basePublishedVersion`, creator/updater references, and timestamps. A new draft has no published invitation row and no base published version. An existing invitation may have one active draft and must reference a positive base version. The SQL migration checks those version/state invariants; `invitationId`, creator, and updater use restrictive foreign keys. The service validates a version-1 payload with Zod, permits incomplete content on save, and rejects theme/variant mismatches and duplicate row keys. Existing-draft media must be associated with that invitation; new-draft media must have a verified `DraftMediaProvision` owned by the same draft. The authenticated admin editor invokes these writes.
 
-### DraftMediaProvision (A5, pending Neon migration)
+### DraftMediaProvision (A5 schema applied; feature inactive)
 
 `DraftMediaProvision` records a draft-owned image upload before Cloudinary receives it. Its immutable draft ID, slot, idempotency key, prepared SHA-256, size, dimensions, format, and deterministic public ID form a retry and recovery receipt. A `RESERVED` row has no `MediaAsset`; a `VERIFIED` row requires the Cloudinary asset identity, a unique `MediaAsset` relation, and verification time. The database enforces status consistency, positive dimensions/bytes, unique `(draftId, idempotencyKey)` and public ID, restrictive foreign keys, and a trigger that permits only the one-way reservation-to-verification transition. There is no automatic deletion. Existing canonical `MediaAsset` records are unchanged; new uploads use this database-backed provenance rather than editing the Git catalog per image.
 
@@ -203,13 +203,13 @@ The invitation repository returns:
 
 The repository returns `null` for a missing slug. It does not substitute `default-preview`.
 
-The public repository still uses the compact `publicInvitationSelect` projection; the mapper defaults optional Siger content to empty strings and derives `Gallery.images` from ordered gallery items for Classic Rose. The full include is used by admin draft/snapshot operations; all four initial baselines are verified. New-draft media queries require the separate A5 migration and feature gate, which are not active on Neon.
+The public repository still uses the compact `publicInvitationSelect` projection; the mapper defaults optional Siger content to empty strings and derives `Gallery.images` from ordered gallery items for Classic Rose. The full include is used by admin draft/snapshot operations; all four initial baselines are verified. The A5 table is present on Neon, but new-draft upload and first-publication queries remain behind the default-off feature gate.
 
 ## Migration Discipline
 
 - Create committed Prisma migrations for schema changes.
 - Use only an explicitly verified isolated non-production database for new integration tests; the operator's current local `DATABASE_URL` points to production Neon.
 - Do not run `db push` against production.
-- Do not run any further Neon migration without an explicitly assigned operation and target approval; the A5 migration remains pending.
+- Do not run any further Neon migration without an explicitly assigned operation and target approval; the A5 migration is complete, while media activation remains separate.
 - Published-invitation edits require verified version-1 provenance (`BASELINE` for legacy slugs, `PUBLISH` with actor and retained draft-owned media for newly created invitations), scoped media, and a separate explicit publish action; do not rerun the canonical seed on this populated database.
 - Backward-incompatible schema changes require a new reviewed plan.

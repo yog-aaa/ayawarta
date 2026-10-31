@@ -41,7 +41,7 @@ For documentation-only work, compare factual claims with the current source, che
 - [ ] Every invitation has a required indexed hero `MediaAsset` relation with `Restrict`; hero is not inferred from gallery order.
 - [ ] Optional `galleryVideoUrl` persists external embed content; empty legacy values normalize to null and are not converted to `MediaAsset`.
 - [ ] Migration is committed and validates locally.
-- [ ] Production migration was not run.
+- [ ] Any production migration has its own exact target authorization, snapshot evidence, and read-only postcheck; local tests alone do not authorize it.
 - [ ] Seed is idempotent.
 - [ ] Four required invitation slugs reconstruct through the repository.
 - [ ] Unknown slug returns `null` at repository level.
@@ -104,6 +104,8 @@ The A4 media gate checks invitation ownership, resource type, the original slot 
 - [ ] Mobile picker, upload/recovery states, keyboard/focus, reduced motion, image payload/dimensions, and sanitized errors are checked. No production upload, Neon migration, or customer publication is inferred from local evidence.
 
 **A5 source verification (2026-10-31):** Frozen pnpm install, Prisma format/validate/generate, TypeScript, ESLint, production build, and `git diff --check` passed. Hermetic Vitest passed 69 files and 864 tests (two opt-in database files skipped in that run). Three opt-in A4/A5 tests passed on disposable PostgreSQL 18.2 at `127.0.0.1:55434/ayawarta_a5`: provenance constraints, late first-publication rollback/retry/reopen, and legacy A4 publication. The cluster was stopped and removed afterward. Fake Cloudinary tests cover readback, missing remote content, and preflight order; no live image upload occurred. The offline media report passed 31/31. Read-only AyaWarta smoke on localhost port 3001 passed ten public routes, login HTTP 200, and unauthenticated admin redirects. The full first run's two timing failures passed when rerun with two workers; the complete two-worker run passed. The remaining unchecked item requires an isolated migrated browser session and visual/mobile review after activation planning; it does not imply that Neon was migrated or A5 enabled.
+
+**A5 Neon schema operation (2026-10-31):** After the owner verified a manual production snapshot from 09:36:15 UTC with no expiry, the approved `20261031060000_add_draft_media_provenance` migration was applied to `ep-mute-water-azaf9oyl:ayawarta:neondb_owner`. Read-only postcheck reported six finished migrations, an empty `DraftMediaProvision` table, release state `seeded`, and four matching baselines with none missing. This operation did not seed, upload, write customer invitation content, change Vercel, deploy, or push Git. A5 switches remain default-off, and the mocked-provider browser gate below remains **OPEN**.
 
 ### A6 release-readiness gate
 
