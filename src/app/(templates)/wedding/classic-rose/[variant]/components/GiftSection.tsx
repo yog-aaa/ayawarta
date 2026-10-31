@@ -2,7 +2,7 @@
 "use client";
 import React, { useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
 import SectionDivider from "./SectionDivider";
 import type { InvitationData } from "@/features/invitations/types";
@@ -27,6 +27,7 @@ interface GiftSectionProps {
 }
 
 const GiftSection: React.FC<GiftSectionProps> = ({ gifts }) => {
+	const reducedMotion = useReducedMotion();
 	const [copiedAccount, setCopiedAccount] = useState<string | null>(null);
 	const giftList = gifts ?? []; // safe fallback
 
@@ -52,10 +53,10 @@ const GiftSection: React.FC<GiftSectionProps> = ({ gifts }) => {
 				className='relative z-20 container mx-auto px-4 sm:px-8 max-w-3xl flex flex-col items-center gap-8 text-center py-20 md:py-32'
 				style={{ color: "var(--color-text)" }}>
 				<motion.div
-					initial={{ opacity: 0, y: 50 }}
-					whileInView={{ opacity: 1, y: 0 }}
+					initial={reducedMotion ? false : { opacity: 0, y: 50 }}
+					whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
 					viewport={{ once: true }}
-					transition={{ duration: 0.8 }}>
+					transition={reducedMotion ? { duration: 0 } : { duration: 0.8 }}>
 					<div className='flex items-center justify-center gap-4'>
 						<SectionDivider />
 						<h2 className='text-xl' style={{ fontFamily: "var(--font-body)" }}>
@@ -77,10 +78,10 @@ const GiftSection: React.FC<GiftSectionProps> = ({ gifts }) => {
 						<motion.div
 							key={index}
 							className='classic-rose-surface flex flex-col items-center rounded-2xl p-5'
-							initial={{ opacity: 0, y: 50 }}
-							whileInView={{ opacity: 1, y: 0 }}
+							initial={reducedMotion ? false : { opacity: 0, y: 50 }}
+							whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
 							viewport={{ once: true }}
-							transition={{ duration: 0.8, delay: 0.2 + index * 0.1 }}>
+							transition={reducedMotion ? { duration: 0 } : { duration: 0.8, delay: 0.2 + index * 0.1 }}>
 							<div className='relative h-8 w-24 mb-2'>
 								<Image
 									src={gift.logo}

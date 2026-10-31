@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { ClassicRoseThemeConfig } from "@/lib/theme-config/classic-rose";
 
 type YTPlayerInstance = {
@@ -77,6 +77,7 @@ const getYoutubeVideoId = (url: string): string | null => {
 const isDirectAudioUrl = (url: string): boolean => /\.(mp3|wav|mpeg)(\?.*)?$/i.test(url);
 
 const MusicPlayer = ({ videoUrl }: MusicPlayerProps) => {
+  const reducedMotion = useReducedMotion();
   const [isPlaying, setIsPlaying] = useState(true);
   const playerRef = useRef<YTPlayerInstance | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -230,17 +231,17 @@ const MusicPlayer = ({ videoUrl }: MusicPlayerProps) => {
         onClick={toggleMusic}
         aria-label={isPlaying ? "Jeda musik" : "Putar musik"}
         className="classic-rose-primary-action fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full shadow-lg"
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+        initial={reducedMotion ? false : { scale: 0, rotate: -180 }}
+        animate={reducedMotion ? undefined : { scale: 1, rotate: 0 }}
+        transition={reducedMotion ? { duration: 0 } : { duration: 0.5, ease: "easeOut" }}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={!reducedMotion}>
           <motion.div
             key={isPlaying ? "on" : "off"}
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.5, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            initial={reducedMotion ? false : { scale: 0.5, opacity: 0 }}
+            animate={reducedMotion ? undefined : { scale: 1, opacity: 1 }}
+            exit={reducedMotion ? undefined : { scale: 0.5, opacity: 0 }}
+            transition={reducedMotion ? { duration: 0 } : { duration: 0.2 }}
           >
             {isPlaying ? <VolumeOnIcon className="h-6 w-6" /> : <VolumeOffIcon className="h-6 w-6" />}
           </motion.div>

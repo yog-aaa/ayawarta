@@ -2,7 +2,7 @@
 "use client";
 import React from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
 import { classicRoseCloudinaryLoader, isClassicRoseCloudinaryAsset } from "@/lib/theme-config/cloudinary-theme-loader";
 import type { InvitationData } from "@/features/invitations/types";
@@ -44,6 +44,7 @@ interface ProfileCardProps {
 }
 
 const ProfileCard: React.FC<ProfileCardProps> = ({ person, align, theme }) => {
+	const reducedMotion = useReducedMotion();
 	const isGroom = align === "left";
 	const photoOrder = isGroom ? "" : "sm:order-2";
 	const textOrder = isGroom ? "" : "sm:order-1";
@@ -53,10 +54,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ person, align, theme }) => {
 	return (
 		<motion.div
 			className='flex w-full flex-col items-center gap-4 sm:grid sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-6'
-			initial={{ opacity: 0, x: isGroom ? -50 : 50 }}
-			whileInView={{ opacity: 1, x: 0 }}
+			initial={reducedMotion ? false : { opacity: 0, x: isGroom ? -50 : 50 }}
+			whileInView={reducedMotion ? undefined : { opacity: 1, x: 0 }}
 			viewport={{ once: true }}
-			transition={{ duration: 0.8 }}>
+			transition={reducedMotion ? { duration: 0 } : { duration: 0.8 }}>
 			<div className={`relative aspect-square w-40 shrink-0 sm:w-44 ${photoOrder}`}>
 				<Image
 					src={theme.assets.photoFrame}
@@ -113,6 +114,7 @@ interface CoupleSectionProps {
 }
 
 const CoupleSection: React.FC<CoupleSectionProps> = ({ data, theme }) => {
+	const reducedMotion = useReducedMotion();
 	return (
 		<section className='relative'>
 			<div
@@ -120,10 +122,10 @@ const CoupleSection: React.FC<CoupleSectionProps> = ({ data, theme }) => {
 				style={{ color: "var(--color-text)" }}>
 				<motion.div
 					className='relative w-[300px] h-[70px]'
-					initial={{ opacity: 0, y: -50 }}
-					whileInView={{ opacity: 1, y: 0 }}
+					initial={reducedMotion ? false : { opacity: 0, y: -50 }}
+					whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
 					viewport={{ once: true }}
-					transition={{ duration: 0.8 }}>
+					transition={reducedMotion ? { duration: 0 } : { duration: 0.8 }}>
 					<div
 						role='img'
 						aria-label='Bismillah'
@@ -142,10 +144,10 @@ const CoupleSection: React.FC<CoupleSectionProps> = ({ data, theme }) => {
 				</motion.div>
 				<motion.p
 					className='font-[--font-body] text-sm max-w-md'
-					initial={{ opacity: 0 }}
-					whileInView={{ opacity: 1 }}
+					initial={reducedMotion ? false : { opacity: 0 }}
+					whileInView={reducedMotion ? undefined : { opacity: 1 }}
 					viewport={{ once: true }}
-					transition={{ duration: 0.8, delay: 0.2 }}>
+					transition={reducedMotion ? { duration: 0 } : { duration: 0.8, delay: 0.2 }}>
 					Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud mengundang
 					Bapak/Ibu/Saudara/i untuk menghadiri acara pernikahan kami:
 				</motion.p>
@@ -158,10 +160,10 @@ const CoupleSection: React.FC<CoupleSectionProps> = ({ data, theme }) => {
 				</div>
 				<motion.div
 					className='classic-rose-surface mt-12 max-w-md rounded-2xl p-6'
-					initial={{ opacity: 0, y: 50 }}
-					whileInView={{ opacity: 1, y: 0 }}
+					initial={reducedMotion ? false : { opacity: 0, y: 50 }}
+					whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
 					viewport={{ once: true }}
-					transition={{ duration: 0.8 }}>
+					transition={reducedMotion ? { duration: 0 } : { duration: 0.8 }}>
 					<p dir='rtl' className='font-[--font-body] text-base leading-relaxed'>
 						وَمِنْ اٰيٰتِهٖٓ اَنْ خَلَقَ لَكُمْ مِّنْ اَنْفُسِكُمْ اَزْوَاجًا
 						لِّتَسْكُنُوْٓا اِلَيْهَا وَجَعَلَ بَيْنَكُمْ مَّوَدَّةً وَّرَحْمَةًۗ

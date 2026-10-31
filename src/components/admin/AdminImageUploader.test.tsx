@@ -63,4 +63,18 @@ describe("admin image uploader", () => {
     expect(container.textContent).toContain("menunggu pemulihan");
     expect(upload).not.toHaveBeenCalled();
   });
+
+  it("replaces the stale pending message after the parent resolves the upload", async () => {
+    upload.mockResolvedValue({ kind: "pending", message: "Foto belum terhubung." });
+    await act(async () => render(false, true));
+    const input = container.querySelector<HTMLInputElement>("#upload-hero")!;
+    Object.defineProperty(input, "files", { configurable: true, value: [new File(["sample"], "foto.jpg", { type: "image/jpeg" })] });
+    await act(async () => input.dispatchEvent(new Event("change", { bubbles: true })));
+    await act(async () => Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Unggah foto"))!.click());
+    expect(container.textContent).toContain("Foto belum terhubung.");
+
+    await act(async () => render(false, false));
+    expect(container.textContent).toContain("Foto terverifikasi dan dipilih.");
+    expect(container.textContent).not.toContain("Foto belum terhubung.");
+  });
 });

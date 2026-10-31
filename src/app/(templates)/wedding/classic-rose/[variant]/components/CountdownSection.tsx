@@ -1,12 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 interface CountdownProps {
 	targetDate: Date;
 }
 
 const CountdownSection: React.FC<CountdownProps> = ({ targetDate }) => {
+	const reducedMotion = useReducedMotion();
 	const calculateTimeLeft = () => {
 		const difference = +targetDate - +new Date();
 		let timeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
@@ -46,9 +47,9 @@ const CountdownSection: React.FC<CountdownProps> = ({ targetDate }) => {
 						<motion.div
 							key={unit.label}
 							className='bg-rose-50 p-4 rounded-lg shadow-md'
-							initial={{ opacity: 0, y: 20 }}
-							whileInView={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.5, delay: index * 0.1 }}
+							initial={reducedMotion ? false : { opacity: 0, y: 20 }}
+							whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
+							transition={reducedMotion ? { duration: 0 } : { duration: 0.5, delay: index * 0.1 }}
 							viewport={{ once: true }}>
 							{/* FIX: Mengganti `font-serif` menjadi `font-heading` (Playfair Display) untuk angka */}
 							<p className='font-heading text-4xl text-[#5C4033]'>

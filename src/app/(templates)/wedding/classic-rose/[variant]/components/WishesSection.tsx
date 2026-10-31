@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { defaultFirebaseWishesAdapter } from "@/features/wishes/firebase-adapter";
 import type {
   Wish,
@@ -30,6 +30,7 @@ const WishesSection: React.FC<WishesSectionProps> = ({
   invitationSlug,
   gateway,
 }) => {
+  const reducedMotion = useReducedMotion();
   const activeGateway = gateway ?? defaultFirebaseWishesAdapter;
 
   const [wishes, setWishes] = useState<Wish[]>([]);
@@ -176,10 +177,10 @@ const WishesSection: React.FC<WishesSectionProps> = ({
         style={{ color: "var(--color-text)" }}
       >
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={reducedMotion ? false : { opacity: 0, y: 50 }}
+          whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+          transition={reducedMotion ? { duration: 0 } : { duration: 0.8 }}
         >
           <div className="flex items-center justify-center gap-4">
             <SectionDivider />
@@ -198,10 +199,10 @@ const WishesSection: React.FC<WishesSectionProps> = ({
         <motion.form
           onSubmit={handleSubmit}
           className="classic-rose-surface w-full space-y-3 rounded-2xl p-5 text-left"
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={reducedMotion ? false : { opacity: 0, y: 50 }}
+          whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={reducedMotion ? { duration: 0 } : { duration: 0.8, delay: 0.2 }}
         >
           {successMessage && (
             <div
@@ -406,9 +407,9 @@ const WishesSection: React.FC<WishesSectionProps> = ({
                 <motion.div
                   key={wish.id}
                   className="classic-rose-surface rounded-2xl p-3"
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5 }}
+                  initial={reducedMotion ? false : { opacity: 0, x: -50 }}
+                  animate={reducedMotion ? undefined : { opacity: 1, x: 0 }}
+                  transition={reducedMotion ? { duration: 0 } : { duration: 0.5 }}
                 >
                   <div className="flex justify-between items-start gap-2">
                     <p

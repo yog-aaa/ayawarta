@@ -25,6 +25,7 @@ export function AdminImageUploader({
   const [idempotencyKey, setIdempotencyKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<ImageUploadOutcome | null>(null);
+  const resolvedPending = outcome?.kind === "pending" && !hasPending;
   const id = `upload-${slot.replace(/[^a-z0-9-]/gi, "-")}`;
 
   const upload = async () => {
@@ -77,7 +78,7 @@ export function AdminImageUploader({
         </button>
       </div>
       <p id={`${id}-status`} role={outcome?.kind === "error" || outcome?.kind === "conflict" ? "alert" : "status"} aria-live="polite" className="mt-2 text-xs leading-5 text-muted-foreground">
-        {busy ? "Foto sedang diunggah dan diverifikasi." : outcome?.kind === "verified" ? "Foto terverifikasi dan dipilih. Simpan draf untuk memakai foto ini." : outcome?.message ?? (disabled ? "Simpan draf dan seluruh perubahan sebelum mengunggah." : hasPending ? "Unggahan sebelumnya masih menunggu pemulihan. Anda dapat memulihkannya atau memilih foto lain." : "Pilih berkas, lalu tekan Unggah foto.")}
+        {busy ? "Foto sedang diunggah dan diverifikasi." : outcome?.kind === "verified" || resolvedPending ? "Foto terverifikasi dan dipilih. Simpan draf untuk memakai foto ini." : outcome?.message ?? (disabled ? "Simpan draf dan seluruh perubahan sebelum mengunggah." : hasPending ? "Unggahan sebelumnya masih menunggu pemulihan. Anda dapat memulihkannya atau memilih foto lain." : "Pilih berkas, lalu tekan Unggah foto.")}
       </p>
       {outcome?.kind === "conflict" && <button type="button" onClick={() => window.location.reload()} className="focus-ring mt-2 min-h-11 rounded-lg px-2 text-xs font-semibold text-brand-primary underline underline-offset-2">Muat ulang editor</button>}
     </div>

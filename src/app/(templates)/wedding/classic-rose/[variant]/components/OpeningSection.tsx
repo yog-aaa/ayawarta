@@ -2,7 +2,7 @@
 "use client";
 import React from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
 import { classicRoseCloudinaryLoader, isClassicRoseCloudinaryAsset } from "@/lib/theme-config/cloudinary-theme-loader";
 
@@ -37,15 +37,16 @@ const OpeningSection: React.FC<OpeningProps> = ({
 	heroImage,
 	isPreview = false,
 }) => {
+	const reducedMotion = useReducedMotion();
 	return (
 		<div
 			className='relative min-h-[100svh] w-full flex items-center justify-center overflow-hidden font-[--font-body]'
 			style={{ color: "var(--color-text)" }}>
 			<motion.div
 				className='relative z-10 flex flex-col items-center text-center px-5 py-12 w-full max-w-md md:max-w-xl'
-				initial={{ opacity: 0, scale: 0.9 }}
-				animate={{ opacity: 1, scale: 1 }}
-				transition={{ duration: 1, delay: 0.5 }}>
+				initial={reducedMotion ? false : { opacity: 0, scale: 0.9 }}
+				animate={reducedMotion ? undefined : { opacity: 1, scale: 1 }}
+				transition={reducedMotion ? { duration: 0 } : { duration: 1, delay: 0.5 }}>
 				{isPreview && (
 					<p className='mb-5 rounded-full border border-current/40 px-4 py-1 text-xs tracking-widest'>
 						PRATINJAU · FOTO ILUSTRASI

@@ -1,7 +1,7 @@
 // src/components/templates/classic-rose/EventSection.tsx
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
 import type { InvitationData } from "@/features/invitations/types";
 
@@ -172,15 +172,16 @@ interface EventSectionProps {
 }
 
 const EventSection: React.FC<EventSectionProps> = ({ events }) => {
+	const reducedMotion = useReducedMotion();
 	return (
 		<section className='relative'>
 			<div className='relative z-20 container mx-auto px-4 sm:px-8 max-w-5xl flex flex-col items-center gap-10 pt-16 pb-20 md:pt-20 md:pb-28'>
 				<motion.div
 					className='text-center'
-					initial={{ opacity: 0, y: -50 }}
-					whileInView={{ opacity: 1, y: 0 }}
+					initial={reducedMotion ? false : { opacity: 0, y: -50 }}
+					whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
 					viewport={{ once: true }}
-					transition={{ duration: 0.8 }}>
+					transition={reducedMotion ? { duration: 0 } : { duration: 0.8 }}>
 					<h2
 						className='text-3xl'
 						style={{
@@ -197,10 +198,10 @@ const EventSection: React.FC<EventSectionProps> = ({ events }) => {
 					<motion.div
 						key={index}
 						className='w-full'
-						initial={{ opacity: 0, y: 50 }}
-						whileInView={{ opacity: 1, y: 0 }}
+						initial={reducedMotion ? false : { opacity: 0, y: 50 }}
+						whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
 						viewport={{ once: true }}
-						transition={{ duration: 0.8, delay: index * 0.2 }}>
+						transition={reducedMotion ? { duration: 0 } : { duration: 0.8, delay: index * 0.2 }}>
 						<EventCard event={event} />
 					</motion.div>
 				))}

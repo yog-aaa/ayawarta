@@ -9,11 +9,13 @@ const mocks = vi.hoisted(() => ({
   requireAdminSession: vi.fn(),
   loadEditor: vi.fn(),
   loadPreview: vi.fn(),
+  isA5Enabled: vi.fn(),
   redirect: vi.fn((href: string) => { throw new Error(`REDIRECT:${href}`); }),
   notFound: vi.fn(() => { throw new Error("NOT_FOUND"); }),
 }));
 vi.mock("@/features/auth/service", () => ({ requireAdminSession: mocks.requireAdminSession }));
 vi.mock("@/features/admin/editor-loader", () => ({ loadAdminEditor: mocks.loadEditor, loadAdminPreview: mocks.loadPreview }));
+vi.mock("@/features/admin/a5-feature", () => ({ isA5Enabled: mocks.isA5Enabled }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect, notFound: mocks.notFound }));
 vi.mock("@/components/admin/AdminDraftEditor", () => ({
   AdminDraftEditor: ({ initialPayload, initialDraft, mediaChoices, mediaUploadEnabled, pendingMedia }: {
@@ -60,6 +62,7 @@ const previewData: InvitationData = {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.requireAdminSession.mockResolvedValue({ id: "admin-1" });
+  mocks.isA5Enabled.mockReturnValue(true);
   mocks.loadEditor.mockResolvedValue({ ok: true, data: { draft, mediaChoices: [{ id: "own-1" }], mediaUploadEnabled: false, pendingMedia: [] } });
   mocks.loadPreview.mockResolvedValue({ ok: true, data: {
     kind: "ready", draftId: "draft-1", slug: "default-preview",
@@ -72,6 +75,7 @@ describe("admin editor routes", () => {
   it("renders an unsaved new editor without creating a draft on page load", async () => {
     const html = renderToStaticMarkup(await NewAdminInvitationPage());
     expect(html).toContain('data-draft-id="new"');
+    expect(html).toContain('data-upload-enabled="true"');
     expect(mocks.loadEditor).not.toHaveBeenCalled();
     expect(mocks.loadPreview).not.toHaveBeenCalled();
   });

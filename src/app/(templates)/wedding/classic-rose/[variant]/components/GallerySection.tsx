@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import type { ClassicRoseThemeConfig } from "@/lib/theme-config/classic-rose";
 import type { InvitationData } from "@/features/invitations/types";
 import { classicRoseCloudinaryLoader, isClassicRoseCloudinaryAsset } from "@/lib/theme-config/cloudinary-theme-loader";
@@ -28,6 +28,7 @@ function getEmbedUrl(url: string): string | null {
 }
 
 export default function GallerySection({ gallery }: GallerySectionProps) {
+  const reducedMotion = useReducedMotion();
   const [playVideo, setPlayVideo] = useState(false);
   const embedUrl = gallery.videoUrl ? getEmbedUrl(gallery.videoUrl) : null;
 
@@ -35,10 +36,10 @@ export default function GallerySection({ gallery }: GallerySectionProps) {
     <section className="relative px-4 py-20 sm:px-8 md:py-28">
       <motion.div
         className="classic-rose-surface relative z-10 mx-auto w-full max-w-3xl rounded-3xl p-4 sm:p-7"
-        initial={{ opacity: 0, y: 32 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={reducedMotion ? false : { opacity: 0, y: 32 }}
+        whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
+        transition={reducedMotion ? { duration: 0 } : { duration: 0.6 }}
       >
         <div className="mb-6 text-center">
           <p className="text-xs uppercase tracking-[.3em] opacity-75">Kenangan bersama</p>

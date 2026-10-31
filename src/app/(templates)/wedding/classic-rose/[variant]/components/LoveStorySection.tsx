@@ -1,7 +1,7 @@
 // src/app/(templates)/wedding/classic-rose/[variant]/components/LoveStorySection.tsx
 "use client";
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ClassicRoseThemeConfig as ThemeConfig } from "@/lib/theme-config/classic-rose";
 import type { InvitationData } from "@/features/invitations/types";
 
@@ -16,6 +16,7 @@ interface LoveStorySectionProps {
 const LoveStorySection: React.FC<LoveStorySectionProps> = ({
 	loveStory,
 }) => {
+	const reducedMotion = useReducedMotion();
 	return (
 		<section className='relative pb-20 md:pb-32'>
 			<div
@@ -23,10 +24,10 @@ const LoveStorySection: React.FC<LoveStorySectionProps> = ({
 				style={{ color: "var(--color-text)" }}>
 				<motion.div
 					className='classic-rose-surface w-full rounded-2xl p-6 text-center'
-					initial={{ opacity: 0, y: 50 }}
-					whileInView={{ opacity: 1, y: 0 }}
+					initial={reducedMotion ? false : { opacity: 0, y: 50 }}
+					whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
 					viewport={{ once: true }}
-					transition={{ duration: 0.8, delay: 0.2 }}>
+					transition={reducedMotion ? { duration: 0 } : { duration: 0.8, delay: 0.2 }}>
 					<div className='flex items-center justify-center gap-4'>
 						<SectionDivider />
 						<h2 className='text-xl' style={{ fontFamily: "var(--font-body)" }}>

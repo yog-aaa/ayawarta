@@ -3,7 +3,7 @@
 
 import React, { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 import { ClassicRoseThemeConfig } from "@/lib/theme-config/classic-rose";
 import type { InvitationData } from "@/features/invitations/types";
@@ -35,6 +35,7 @@ function InvitationView({
 	usesPublicSampleMedia?: boolean;
 }) {
 	const [isOpened, setIsOpened] = useState(false);
+	const reducedMotion = useReducedMotion();
 	const searchParams = useSearchParams();
 	const guestName = searchParams.get("to");
 
@@ -72,8 +73,8 @@ function InvitationView({
 				{!isOpened ? (
 					<motion.div
 						key='opening'
-						exit={{ opacity: 0, y: -50 }}
-						transition={{ duration: 0.5 }}>
+						exit={reducedMotion ? undefined : { opacity: 0, y: -50 }}
+						transition={reducedMotion ? { duration: 0 } : { duration: 0.5 }}>
 						<OpeningSection
 							coupleNames={`${data.couple.groom.name} & ${data.couple.bride.name}`}
 							guestName={guestName}
@@ -87,9 +88,9 @@ function InvitationView({
 					<main className='seamless-background'>
 						<motion.div
 							key='content'
-							initial={{ opacity: 0 }}
-							animate={{ opacity: 1 }}
-							transition={{ duration: 0.8 }}>
+							initial={reducedMotion ? false : { opacity: 0 }}
+							animate={reducedMotion ? undefined : { opacity: 1 }}
+							transition={reducedMotion ? { duration: 0 } : { duration: 0.8 }}>
 							{data.musicUrl && (
 								<MusicPlayer videoUrl={data.musicUrl} theme={themeConfig} />
 							)}
