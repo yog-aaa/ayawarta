@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    '/admin/api/drafts/*/media': [
+      './node_modules/.pnpm/@img+sharp-linux-x64@0.35.5*/node_modules/@img/sharp-linux-x64/**/*',
+      './node_modules/.pnpm/@img+sharp-libvips-linux-x64@1.3.4*/node_modules/@img/sharp-libvips-linux-x64/**/*',
+    ],
+  },
   images: {
     remotePatterns: [
       {

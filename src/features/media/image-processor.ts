@@ -2,7 +2,7 @@ import "server-only";
 
 import crypto from "node:crypto";
 import fs from "node:fs";
-import sharp, { type Metadata } from "sharp";
+import type { Metadata } from "sharp";
 
 export const MAX_INPUT_BYTES = 50 * 1024 * 1024; // 50 MB
 export const MAX_DECODED_PIXELS = 40_000_000; // 40 Megapixels
@@ -70,6 +70,7 @@ export async function prepareImage(
     );
   }
 
+  const { default: sharp } = await import("sharp");
   // 2. Decode metadata using sharp
   let metadata: Metadata;
   try {

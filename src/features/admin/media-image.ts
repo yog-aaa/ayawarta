@@ -1,7 +1,6 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import sharp from "sharp";
 import { prepareImage } from "@/features/media/image-processor";
 
 export const MAX_ADMIN_IMAGE_INPUT_BYTES = 15 * 1024 * 1024;
@@ -52,6 +51,7 @@ export async function prepareAdminImage(input: Buffer, declaredType: string, slo
     throw new AdminImageInputError("file", "Tanda berkas foto tidak valid atau berkas memiliki data tambahan.");
   }
 
+  const { default: sharp } = await import("sharp");
   let source: Awaited<ReturnType<typeof prepareImage>>;
   try {
     source = await prepareImage(input, {
