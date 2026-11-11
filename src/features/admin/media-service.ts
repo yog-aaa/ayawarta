@@ -7,7 +7,7 @@ import { createDraftMediaRepository, DraftMediaError, verifyDraftMediaReceipt } 
 import type { AdminDraftResult } from "./draft-service";
 import { parseDraftForSave, validateDraftForPublish } from "./draft-schema";
 import { A5UnavailableError, requireA5Enabled } from "./a5-feature";
-import { AdminCloudIdentityError, RealAdminMediaCloudClient, verifyAdminCloudImage, type AdminCloudImage, type AdminMediaCloudClient } from "./media-cloudinary";
+import { AdminCloudIdentityError, RealAdminMediaCloudClient, cloudinaryHttpCode, verifyAdminCloudImage, type AdminCloudImage, type AdminMediaCloudClient } from "./media-cloudinary";
 import { AdminImageInputError, parseAdminImageSlot, prepareAdminImage, type AdminImageSlot } from "./media-image";
 
 export interface AdminVerifiedImage {
@@ -53,6 +53,14 @@ function mapError(error: unknown, recoveryId?: string): AdminDraftResult<never> 
     return { ok: false, code: "dependency_failure", message: "Penyimpanan media belum tersedia. Coba lagi.", ...(recoveryId ? { recoveryId } : {}) };
   }
   return { ok: false, code: "dependency_failure", message: "Foto belum dapat disimpan. Coba pemulihan unggahan.", ...(recoveryId ? { recoveryId } : {}) };
+}
+
+function safeErrorCategory(error: unknown): string {
+  if (error instanceof AdminCloudIdentityError) return "cloud_identity";
+  if (error instanceof DraftMediaError) return "draft_media";
+  if (error instanceof AdminImageInputError) return "image_input";
+  if (error instanceof Error && error.name === "AbortError") return "timeout";
+  return "unexpected";
 }
 
 function assertInput(input: AdminUploadImageInput): AdminImageSlot {
@@ -111,14 +119,19 @@ async function verifyRemote(
 
 /** Server-facing operation. The A5 and admin gates execute before new-table access or provider calls. */
 export async function uploadAdminDraftImage(input: AdminUploadImageInput): Promise<AdminDraftResult<AdminVerifiedImage>> {
+  const started = performance.now();
+  let phase = "admin";
   let recoveryId: string | undefined;
   try {
     const admin = await requireAdminSession();
     requireA5Enabled();
     const slot = assertInput(input);
+    phase = "draft";
     await currentNewDraft(input.draftId, input.expectedDraftVersion, slot);
+    phase = "prepare";
     const prepared = await prepareAdminImage(input.bytes, input.contentType, slot);
     const repo = createDraftMediaRepository();
+    phase = "reserve";
     const { provision } = await repo.reserve({
       draftId: input.draftId, slot: storedSlot(slot), idempotencyKey: input.idempotencyKey,
       expectedDraftVersion: input.expectedDraftVersion,
@@ -128,13 +141,19 @@ export async function uploadAdminDraftImage(input: AdminUploadImageInput): Promi
     });
     if (provision.state === "VERIFIED") return { ok: true, data: readyDto(provision) };
     recoveryId = provision.id;
+    phase = "cloud_client";
     const cloud = cloudClient();
+    phase = "cloud_read";
     const existing = await cloud.read(provision.publicId);
+    phase = "cloud_upload";
     const uploaded = existing ? null : await cloud.upload(prepared.buffer, provision.publicId);
+    phase = "cloud_readback";
     const readback = existing ?? await cloud.read(provision.publicId);
     if (!readback || (uploaded && readback.assetId !== uploaded.assetId)) throw new AdminCloudIdentityError();
+    phase = "remote_verify";
     await verifyRemote(cloud, readback, { publicId: provision.publicId, format: provision.format,
       bytes: provision.bytes, width: provision.width, height: provision.height, sha256: provision.preparedSha256 });
+    phase = "finalize";
     const verified = await repo.finalizeVerified({
       draftId: input.draftId, provisionId: provision.id, cloudinaryAssetId: readback.assetId,
       publicId: provision.publicId, secureUrl: readback.secureUrl, resourceType: "IMAGE",
@@ -142,8 +161,16 @@ export async function uploadAdminDraftImage(input: AdminUploadImageInput): Promi
       originalName: slot === "hero" ? "Foto sampul.webp" : slot === "groom" ? "Foto mempelai pria.webp" :
         slot === "bride" ? "Foto mempelai wanita.webp" : "Foto galeri.webp",
     });
-    return { ok: true, data: readyDto(verified) };
-  } catch (error) { return mapError(error, recoveryId); }
+    const dto = readyDto(verified);
+    console.info("A5_MEDIA_UPLOAD", { outcome: "verified", durationMs: Math.round(performance.now() - started) });
+    return { ok: true, data: dto };
+  } catch (error) {
+    if (recoveryId) console.warn("A5_MEDIA_UPLOAD", {
+      outcome: "failed", phase, durationMs: Math.round(performance.now() - started),
+      httpCode: cloudinaryHttpCode(error), errorCategory: safeErrorCategory(error),
+    });
+    return mapError(error, recoveryId);
+  }
 }
 
 /** Looks up a reserved remote resource without needing the original file. */

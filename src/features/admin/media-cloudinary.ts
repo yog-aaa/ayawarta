@@ -27,6 +27,15 @@ export class AdminCloudIdentityError extends Error {
   constructor() { super("Cloudinary asset identity does not match the prepared image"); this.name = "AdminCloudIdentityError"; }
 }
 
+/** Cloudinary SDK errors can carry the HTTP status directly or under `error`. */
+export function cloudinaryHttpCode(value: unknown): number | null {
+  if (!value || typeof value !== "object") return null;
+  if ("http_code" in value && typeof value.http_code === "number") return value.http_code;
+  const nested = "error" in value ? value.error : null;
+  return nested && typeof nested === "object" && "http_code" in nested && typeof nested.http_code === "number"
+    ? nested.http_code : null;
+}
+
 function parseResource(value: Record<string, unknown>): AdminCloudImage {
   const required = ["asset_id", "public_id", "secure_url", "format"] as const;
   if (required.some((field) => typeof value[field] !== "string" || !value[field])) throw new AdminCloudIdentityError();
@@ -77,7 +86,7 @@ export class RealAdminMediaCloudClient implements AdminMediaCloudClient {
     try {
       return parseResource(await cloudinary.api.resource(publicId, { resource_type: "image" }) as Record<string, unknown>);
     } catch (error) {
-      if (typeof error === "object" && error !== null && "http_code" in error && error.http_code === 404) return null;
+      if (cloudinaryHttpCode(error) === 404) return null;
       throw error;
     }
   }

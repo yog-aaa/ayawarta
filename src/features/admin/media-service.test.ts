@@ -21,9 +21,9 @@ vi.mock("./a5-feature", () => ({
   requireA5Enabled: vi.fn(),
   A5UnavailableError: class A5UnavailableError extends Error { constructor() { super("Disabled"); } },
 }));
-vi.mock("./media-cloudinary", () => ({
+vi.mock("./media-cloudinary", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./media-cloudinary")>()),
   RealAdminMediaCloudClient: vi.fn(), verifyAdminCloudImage: vi.fn(),
-  AdminCloudIdentityError: class AdminCloudIdentityError extends Error { constructor() { super("Cloud identity mismatch"); } },
 }));
 vi.mock("./media-image", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./media-image")>()), prepareAdminImage: vi.fn(),
@@ -98,6 +98,19 @@ describe("A5 authenticated media service", () => {
   it("keeps the recovery ID when finalization reports a receipt conflict", async () => {
     mediaRepo.finalizeVerified.mockRejectedValueOnce(new DraftMediaError("conflict", "receipt differs"));
     expect(await uploadAdminDraftImage(input)).toMatchObject({ ok: false, code: "conflict", recoveryId: provisionId });
+  });
+
+  it("logs only safe phase and status details for a provider failure", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      cloud.read.mockRejectedValueOnce({ error: { http_code: 401, message: "api_secret=not-for-logs" } });
+      expect(await uploadAdminDraftImage(input)).toMatchObject({ ok: false, code: "dependency_failure", recoveryId: provisionId });
+      expect(warning).toHaveBeenCalledWith("A5_MEDIA_UPLOAD", expect.objectContaining({
+        outcome: "failed", phase: "cloud_read", httpCode: 401, errorCategory: "unexpected",
+      }));
+      expect(JSON.stringify(warning.mock.calls)).not.toContain("not-for-logs");
+      expect(cloud.upload).not.toHaveBeenCalled();
+    } finally { warning.mockRestore(); }
   });
 
   it("recovers an existing remote asset without the original file", async () => {
