@@ -20,6 +20,23 @@ describe("admin image preparation", () => {
     expect(prepared.buffer.length).toBe(prepared.bytes);
   });
 
+  it("applies EXIF orientation before sizing and removes source metadata", async () => {
+    const input = await sharp({ create: { width: 40, height: 20, channels: 3, background: "#d0a681" } })
+      .jpeg().withMetadata({ orientation: 6 }).toBuffer();
+    const prepared = await prepareAdminImage(input, "image/jpeg", "hero");
+    expect(prepared).toMatchObject({ width: 20, height: 40, format: "webp" });
+    expect((await sharp(prepared.buffer).metadata()).orientation).toBeUndefined();
+  });
+
+  it("rejects an image above the decoded-pixel limit before resizing", async () => {
+    const input = await sharp({ create: { width: 6500, height: 6500, channels: 3, background: "#ffffff" } })
+      .jpeg({ quality: 1 }).toBuffer();
+    expect(input.length).toBeLessThan(MAX_ADMIN_IMAGE_INPUT_BYTES);
+    await expect(prepareAdminImage(input, "image/jpeg", "hero")).rejects.toMatchObject({
+      field: "file", message: expect.stringContaining("dimensi"),
+    });
+  });
+
   it("rejects MIME spoofing, oversize input, and invalid images", async () => {
     const image = await sharp({ create: { width: 10, height: 10, channels: 3, background: "#ffffff" } }).png().toBuffer();
     await expect(prepareAdminImage(image, "image/jpeg", "hero")).rejects.toMatchObject({ field: "file" });

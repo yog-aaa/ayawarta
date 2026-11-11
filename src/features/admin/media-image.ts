@@ -1,7 +1,8 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import { prepareImage } from "@/features/media/image-processor";
+import type { Metadata } from "sharp";
+import { MAX_DECODED_PIXELS } from "@/features/media/image-processor";
 
 export const MAX_ADMIN_IMAGE_INPUT_BYTES = 15 * 1024 * 1024;
 export const MAX_ADMIN_IMAGE_OUTPUT_BYTES = 3 * 1024 * 1024;
@@ -52,35 +53,43 @@ export async function prepareAdminImage(input: Buffer, declaredType: string, slo
   }
 
   const { default: sharp } = await import("sharp");
-  let source: Awaited<ReturnType<typeof prepareImage>>;
+  const decodeOptions = { limitInputPixels: MAX_DECODED_PIXELS };
+  let source: Metadata;
   try {
-    source = await prepareImage(input, {
-      maxInputBytes: MAX_ADMIN_IMAGE_INPUT_BYTES,
-      targetMaxBytes: MAX_ADMIN_IMAGE_INPUT_BYTES,
-    });
+    source = await sharp(input, decodeOptions).metadata();
   } catch {
     throw new AdminImageInputError("file", "Foto tidak dapat diproses atau melampaui batas ukuran dan dimensi.");
   }
-  if (source.format !== mimeFormat) throw new AdminImageInputError("file", "Jenis berkas tidak cocok dengan isi foto.");
+  if (!source.width || !source.height || source.width * source.height > MAX_DECODED_PIXELS) {
+    throw new AdminImageInputError("file", "Foto tidak dapat diproses atau melampaui batas ukuran dan dimensi.");
+  }
+  if ((source.format === "jpeg" ? "jpg" : source.format) !== mimeFormat) {
+    throw new AdminImageInputError("file", "Jenis berkas tidak cocok dengan isi foto.");
+  }
 
   const limit = slot === "hero" ? { width: 1600, height: 2400 } :
     slot === "groom" || slot === "bride" ? { width: 900, height: 1200 } : { width: 1600, height: 1600 };
   for (const quality of [82, 76, 70, 64]) {
-    const buffer = await sharp(source.buffer)
-      .resize({ ...limit, fit: "inside", withoutEnlargement: true })
-      .webp({ quality, effort: 5 })
-      .toBuffer();
-    if (buffer.length > MAX_ADMIN_IMAGE_OUTPUT_BYTES) continue;
-    const meta = await sharp(buffer).metadata();
-    if (!meta.width || !meta.height || meta.format !== "webp") break;
-    return {
-      buffer,
-      sha256: createHash("sha256").update(buffer).digest("hex"),
-      format: "webp",
-      width: meta.width,
-      height: meta.height,
-      bytes: buffer.length,
-    };
+    try {
+      const buffer = await sharp(input, decodeOptions)
+        .rotate()
+        .resize({ ...limit, fit: "inside", withoutEnlargement: true })
+        .webp({ quality, effort: 5 })
+        .toBuffer();
+      if (buffer.length > MAX_ADMIN_IMAGE_OUTPUT_BYTES) continue;
+      const meta = await sharp(buffer).metadata();
+      if (!meta.width || !meta.height || meta.format !== "webp") break;
+      return {
+        buffer,
+        sha256: createHash("sha256").update(buffer).digest("hex"),
+        format: "webp",
+        width: meta.width,
+        height: meta.height,
+        bytes: buffer.length,
+      };
+    } catch {
+      throw new AdminImageInputError("file", "Foto tidak dapat diproses atau melampaui batas ukuran dan dimensi.");
+    }
   }
   throw new AdminImageInputError("file", "Foto terlalu besar setelah dioptimalkan. Pilih foto lain.");
 }
