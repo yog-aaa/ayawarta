@@ -70,12 +70,12 @@ export default function SigerPrianganView({ data, invitationSlug, isPreview = fa
           <div className="siger-rule" aria-hidden="true" />
           <p className="siger-lede">Dengan hangat kami mengundang Anda untuk merayakan hari pernikahan kami.</p>
         </section>
-        {data.sections.couple && <section className="siger-section" aria-labelledby="siger-couple-title">
+        {data.sections.couple && <section className="siger-section siger-couple-section" aria-labelledby="siger-couple-title">
           <p className="siger-kicker">Dua cerita, satu perjalanan</p><h2 id="siger-couple-title">Mempelai</h2>
           <div className="siger-profiles"><Profile person={groom} label="Mempelai" /><Profile person={bride} label="Mempelai" /></div>
           {(data.greeting || data.prayer) && <div className="siger-message">{data.greeting && <p>{data.greeting}</p>}{data.prayer && <p>{data.prayer}</p>}</div>}
         </section>}
-        {data.sections.events && data.events.length > 0 && <section className="siger-section" aria-labelledby="siger-events-title">
+        {data.sections.events && data.events.length > 0 && <section className="siger-section siger-events-section" aria-labelledby="siger-events-title">
           <p className="siger-kicker">Hari bahagia</p><h2 id="siger-events-title">Rangkaian Acara</h2>
           <div className="siger-events">{data.events.map((event, index) => <article className="siger-event" key={`${event.name}-${index}`}>
             <span className="siger-event-index">0{index + 1} / Acara</span><h3>{event.name}</h3>
@@ -84,11 +84,11 @@ export default function SigerPrianganView({ data, invitationSlug, isPreview = fa
             {event.mapLink && <a href={event.mapLink} target="_blank" rel="noopener noreferrer" className="siger-inline-link">Lihat lokasi ↗</a>}
           </article>)}</div>
         </section>}
-        {data.sections.loveStory && !!data.loveStory?.length && <section className="siger-section" aria-labelledby="siger-story-title">
+        {data.sections.loveStory && !!data.loveStory?.length && <section className="siger-section siger-story-section" aria-labelledby="siger-story-title">
           <p className="siger-kicker">Jejak yang kami simpan</p><h2 id="siger-story-title">Kisah Kami</h2>
           <div className="siger-stories">{data.loveStory.map((story, index) => <article className="siger-story" key={`${story.title}-${index}`}><span>0{index + 1}</span><div><h3>{story.title}</h3><p>{story.content}</p></div></article>)}</div>
         </section>}
-        {data.sections.gallery && !!data.gallery?.items.length && <section className="siger-section" aria-labelledby="siger-gallery-title">
+        {data.sections.gallery && !!data.gallery?.items.length && <section className="siger-section siger-gallery-section" aria-labelledby="siger-gallery-title">
           <p className="siger-kicker">Album pasangan</p><h2 id="siger-gallery-title">Galeri</h2>
           <div className="siger-gallery">{data.gallery.items.map((item, index) => <figure key={`${item.url}-${index}`}><div className="siger-gallery-frame">{item.url ? <Image src={item.url} alt={item.altText} fill sizes="(max-width: 600px) 85vw, (max-width: 900px) 45vw, 300px" className="siger-gallery-image" loading="lazy" /> : <span className="siger-gallery-placeholder" aria-label={item.altText}>Foto pasangan</span>}</div>{item.caption && <figcaption>{item.caption}</figcaption>}</figure>)}</div>
         </section>}

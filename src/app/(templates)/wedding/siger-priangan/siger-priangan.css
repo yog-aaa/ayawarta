@@ -24,7 +24,7 @@
 .siger-cover-side { position: absolute; top: 46%; width: 180px; color: #5b6c61; font: italic 23px/1.35 Georgia,serif; }
 .siger-cover-side-left { left: max(4vw,30px); text-align: right; }
 .siger-cover-side-right { right: max(4vw,30px); }
-.siger-cover-paper { position: relative; width: min(100%,440px); min-height: min(820px,calc(100svh - 40px)); overflow: hidden; border: 1px solid #d6c6a8; background: linear-gradient(135deg,#fffaf2,#f2e9d9 75%,#fffaf2); box-shadow: 0 26px 65px #4d483328, 0 2px 4px #4d48331a; }
+.siger-cover-paper { position: relative; width: min(100%,440px); min-height: min(820px,calc(100svh - 40px)); overflow: hidden; border: 1px solid #d6c6a8; background: linear-gradient(135deg,#fffaf2,#f2e9d9 75%,#fffaf2); box-shadow: 0 26px 65px #4d483328, 0 2px 4px #4d48331a; perspective: 1100px; }
 .siger-cover-paper::before,.siger-content::before { background-image: repeating-linear-gradient(145deg,transparent 0 32px,#b58b5318 33px 34px,transparent 35px 62px),radial-gradient(#9d825512 .65px,transparent .8px); background-size: auto, 5px 5px; }
 .siger-cover-paper::before { position: absolute; inset: 0; content: ""; pointer-events: none; }
 .siger-cover-relief { position: absolute; top: 82px; left: 50%; width: 280px; height: 174px; transform: translateX(-50%); opacity: .36; pointer-events: none; }
@@ -55,7 +55,8 @@
 .siger-section p,.siger-section address { line-height: 1.7; }
 .siger-hero,.siger-closing { text-align: center; }
 .siger-hero h1 { margin: 13px auto; font-size: clamp(42px,7vw,64px); line-height: 1.05; }
-.siger-seal { display: grid; width: 70px; height: 70px; place-items: center; margin: 0 auto 25px; border: 1px solid var(--siger-gold); border-radius: 50%; box-shadow: 0 0 0 7px #b58b5319; color: #8b663d; font: 25px Georgia,serif; }
+.siger-seal { position: relative; display: grid; width: 70px; height: 70px; place-items: center; margin: 0 auto 25px; border: 1px solid var(--siger-gold); border-radius: 50%; box-shadow: 0 0 0 7px #b58b5319; color: #8b663d; font: 25px Georgia,serif; }
+.siger-seal::after { position: absolute; inset: -10px; border: 1px solid #b58b5359; border-radius: 50%; content: ""; opacity: .65; pointer-events: none; }
 .siger-rule { width: 52px; height: 1px; margin: 23px auto; background: var(--siger-gold); }
 .siger-lede { max-width: 490px; margin: auto; font-size: 17px; }
 .siger-profiles,.siger-events,.siger-stories,.siger-gift-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 17px; }
@@ -65,7 +66,8 @@
 .siger-muted { color: #52675e; font-size: 12px; }
 .siger-message { margin-top: 22px; border-left: 2px solid var(--siger-gold); border-radius: 0 12px 12px 0; padding: 17px 20px; background: #fffbf5; }
 .siger-message p + p { margin-top: 12px; }
-.siger-event { padding: 25px 19px; text-align: center; }
+.siger-event { position: relative; padding: 25px 19px; text-align: center; }
+.siger-event::after { position: absolute; right: 13px; bottom: -7px; left: 13px; height: 7px; border-radius: 0 0 13px 13px; background: linear-gradient(#b58b532b,#243b350d); content: ""; opacity: .7; pointer-events: none; }
 .siger-event-index { color: #785b38; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
 .siger-event h3 { margin: 11px 0; }
 .siger-event-date { font-family: Georgia,serif; font-size: 24px; }
@@ -76,6 +78,7 @@
 .siger-story > span { color: #785b38; font: 22px Georgia,serif; }
 .siger-story h3 { margin-bottom: 7px; }
 .siger-story p { font-size: 14px; }
+.siger-story-section::before { position: absolute; top: -1px; right: 10%; left: 10%; height: 10px; border-top: 1px solid #b58b5366; border-radius: 50% 50% 0 0; background: linear-gradient(#fffaf2,#f6f1e800); content: ""; opacity: .7; pointer-events: none; }
 .siger-gallery { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
 .siger-gallery figure { min-width: 0; }
 .siger-gallery figure:first-child:nth-last-child(n+3) { grid-column: span 2; }
@@ -109,4 +112,75 @@
 .siger-closing-names { margin-top: 22px; font-size: 28px; }
 @media(max-width:1050px) { .siger-cover-side { display: none; } }
 @media(max-width:620px) { .siger-cover-stage { padding: 0; } .siger-cover-paper { min-height: 100svh; width: 100%; border: 0; box-shadow: none; } .siger-cover-content { min-height: 100svh; padding: 34px 24px 28px; } .siger-section { padding-block: 55px; } .siger-profiles,.siger-events,.siger-stories,.siger-gift-list { grid-template-columns: 1fr; } .siger-portrait-hero { margin-top: clamp(100px,16svh,150px); } .siger-content { background: var(--siger-ivory); } }
+
+/* The paper and portrait layers alone respond to local scroll progress. Base styles above are the final static frame. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports ((animation-timeline: view()) and (animation-range: entry)) {
+    .siger-cover-stage { view-timeline-name: --siger-cover; }
+    .siger-hero { view-timeline-name: --siger-hero; }
+    .siger-couple-section { view-timeline-name: --siger-couple; }
+    .siger-events-section { view-timeline-name: --siger-events; }
+    .siger-story-section { view-timeline-name: --siger-story; }
+    .siger-gallery-section { view-timeline-name: --siger-gallery; }
+    .siger-closing { view-timeline-name: --siger-closing; }
+
+    .siger-cover-paper::before,
+    .siger-cover-relief,
+    .siger-hero .siger-seal::after,
+    .siger-couple-section .siger-profile .siger-portrait,
+    .siger-events-section .siger-event::after,
+    .siger-story-section::before,
+    .siger-gallery-section figure:nth-child(-n+2) .siger-gallery-frame,
+    .siger-closing .siger-seal::after {
+      animation-duration: auto;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-range: entry 0% exit 100%;
+    }
+
+    .siger-cover-paper::before { animation-name: siger-paper-light; animation-timeline: --siger-cover; }
+    .siger-cover-relief { animation-name: siger-cover-depth; animation-timeline: --siger-cover; }
+    .siger-hero .siger-seal::after { animation-name: siger-seal-light; animation-timeline: --siger-hero; }
+    .siger-couple-section .siger-profile .siger-portrait { animation-name: siger-portrait-depth; animation-timeline: --siger-couple; }
+    .siger-couple-section .siger-profile:nth-child(2) .siger-portrait { animation-direction: reverse; }
+    .siger-events-section .siger-event::after { animation-name: siger-event-edge; animation-timeline: --siger-events; }
+    .siger-story-section::before { animation-name: siger-story-edge; animation-timeline: --siger-story; }
+    .siger-gallery-section figure:nth-child(-n+2) .siger-gallery-frame { animation-name: siger-gallery-mat; animation-timeline: --siger-gallery; }
+    .siger-gallery-section figure:nth-child(2) .siger-gallery-frame { animation-direction: reverse; }
+    .siger-closing .siger-seal::after { animation-name: siger-seal-light; animation-timeline: --siger-closing; }
+
+    @keyframes siger-paper-light {
+      0%, 100% { transform: translate3d(0,8px,0); opacity: .7; }
+      50% { transform: translate3d(0,0,0); opacity: 1; }
+    }
+    @keyframes siger-cover-depth {
+      0% { transform: translateX(-50%) translateY(8px) rotateX(4deg); opacity: .28; }
+      50% { transform: translateX(-50%) translateY(0) rotateX(0); opacity: .36; }
+      100% { transform: translateX(-50%) translateY(-8px) rotateX(-4deg); opacity: .28; }
+    }
+    @keyframes siger-seal-light {
+      0%, 100% { transform: rotate(-3deg) scale(.96); opacity: .4; }
+      50% { transform: rotate(0) scale(1); opacity: .65; }
+    }
+    @keyframes siger-portrait-depth {
+      0% { transform: translate3d(-8px,0,0) rotateY(-3deg); }
+      50% { transform: translate3d(0,0,0) rotateY(0); }
+      100% { transform: translate3d(3px,0,0) rotateY(1deg); }
+    }
+    @keyframes siger-event-edge {
+      0%, 100% { transform: translate3d(0,5px,0); opacity: .4; }
+      50% { transform: translate3d(0,0,0); opacity: .7; }
+    }
+    @keyframes siger-story-edge {
+      0% { transform: translate3d(0,-6px,0) rotateX(3deg); opacity: .3; }
+      50% { transform: translate3d(0,0,0) rotateX(0); opacity: .7; }
+      100% { transform: translate3d(0,4px,0) rotateX(-2deg); opacity: .4; }
+    }
+    @keyframes siger-gallery-mat {
+      0% { transform: translate3d(0,6px,0) rotate(-.6deg); }
+      50% { transform: translate3d(0,0,0) rotate(0); }
+      100% { transform: translate3d(0,-6px,0) rotate(.6deg); }
+    }
+  }
+}
 @media(prefers-reduced-motion:reduce) { .siger-shell *, .siger-shell *::before, .siger-shell *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
