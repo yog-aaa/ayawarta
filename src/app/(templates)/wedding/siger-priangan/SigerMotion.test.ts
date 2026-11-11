@@ -6,6 +6,18 @@ import { describe, expect, it } from "vitest";
 const css = postcss.parse(readFileSync(path.join(import.meta.dirname, "siger-priangan.css"), "utf8"));
 
 describe("Siger Priangan decorative motion", () => {
+  it("keeps a continuous paper sheet and section folds in the static frame", () => {
+    const reading = css.nodes.find((node) => node.type === "rule" && node.selector === ".siger-reading");
+    const fold = css.nodes.find((node) => node.type === "rule" && node.selector.includes(".siger-section + .siger-section::before"));
+    expect(reading?.type).toBe("rule");
+    expect(fold?.type).toBe("rule");
+    if (reading?.type === "rule" && fold?.type === "rule") {
+      expect(reading.nodes.some((node) => node.type === "decl" && node.prop === "background" && node.value.includes("--siger-paper"))).toBe(true);
+      expect(fold.nodes.some((node) => node.type === "decl" && node.prop === "background" && node.value.includes("linear-gradient"))).toBe(true);
+      expect(fold.parent?.type).toBe("root");
+    }
+  });
+
   it("keeps scroll effects behind feature detection and a no-preference setting", () => {
     let animatedRules = 0;
     css.walkDecls("animation-name", (declaration) => {
