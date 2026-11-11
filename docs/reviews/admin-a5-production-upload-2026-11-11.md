@@ -1,6 +1,6 @@
 # A5 Production upload check — 2026-11-11
 
-**Status: Production upload failed before Cloudinary storage; draft remains private.** This record concerns the owner-requested test of the optimized admin photo path on the AyaWarta Production deployment. It does not attest to a successful upload or stable function latency.
+**Status: the initial Production upload failed; the same QA reservation was verified after the Cloudinary 404 fix deployed. The draft remains private.** This record concerns the owner-requested test of the optimized admin photo path on AyaWarta Production. A single successful upload does not establish stable function latency.
 
 ## Preflight
 
@@ -17,12 +17,22 @@
 - The same supplied JPEG was selected again using **Unggah berkas yang sama**, preserving the existing idempotency key and provision ID. The editor returned to pending after about 26 seconds. A second read-only Neon and Cloudinary check showed the same single `RESERVED` row and no remote resource. No new reservation, media asset, or published invitation was created.
 - Browser console and recent Vercel error/warning logs showed no recorded error. The service maps unexpected provider failures to a generic pending response without logging the failing phase, so these empty logs do not establish a healthy upload path. The public `/qa-a5-upload-20261111` route returned 404 as expected.
 
-## Boundary and follow-up
+## Initial boundary and follow-up
 
-The Production photo preparation succeeded, but the initial Cloudinary lookup did not progress to storage on either attempt. The sanitized UI/runtime evidence alone did not reveal why; the read-only Cloudinary probe below identified a 404 response shape that the client mishandled. Do not create another idempotency key, publish the QA draft, or delete its reservation while the fix is reviewed. Vercel Production Cloudinary Secret values are non-readable; if a retry still fails after deployment, attest their parity with the approved source without printing them.
+The Production photo preparation succeeded, but the initial Cloudinary lookup did not progress to storage on either attempt. The sanitized UI/runtime evidence alone did not reveal why; the read-only Cloudinary probe below identified a 404 response shape that the client mishandled. The retry needed to keep the existing idempotency key and reservation. Vercel Production Cloudinary Secret values were non-readable, so credential parity would require separate attestation only if the corrected retry failed.
 
-## Root-cause investigation and code candidate
+## Root-cause investigation and fix
 
 The approved local Cloudinary Admin API returned the missing-resource status as `{ error: { http_code: 404 } }`. `RealAdminMediaCloudClient.read` only checked a top-level `http_code`, so it threw during the initial remote lookup instead of returning `null` and proceeding to `upload_stream`. This explains why both Production attempts left the same reservation without a remote asset. A new test reproduced the nested-404 failure against the old implementation, then passed after the client accepted both top-level and nested 404. Tests still require 401 and 500 to propagate.
 
-The local code candidate also records a sanitized `A5_MEDIA_UPLOAD` outcome, elapsed service time, and failure phase/status/category. It never logs provider messages, public IDs, URLs, credentials, or customer content. Frozen pnpm install, Prisma format/validate/generate, TypeScript, ESLint, full Vitest (70 passed/3 skipped files; 878 passed/3 skipped tests), and a Next.js production build passed. The change is **not yet deployed**, so the live upload remains unverified. Once the owner reviews, commits, and deploys this candidate, retry only the saved QA provision with the same original file and idempotency key, inspect the new phase/timing log, verify Cloudinary readback and Neon `VERIFIED` state, and confirm the draft remains private.
+The fix also records a sanitized `A5_MEDIA_UPLOAD` outcome, elapsed service time, and failure phase/status/category. It never logs provider messages, public IDs, URLs, credentials, or customer content. Frozen pnpm install, Prisma format/validate/generate, TypeScript, ESLint, full Vitest (70 passed/3 skipped files; 878 passed/3 skipped tests), and a Next.js production build passed before deployment.
+
+## Post-fix Production retest
+
+- Vercel Production deployment `dpl_DZ6o2tHovhDirRs6RaQ9z9xhNkLm` was Ready and aliased to `ayawarta.my.id` at commit `7fc11d73e53a22fd50ab7e2f69c653a802e75453` (`fix(admin): tangani 404 Cloudinary saat unggah media A5`).
+- The authenticated editor still showed the single pending cover reservation. The same owner-approved `gallery-01.jpg` was selected through **Unggah berkas yang sama**, retaining its idempotency key. The pending warning disappeared and the editor showed the verified 1600 × 1066 cover image. The cover selection was saved to the private draft, advancing it from version 1 to version 2.
+- Vercel runtime logged `A5_MEDIA_UPLOAD { outcome: 'verified', durationMs: 6204 }` for the Production media POST. No error-level logs appeared for this deployment in the queried 15:43–16:33 UTC window. This is one service invocation, not a latency percentile or a browser/network timing measurement.
+- A guarded, read-only Neon check found exactly one reservation for the QA draft: the original provision is `VERIFIED`, slot `cover`, WebP 1600 × 1066, 297,592 bytes, linked to one `MediaAsset` and selected by the saved draft. A separate Cloudinary Admin API readback matched the asset ID, public ID, versioned secure URL, format, byte count, and dimensions. No new reservation was created.
+- The draft has no published invitation ID, and the public `/qa-a5-upload-20261111` route returned 404. Its private preview reported missing wedding date and event fields because the minimal QA fixture is intentionally incomplete; this does not affect the upload result.
+
+The original missing-resource failure is fixed in the live upload path. Keep the QA draft private; additional latency samples belong to a separate performance assessment.
