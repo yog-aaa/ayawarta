@@ -31,7 +31,7 @@ Neon schema migration and the one-time canonical seed completed on 2026-10-30 fo
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
 - `APPROVED_NEON_TARGET_FINGERPRINT` (approved endpoint/database/role identifier for guarded production tooling)
-- `AYAWARTA_A5_MEDIA` and `AYAWARTA_A5_APPROVED_CLOUD` (optional A5 activation switches; absent by default)
+- `AYAWARTA_A5_MEDIA` and `AYAWARTA_A5_APPROVED_CLOUD` (server-only A5 activation switches; enabled for Vercel Production on 2026-11-11, absent by default elsewhere)
 
 ### Public client configuration
 
@@ -78,9 +78,9 @@ On Vercel Production (`VERCEL_ENV=production`), the application runtime strictly
 
 The guarded Neon migration, one-time canonical seed, and strict `pnpm prod:verify --execute` check completed on 2026-10-30. Those were **initial bootstrap** operations, not steps to repeat on the populated target. In particular, rerunning the seed could replace ordered invitation children and reset administrator credentials. The local `prisma:seed` and `seed:verify` commands deliberately reject Neon.
 
-For a later release, use the reviewed `Update` path in [the operational guide](deployment-aiven-vercel.md#reusable-release-wrapper-windows-powershell). It validates the approved direct/pooled target and committed migration history, applies pending migrations, and never reruns seed. Keep Vercel Production and Preview variable scopes separate, build from the committed `pnpm-lock.yaml`, and retain the previous healthy deployment. The [A5 activation runbook](runbooks/admin-a5-production-activation.md) records the completed additive schema migration and separates the pending code release from enabling new image uploads and first publication.
+For a later release, use the reviewed `Update` path in [the operational guide](deployment-aiven-vercel.md#reusable-release-wrapper-windows-powershell). It validates the approved direct/pooled target and committed migration history, applies pending migrations, and never reruns seed. Keep Vercel Production and Preview variable scopes separate, build from the committed `pnpm-lock.yaml`, and retain the previous healthy deployment. The [A5 activation runbook](runbooks/admin-a5-production-activation.md) and [cutover record](reviews/admin-a5-production-activation-2026-11-11.md) document the completed schema migration, staged Production activation, and remaining first customer-content boundary.
 
-The A5 schema step is complete on Neon. The remaining A5 release steps are code/deployment verification and a separately approved feature activation; the mocked-provider browser gate remains open. The 2026-10-31 schema operation did not perform either step.
+The A5 schema step is complete on Neon. The isolated mocked-provider browser gate and the staged Production activation passed on 2026-11-11. The first real customer image upload, private preview, and publication have not been exercised on Production; handle them through the reviewed admin content flow. The 2026-10-31 schema operation did not perform the later deployment or activation.
 
 ## Production Cutover Checklist
 

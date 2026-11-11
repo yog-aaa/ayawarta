@@ -21,6 +21,7 @@ This directory index is the entry point for programmer agents and reviewers. For
 | `docs/media-management.md` | Current Cloudinary catalog, verification commands, and future upload boundaries. |
 | `docs/admin-operations.md` | Administrator draft, upload, recovery, and publication procedures. |
 | `docs/runbooks/admin-a5-production-activation.md` | Separately authorized A5 migration, deployment, activation, and recovery steps. |
+| `docs/reviews/admin-a5-production-activation-2026-11-11.md` | Completed staged A5 Production cutover, smoke evidence, and remaining first customer-content boundary. |
 | `docs/agent-workflow.md` | Current fixed-role Codex orchestration and historical stage assignments. |
 | `docs/agent/prompts.md` | Historical Antigravity copy-ready prompts; not standing instructions. |
 | `docs/agent/skills.md` | Skill-selection rules and historical stage routing. |
