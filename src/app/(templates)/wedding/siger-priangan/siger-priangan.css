@@ -216,14 +216,20 @@
     .siger-cover-relief { animation-name: siger-cover-depth; }
     .siger-cover-horizon { animation-name: siger-horizon-depth; }
 
-    .siger-section > .siger-kicker,.siger-section > h2,
+    .siger-section > .siger-kicker,.siger-section > h2 {
+      animation-duration: auto;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: --siger-section;
+      animation-range: entry 0% cover 50%;
+    }
     .siger-couple-section::after,.siger-events-section::after,.siger-story-section::after,
     .siger-gallery-section::after,.siger-gifts::after,.siger-wishes::after {
       animation-duration: auto;
       animation-timing-function: linear;
       animation-fill-mode: both;
       animation-timeline: --siger-section;
-      animation-range: entry 0% cover 50%;
+      animation-range: entry 0% exit 100%;
     }
     .siger-section > .siger-kicker { animation-name: siger-chapter-kicker; }
     .siger-section > h2 { animation-name: siger-chapter-title; }
@@ -296,27 +302,33 @@
     }
     @keyframes siger-pair-fan {
       0% { transform: translate3d(-150px,110px,0) rotate(-17deg) scale(.7); opacity: .12; }
-      100% { transform: translate3d(0,0,0) rotate(0) scale(1); opacity: .7; }
+      50% { transform: translate3d(0,0,0) rotate(0) scale(1); opacity: .7; }
+      100% { transform: translate3d(150px,-80px,0) rotate(14deg) scale(.88); opacity: .18; }
     }
     @keyframes siger-event-curtain {
       0% { transform: translate3d(0,160px,0) scaleX(.52) rotateX(-22deg); opacity: .12; }
-      100% { transform: translate3d(0,0,0) scaleX(1) rotateX(0); opacity: .75; }
+      50% { transform: translate3d(0,0,0) scaleX(1) rotateX(0); opacity: .75; }
+      100% { transform: translate3d(0,-140px,0) scaleX(.64) rotateX(16deg); opacity: .18; }
     }
     @keyframes siger-story-ribbon {
       0% { transform: translate3d(180px,-90px,0) rotate(15deg) scale(.75); opacity: .08; }
-      100% { transform: translate3d(0,0,0) rotate(0) scale(1); opacity: .76; }
+      50% { transform: translate3d(0,0,0) rotate(0) scale(1); opacity: .76; }
+      100% { transform: translate3d(-150px,90px,0) rotate(-13deg) scale(.82); opacity: .15; }
     }
     @keyframes siger-album-backdrop {
       0% { transform: translate3d(-130px,100px,0) rotate(-12deg) scale(1.28); opacity: .08; }
-      100% { transform: translate3d(0,0,0) rotate(0) scale(1); opacity: .58; }
+      50% { transform: translate3d(0,0,0) rotate(0) scale(1); opacity: .58; }
+      100% { transform: translate3d(130px,-95px,0) rotate(11deg) scale(1.15); opacity: .1; }
     }
     @keyframes siger-gift-leaf {
       0% { transform: translate3d(-170px,90px,0) rotate(-14deg) scale(.78); opacity: .1; }
-      100% { transform: translate3d(0,0,0) rotate(0) scale(1); opacity: .67; }
+      50% { transform: translate3d(0,0,0) rotate(0) scale(1); opacity: .67; }
+      100% { transform: translate3d(155px,-80px,0) rotate(12deg) scale(.86); opacity: .14; }
     }
     @keyframes siger-reply-leaf {
       0% { transform: translate3d(170px,90px,0) rotate(14deg) scale(.78); opacity: .1; }
-      100% { transform: translate3d(0,0,0) rotate(0) scale(1); opacity: .67; }
+      50% { transform: translate3d(0,0,0) rotate(0) scale(1); opacity: .67; }
+      100% { transform: translate3d(-155px,-80px,0) rotate(-12deg) scale(.86); opacity: .14; }
     }
     @keyframes siger-secondary-card-left {
       0% { transform: translate3d(-75px,65px,0) rotateY(-12deg); opacity: .3; }

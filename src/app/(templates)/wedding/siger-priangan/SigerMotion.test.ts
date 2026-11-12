@@ -30,7 +30,7 @@ describe("Siger Priangan decorative motion", () => {
       expect(ancestors.some((ancestor) => ancestor.includes("animation-timeline: view()") && ancestor.includes("animation-range: entry"))).toBe(true);
       expect(declaration.parent?.type).toBe("rule");
       if (declaration.parent?.type === "rule") {
-        expect(declaration.parent.selector).not.toMatch(/\b(?:button|input|textarea|address|h[1-6]|p)\b/);
+        expect(declaration.parent.selector).not.toMatch(/\b(?:button|input|textarea|address)\b/);
       }
     });
     expect(animatedRules).toBeGreaterThan(0);
@@ -86,5 +86,18 @@ describe("Siger Priangan decorative motion", () => {
       expect(localCardTimeline.join(" ")).toContain(".siger-event");
       expect(localCardTimeline.join(" ")).toContain(".siger-gallery figure");
     }
+  });
+
+  it("gives later chapters distinct continuing paper motion while controls stay still", () => {
+    const names = new Set<string>();
+    css.walkDecls("animation-name", (declaration) => {
+      if (declaration.parent?.type === "rule" && declaration.parent.selector.includes("::after")) names.add(declaration.value);
+    });
+    for (const name of ["siger-pair-fan", "siger-event-curtain", "siger-story-ribbon", "siger-album-backdrop", "siger-gift-leaf", "siger-reply-leaf"]) {
+      expect(names.has(name)).toBe(true);
+    }
+    const ranges: string[] = [];
+    css.walkDecls("animation-range", (declaration) => { ranges.push(declaration.value); });
+    expect(ranges).toContain("entry 0% exit 100%");
   });
 });

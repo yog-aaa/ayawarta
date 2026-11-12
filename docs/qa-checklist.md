@@ -113,6 +113,8 @@ The stronger-motion revision passed 894 unit tests (4 skipped) before the final 
 
 The revision passed 893 unit tests (4 skipped), full ESLint, TypeScript, `git diff --check`, and a local Next production build with dummy local service configuration. The first test run used `.env.local` pointing to Neon and correctly failed the local-only Prisma guard; the passing run supplied a non-connecting `127.0.0.1/ayawarta` test URL. The first build could not fetch existing Google Fonts from the sandbox; its repeat with network access compiled and generated all routes. Neither verification wrote to production services.
 
+**T4 chapter-motion follow-up (2026-11-12):** The owner found the cover transition strong but the later chapters too quiet. Abstract paper backdrops now have distinct travel paths in the couple, event, story, gallery, gift, and RSVP chapters and continue moving across the full section viewport timeline. Chapter kicker/title pairs and complete gift/RSVP panels enter separately; inputs, buttons, and account text remain stable after entry. In the local browser at 322 px, the couple backdrop moved from about `x=-4 px` near section top to `x=149 px` near exit, while event, gallery, gift, and reply content remained legible. Twelve focused Siger tests, TypeScript, scoped ESLint, `git diff --check`, and the local Next build with a dummy localhost database passed. Device-level reduced-motion and low-power checks remain open. No production data or media was changed.
+
 ### A4 explicit publication gate
 
 - [ ] A read-only review verifies the saved draft, current live version, complete baseline/current snapshots, media pins, and a guest-visible change summary.
