@@ -1,6 +1,6 @@
 # Paket review budaya Siger Priangan
 
-**Status 12 November 2026:** bahan diskusi, belum mendapat penilaian praktisi. Semua gambar di bawah adalah konsep orisinal. Tidak satu pun sudah disetujui sebagai representasi tata rias adat, dipasang sebagai aset undangan, atau diunggah ke Cloudinary. [Preview yang berjalan](https://ayawarta.my.id/wedding/siger-priangan/ivory) masih ilustratif dan memakai relief CSS abstrak.
+**Status 12 November 2026:** pemilik meminta desain dibuat lengkap terlebih dahulu, lalu ditinjau secara budaya. Semua gambar di bawah adalah konsep orisinal dan belum mendapat penilaian praktisi. Tidak satu pun sudah disetujui sebagai representasi tata rias adat atau diunggah ke Cloudinary. [Preview yang berjalan](https://ayawarta.my.id/wedding/siger-priangan/ivory) masih ilustratif; relief yang dirender adalah bentuk abstrak ringan, terpisah dari foto dan teks.
 
 ## Tujuan review
 
@@ -13,11 +13,17 @@ AyaWarta ingin membuat undangan pernikahan digital dengan arah Priangan umum dan
 | [Alur mobile T1](../../assets/themes/siger-priangan/concepts/mobile-composition-v2.png) | Konteks cover dan urutan section | Studi suasana; teks di dalam gambar bukan konten produk. Kontur di atas lingkaran potret masih hipotesis. |
 | [Kontur cover T4](../../assets/themes/siger-priangan/concepts/cover-contour-t4-study.png) | Tiga sapuan emboss terbuka di atas area potret | **Calon konsep**, bukan gambar siger historis. Lihat juga [prompt dan asal-usul](../../assets/themes/siger-priangan/concepts/cover-contour-t4-study.md). |
 | [Tepi kertas T4](../../assets/themes/siger-priangan/concepts/paper-edge-layer-t4-study.png) | Lapisan kertas, dua ranting kecil, dan ritme belah ketupat di margin | **Calon konsep**; jangan dinilai sebagai motif batik Garutan tertentu. Lihat [prompt dan asal-usul](../../assets/themes/siger-priangan/concepts/paper-edge-layer-t4-study.md). |
+| [Kontur cover v2](../../assets/themes/siger-priangan/concepts/cover-contour-t4-v2.png) | Sapuan relief terbuka dengan aksen belah ketupat kecil di atas slot potret | **Konsep sumber terbaru**; periksa jarak terhadap foto. [Prompt, ukuran, dan batas penggunaan](../../assets/themes/siger-priangan/concepts/t4-cultural-art-v2-provenance.md). |
+| [Motif margin v2](../../assets/themes/siger-priangan/concepts/margin-motif-t4-v2.png) | Ritme diagonal, belah ketupat, ranting kecil, dan tepi kertas pada margin | **Konsep sumber terbaru**; abstraksi orisinal, bukan motif perajin tertentu. [Prompt dan asal-usul](../../assets/themes/siger-priangan/concepts/t4-cultural-art-v2-provenance.md). |
 | [Visual board T1](siger-priangan-board.md) | Prinsip warna, ruang aman, dan transisi | Dokumen arah desain. Gambar ornamen T1 yang lebih padat tidak diusulkan sebagai aset runtime. |
 
 ![Studi kontur emboss di atas area potret](../../assets/themes/siger-priangan/concepts/cover-contour-t4-study.png)
 
 ![Studi tepi kertas transparan](../../assets/themes/siger-priangan/concepts/paper-edge-layer-t4-study.png)
+
+![Studi kontur cover v2 transparan](../../assets/themes/siger-priangan/concepts/cover-contour-t4-v2.png)
+
+![Studi motif margin v2 transparan](../../assets/themes/siger-priangan/concepts/margin-motif-t4-v2.png)
 
 ## Pertanyaan untuk praktisi
 

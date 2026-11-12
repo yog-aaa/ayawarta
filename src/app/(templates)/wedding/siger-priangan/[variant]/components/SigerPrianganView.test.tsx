@@ -13,6 +13,7 @@ describe("Siger Priangan static template", () => {
     const html = renderToStaticMarkup(<SigerPrianganView invitationSlug="siger-priangan-sample" data={sigerPrianganSample.invitation.data} isPreview />);
     expect(html).toContain("Damar &amp; Raras");
     expect(html).toContain('href="#siger-content"');
+    expect(html).toMatch(/class="siger-cover-relief" aria-hidden="true"><svg[^>]+focusable="false"/);
     expect(html).toContain("Upacara Pernikahan");
     expect(html).toContain("Alamat contoh, Jawa Barat");
     expect(html).toContain("Sampai bertemu");

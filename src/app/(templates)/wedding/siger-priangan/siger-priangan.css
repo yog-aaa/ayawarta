@@ -5,6 +5,7 @@
   --siger-gold: #b58b53;
   --siger-line: #d8c7a7;
   --siger-canvas: linear-gradient(90deg,#e9dfce 0,#f6f1e8 24%,#f6f1e8 76%,#e9dfce 100%);
+  --siger-margin-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='48' viewBox='0 0 14 48'%3E%3Cpath d='M7 3 12 10 7 17 2 10ZM7 27 12 34 7 41 2 34Z' fill='none' stroke='%23b58b53' stroke-opacity='.62' stroke-width='.8'/%3E%3C/svg%3E");
   min-height: 100svh;
   overflow-x: clip;
   color: var(--siger-ink);
@@ -28,11 +29,11 @@
 .siger-cover-paper { position: relative; width: min(100%,440px); min-height: min(820px,calc(100svh - 40px)); overflow: hidden; border: 1px solid #d6c6a8; background: linear-gradient(135deg,#fffaf2,#f2e9d9 75%,#fffaf2); box-shadow: 0 26px 65px #4d483328, 0 2px 4px #4d48331a; perspective: 1100px; }
 .siger-cover-paper::before,.siger-content::before { background-image: repeating-linear-gradient(145deg,transparent 0 32px,#b58b5318 33px 34px,transparent 35px 62px),radial-gradient(#9d825512 .65px,transparent .8px); background-size: auto, 5px 5px; }
 .siger-cover-paper::before { position: absolute; inset: 0; content: ""; pointer-events: none; }
-.siger-cover-relief { position: absolute; top: 82px; left: 50%; width: 280px; height: 174px; transform: translateX(-50%); opacity: .36; pointer-events: none; }
-.siger-cover-relief span { position: absolute; border: 2px solid #d5c19d; border-radius: 50% 50% 8% 8%; transform: rotate(45deg); box-shadow: inset 2px 2px #fff9, 2px 2px 2px #897c6330; }
-.siger-cover-relief span:first-child { top: 15px; left: 95px; width: 90px; height: 90px; }
-.siger-cover-relief span:nth-child(2) { top: 68px; left: 30px; width: 64px; height: 64px; }
-.siger-cover-relief span:nth-child(3) { top: 68px; right: 30px; width: 64px; height: 64px; }
+.siger-cover-paper::after { position: absolute; inset: 0; content: ""; background-image: var(--siger-margin-pattern), var(--siger-margin-pattern); background-position: left 4px top, right 4px top; background-size: 14px 48px; background-repeat: repeat-y; opacity: .8; pointer-events: none; }
+.siger-cover-relief { position: absolute; top: clamp(70px,10svh,90px); left: 50%; width: min(82%,320px); aspect-ratio: 320 / 124; transform: translateX(-50%); opacity: .68; pointer-events: none; }
+.siger-cover-relief svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 -1px 1px #8a73464d) drop-shadow(0 1px 0 #fffaf2); }
+.siger-cover-relief path { stroke: #c7b89d; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.siger-cover-relief .siger-contour-glint { stroke: var(--siger-gold); stroke-width: .8; opacity: .5; }
 .siger-cover-content { position: relative; display: flex; min-height: inherit; flex-direction: column; align-items: center; padding: 42px 24px 34px; text-align: center; }
 .siger-cover-label { margin-top: 12px; font: 18px Georgia,serif; }
 .siger-portrait { position: relative; display: grid; width: 78px; height: 78px; flex: none; place-items: center; overflow: hidden; border: 4px solid #fffaf2; border-radius: 50%; background: linear-gradient(145deg,#ded3bc,#a1afa3); box-shadow: 0 0 0 1px var(--siger-gold),0 10px 25px #243b3518; }
@@ -49,12 +50,12 @@
 .siger-cover-button { margin-top: 18px; }
 .siger-content { position: relative; min-height: 100svh; isolation: isolate; background: var(--siger-canvas); }
 .siger-reading { position: relative; width: min(100%,760px); margin: 0 auto; background: var(--siger-paper); box-shadow: 0 0 0 1px #d6c6a873, 0 0 55px #4d48332b; }
-.siger-reading::before,.siger-reading::after { position: absolute; z-index: 2; top: 0; bottom: 0; width: 13px; content: ""; background: linear-gradient(90deg,#b7a384b8,#eee2ce9c 46%,#fffaf200); clip-path: polygon(100% 0,100% 100%,12% 100%,0 95%,24% 90%,4% 85%,27% 79%,2% 73%,22% 67%,0 61%,26% 55%,3% 49%,28% 43%,5% 37%,23% 31%,1% 25%,26% 19%,2% 13%,22% 7%,0 0); pointer-events: none; }
+.siger-reading::before,.siger-reading::after { position: absolute; z-index: 2; top: 0; bottom: 0; width: 24px; content: ""; background-image: var(--siger-margin-pattern),linear-gradient(90deg,#b7a384b8,#eee2ce9c 46%,#fffaf200); background-position: center top,center; background-size: 14px 48px,100% 100%; background-repeat: repeat-y,no-repeat; clip-path: polygon(100% 0,100% 100%,12% 100%,0 95%,24% 90%,4% 85%,27% 79%,2% 73%,22% 67%,0 61%,26% 55%,3% 49%,28% 43%,5% 37%,23% 31%,1% 25%,26% 19%,2% 13%,22% 7%,0 0); pointer-events: none; }
 .siger-reading::before { left: 0; }
 .siger-reading::after { right: 0; transform: scaleX(-1); }
 .siger-section { position: relative; padding: 70px clamp(22px,5vw,54px); }
-.siger-hero::before,.siger-section + .siger-section::before { position: absolute; z-index: 1; top: -13px; right: 0; left: 0; height: 29px; content: ""; background: linear-gradient(180deg,#b7a6888c 0,#eadbc3 17%,#fffaf2 52%,#fffaf200 100%); clip-path: polygon(0 32%,16% 26%,33% 34%,51% 25%,70% 35%,86% 27%,100% 31%,100% 100%,0 100%); pointer-events: none; }
-.siger-section:nth-of-type(even)::before { clip-path: polygon(0 30%,17% 35%,35% 26%,53% 34%,72% 25%,88% 34%,100% 29%,100% 100%,0 100%); }
+.siger-hero::before,.siger-section + .siger-section::before { position: absolute; z-index: 1; top: -15px; right: 0; left: 0; height: 32px; content: ""; background: linear-gradient(180deg,#a9957473 0,#e6d7bd 23%,#fffaf2 58%,#fffaf200 100%); clip-path: polygon(0 34%,16% 19%,33% 40%,51% 24%,70% 39%,86% 22%,100% 32%,100% 100%,0 100%); pointer-events: none; }
+.siger-section:nth-of-type(even)::before { clip-path: polygon(0 31%,17% 40%,35% 22%,53% 39%,72% 20%,88% 38%,100% 28%,100% 100%,0 100%); }
 .siger-section > .siger-kicker,.siger-section > h2 { text-align: center; }
 .siger-section h2 { margin: 9px 0 22px; font-size: clamp(31px,5vw,41px); line-height: 1.12; }
 .siger-section h3 { font-size: 25px; line-height: 1.2; }
@@ -123,6 +124,7 @@
 @media(max-width:620px) {
   .siger-content { padding-inline: 9px; background: var(--siger-canvas); }
   .siger-reading { box-shadow: 0 0 0 1px #b7a384, 0 0 15px #243b3538; }
+  .siger-reading::before,.siger-reading::after { width: 16px; }
   .siger-reading::before { left: -5px; }
   .siger-reading::after { right: -5px; }
   .siger-section { padding-inline: 20px; }

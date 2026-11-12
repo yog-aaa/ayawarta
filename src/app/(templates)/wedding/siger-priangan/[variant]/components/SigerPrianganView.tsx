@@ -48,7 +48,14 @@ export default function SigerPrianganView({ data, invitationSlug, isPreview = fa
     <header className="siger-cover-stage">
       <div className="siger-cover-side siger-cover-side-left" aria-hidden="true">Sebuah cerita<br />yang menjadi<br />kenang-kenangan.</div>
       <div className="siger-cover-paper">
-        <div className="siger-cover-relief" aria-hidden="true"><span /><span /><span /></div>
+        <div className="siger-cover-relief" aria-hidden="true">
+          <svg viewBox="0 0 320 124" fill="none" focusable="false">
+            <path d="M96 48 C124 48 137 31 160 31 C183 31 196 48 224 48" />
+            <path d="M54 78 C96 78 122 52 160 52 C198 52 224 78 266 78" />
+            <path d="M22 112 C75 112 112 73 160 73 C208 73 245 112 298 112" />
+            <path className="siger-contour-glint" d="M80 104 C108 94 132 73 160 73 C188 73 212 94 240 104" />
+          </svg>
+        </div>
         <div className="siger-cover-content">
           <p className="siger-kicker">AyaWarta · Siger Priangan</p>
           <p className="siger-cover-label">Undangan Pernikahan</p>
