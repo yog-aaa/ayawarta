@@ -1,6 +1,17 @@
 # Siger Priangan — in-invitation scroll storyboard
 
-**Status:** living design record, 12 November 2026. The illustrative local preview now includes a photo chapter and generated sample photos. This does not approve a cultural-authenticity claim, Cloudinary upload, or a production release.
+**Status:** living design record, 13 November 2026. The illustrative local preview includes a photo chapter, generated sample photos, and section-level scroll transitions. This does not approve a cultural-authenticity claim, Cloudinary upload, or a production release.
+
+## Section-level motion revision
+
+The owner found the large photo chapter compelling but the remaining sections still felt like cards sliding inside static frames. The approved revision changes the scene composition itself at four points:
+
+1. **Couple:** two full-height paper leaves meet over the paired profiles, then hinge outward as both portraits and names become visible. The leaves are decorative and leave the reading state clear.
+2. **Photo to events:** a dark green paper veil continues the photo chapter's color field and lifts to uncover the ivory schedule. The image is not rendered a second time at the seam.
+3. **Story:** a pale sheet unfurls from the top while the gold/green timeline draws downward through the ordered chapters.
+4. **Gallery:** an album cover with the couple's initials turns on its left hinge before the existing photo shutters reveal individual images.
+
+Each transition is linked to its section's view timeline, so scrolling upward reverses it. No scroll snapping or wheel interception is introduced. The base CSS keeps the leaves out of the way and all content present when scroll timelines are unsupported. Existing reduced-motion rules remain in place; the owner asked to defer additional reduced-motion work for this visual iteration.
 
 ## Photo-led revision
 

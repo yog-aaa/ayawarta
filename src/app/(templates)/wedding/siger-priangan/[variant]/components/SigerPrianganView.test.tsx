@@ -68,6 +68,10 @@ describe("Siger Priangan static template", () => {
     }
     expect(html).toContain('class="siger-cover-horizon" aria-hidden="true"');
     expect(html).toContain('class="siger-gallery-mat" aria-hidden="true"');
+    expect(html).toContain('class="siger-pair-fold siger-pair-fold-left" aria-hidden="true"');
+    expect(html).toContain('class="siger-event-paper-veil" aria-hidden="true"');
+    expect(html).toContain('class="siger-story-unfurl" aria-hidden="true"');
+    expect(html).toContain('class="siger-album-cover" aria-hidden="true"');
     expect(html).toMatch(/<h2 id="siger-events-title">Rangkaian Acara<\/h2>.*?<article class="siger-event"/);
     expect(html.indexOf('class="siger-lede"')).toBeLessThan(html.indexOf('class="siger-scene siger-scene-opening"'));
     expect(html).toMatch(/<h2 id="siger-events-title">Rangkaian Acara<\/h2><div class="siger-event-stage"><div class="siger-scene siger-scene-schedule" aria-hidden="true"/);
