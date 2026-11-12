@@ -71,6 +71,11 @@ export default function SigerPrianganView({ data, invitationSlug, isPreview = fa
   const coupleName = `${groom.name} & ${bride.name}`;
   const date = dateFormat.format(data.weddingDate);
   const initials = `${groom.name.trim()[0] || "A"}·${bride.name.trim()[0] || "W"}`;
+  const chapterPhoto = data.sections.gallery
+    ? data.gallery?.items.find((item) => item.url)
+    : undefined;
+  const chapterImage = chapterPhoto?.url || data.couple.heroImage;
+  const chapterAlt = chapterPhoto?.altText || `Foto ${coupleName}`;
 
   async function copyAccount(number: string) {
     try { await navigator.clipboard.writeText(number); setCopied(number); }
@@ -128,6 +133,14 @@ export default function SigerPrianganView({ data, invitationSlug, isPreview = fa
           <div className="siger-scene siger-scene-pair" aria-hidden="true" />
           <div className="siger-profiles"><Profile person={groom} label="Mempelai" index={1} /><Profile person={bride} label="Mempelai" index={2} /></div>
           {(data.greeting || data.prayer) && <div className="siger-message">{data.greeting && <p>{data.greeting}</p>}{data.prayer && <p>{data.prayer}</p>}</div>}
+        </section>}
+        {chapterImage && <section className="siger-photo-chapter" aria-label={`Potret ${coupleName}`}>
+          <div className="siger-photo-stage">
+            <div className="siger-photo-frame"><Image src={chapterImage} alt={chapterAlt} fill sizes="(max-width: 760px) 100vw, 760px" className="siger-photo-chapter-image" loading="lazy" /></div>
+            <div className="siger-photo-shutter siger-photo-shutter-left" aria-hidden="true" />
+            <div className="siger-photo-shutter siger-photo-shutter-right" aria-hidden="true" />
+            <div className="siger-photo-overlay"><span>Sebuah perjalanan</span><strong>{coupleName}</strong><span>{date}</span></div>
+          </div>
         </section>}
         {data.sections.events && data.events.length > 0 && <section className="siger-section siger-events-section" aria-labelledby="siger-events-title">
           <p className="siger-kicker">Hari bahagia</p><h2 id="siger-events-title">Rangkaian Acara</h2>

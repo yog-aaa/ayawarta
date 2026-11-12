@@ -1,6 +1,6 @@
 # Paket review budaya Siger Priangan
 
-**Status 12 November 2026:** pemilik meminta desain dibuat lengkap terlebih dahulu, lalu ditinjau secara budaya. Semua gambar di bawah adalah konsep orisinal dan belum mendapat penilaian praktisi. Tidak satu pun sudah disetujui sebagai representasi tata rias adat atau diunggah ke Cloudinary. [Preview yang berjalan](https://ayawarta.my.id/wedding/siger-priangan/ivory) masih ilustratif; relief yang dirender adalah bentuk abstrak ringan, terpisah dari foto dan teks.
+**Status 12 November 2026:** pemilik meminta desain dibuat lengkap terlebih dahulu, lalu ditinjau secara budaya. Semua gambar di bawah adalah konsep orisinal dan belum mendapat penilaian praktisi. Tidak satu pun sudah disetujui sebagai representasi tata rias adat atau diunggah ke Cloudinary. Pratinjau lokal kini memakai [foto ilustratif pasangan fiktif](siger-priangan-sample-media.md) untuk menunjukkan gerak antarbab; relief yang dirender tetap bentuk abstrak ringan. Status deployment publik dapat berbeda sampai kode ini diterbitkan.
 
 Pada T5, kartu ketujuh di etalase tema memakai ilustrasi CSS/SVG dan menaut ke preview tersebut. Jalur uji lokal untuk menyimpan dan menerbitkan draf Siger tidak mengubah status budaya gambar ini. Konsep PNG tetap bahan sumber untuk review praktisi; tidak ada persetujuan untuk menjadikannya aset runtime, klaim keaslian budaya, atau aktivasi undangan pelanggan.
 

@@ -35,7 +35,7 @@ describe("Siger Priangan static template", () => {
     expect(draft).not.toContain("<form");
   });
 
-  it("keeps schedule details and empty gallery media as readable text", () => {
+  it("keeps schedule details readable and gives the sample a photo chapter", () => {
     const html = renderToStaticMarkup(<SigerPrianganView invitationSlug="siger-priangan-sample" data={sigerPrianganSample.invitation.data} isPreview />);
     const event = html.match(/<article class="siger-event"[^>]*>.*?<\/article>/)?.[0];
     expect(event).toMatch(/<header class="siger-event-heading">.*?<h3>Upacara Pernikahan<\/h3><\/header>/);
@@ -43,6 +43,20 @@ describe("Siger Priangan static template", () => {
     expect(event).toContain("09.00 WIB");
     expect(event).toContain("Tempat acara contoh");
     expect(event).toContain("Alamat contoh, Jawa Barat");
+    expect(html).toContain('class="siger-photo-chapter"');
+    expect(html).toContain("forest-walk.webp");
+    expect(html).toContain("Ilustrasi pasangan fiktif berjalan bersama di hutan pinus");
+    expect(html).not.toContain("Foto belum tersedia");
+  });
+
+  it("retains the honest placeholder when media is missing", () => {
+    const data = {
+      ...sigerPrianganSample.invitation.data,
+      couple: { ...sigerPrianganSample.invitation.data.couple, heroImage: "" },
+      gallery: { ...sigerPrianganSample.invitation.data.gallery, items: [{ url: "", altText: "", caption: "" }] },
+    };
+    const html = renderToStaticMarkup(<SigerPrianganView invitationSlug="draft-private" data={data} isPreview />);
+    expect(html).not.toContain('class="siger-photo-chapter"');
     expect(html).toContain('class="siger-gallery-placeholder"');
     expect(html).toContain("Foto belum tersedia");
   });

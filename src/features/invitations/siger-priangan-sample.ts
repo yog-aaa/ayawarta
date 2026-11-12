@@ -4,7 +4,7 @@ import type { Invitation } from "./types";
 export const sigerPrianganSample = {
   kind: "illustrative-preview" as const,
   guestInteractions: "read-only" as const,
-  mediaStatus: "awaiting-approved-artwork" as const,
+  mediaStatus: "illustrative-generated" as const,
   invitation: {
     meta: { theme: "siger-priangan", variant: "ivory" },
     data: {
@@ -14,15 +14,15 @@ export const sigerPrianganSample = {
           name: "Damar",
           parents: "",
           instagram: "",
-          photo: "",
+          photo: "/themes/siger-priangan/sample/groom-portrait.webp",
         },
         bride: {
           name: "Raras",
           parents: "",
           instagram: "",
-          photo: "",
+          photo: "/themes/siger-priangan/sample/bride-portrait.webp",
         },
-        heroImage: "",
+        heroImage: "/themes/siger-priangan/sample/couple-portrait.webp",
       },
       weddingDate: new Date("2027-06-12T02:00:00.000Z"),
       greeting: "Selamat datang dalam cerita kami.",
@@ -42,9 +42,9 @@ export const sigerPrianganSample = {
         videoUrl: "",
         images: [],
         items: [
-          { url: "", altText: "Tempat foto pasangan contoh pertama", caption: "Ruang untuk kenangan pasangan" },
-          { url: "", altText: "Tempat foto pasangan contoh kedua", caption: "" },
-          { url: "", altText: "Tempat foto pasangan contoh ketiga", caption: "" },
+          { url: "/themes/siger-priangan/sample/forest-walk.webp", altText: "Ilustrasi pasangan fiktif berjalan bersama di hutan pinus", caption: "Langkah yang kami pilih bersama" },
+          { url: "/themes/siger-priangan/sample/hands-detail.webp", altText: "Ilustrasi detail tangan pasangan fiktif yang saling menggenggam", caption: "Dekat, dalam setiap langkah" },
+          { url: "/themes/siger-priangan/sample/couple-portrait.webp", altText: "Ilustrasi potret pasangan fiktif di hutan pinus", caption: "Sebuah cerita untuk dikenang" },
         ],
       },
       gifts: [{ platform: "Rekening contoh", accountHolder: "Nama pasangan", accountNumber: "Nomor rekening contoh", logo: "" }],
@@ -53,6 +53,6 @@ export const sigerPrianganSample = {
 } satisfies {
   kind: "illustrative-preview";
   guestInteractions: "read-only";
-  mediaStatus: "awaiting-approved-artwork";
+  mediaStatus: "illustrative-generated";
   invitation: Invitation;
 };

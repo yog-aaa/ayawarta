@@ -1,6 +1,12 @@
 # Siger Priangan — in-invitation scroll storyboard
 
-**Status:** design direction for the next reviewed frontend slice, 12 November 2026. This document specifies scenes inside the invitation. It does not approve a cultural-authenticity claim, a runtime raster, Cloudinary upload, or a production release.
+**Status:** living design record, 12 November 2026. The illustrative local preview now includes a photo chapter and generated sample photos. This does not approve a cultural-authenticity claim, Cloudinary upload, or a production release.
+
+## Photo-led revision
+
+The reference's three phones are a promotional layout; the invitation uses one reading column. Its strongest cue is a succession of photographic scenes. The current preview therefore places a dedicated photo chapter between the couple profiles and event schedule. On scroll, two paper leaves separate, a rounded portrait aperture expands to a full photo, the image drifts more slowly than the frame, and the couple's names settle over a contrast gradient. The dark green chapter continues into the event section. Each gallery mat also turns away a paper shutter to reveal its photo as it enters; the underlying image crop stays still. Reverse scrolling reverses these sequences. Without scroll-timeline support or with reduced motion, the full image and caption remain visible.
+
+The sample uses five lightweight, generated WebP files from fictional adults (total approximately 218 KiB); see [sample media provenance](siger-priangan-sample-media.md). Customer invitations use their own first gallery image when the gallery is enabled, otherwise their hero photo. The chapter is omitted if both are empty, and the gallery keeps its explicit missing-photo placeholder. The chapter never transmits customer media or uploads anything to Cloudinary.
 
 ## Reading the reference
 
@@ -98,7 +104,7 @@ The large travel values above apply to **decoration**. The latest stronger-motio
 
 ### 5. Story → gallery: open the album
 
-**Static frame.** The timeline ends at a paper corner; the gallery has one lead mat and smaller accompanying mats. Owner photos retain their aspect-ratio-safe crop and optional HTML captions. The illustrative preview uses an honest neutral paper placeholder, not fabricated couple imagery.
+**Static frame.** The timeline ends at a paper corner; the gallery has one lead mat and smaller accompanying mats. Owner photos retain their aspect-ratio-safe crop and optional HTML captions. The illustrative preview now uses clearly labeled generated imagery of a fictional couple; actual missing media still uses a neutral paper placeholder.
 
 **Layers.** (1) Recessed album backing, (2) one clearly dominant lead photo mat, (3) one secondary mat and a foreground corner fold that touches only mat edges. Existing portrait/gallery media is content, not an animated texture. The no-photo preview uses original paper geometry rather than imitation photography.
 
@@ -137,6 +143,6 @@ The large travel values above apply to **decoration**. The latest stronger-motio
 
 ## Current implementation gap and cultural review
 
-The current `SigerPrianganView.tsx` has the cover and semantic section order. `siger-priangan.css` has distinct scene planes, an opening cover, and viewport-entry card motion in addition to paper seams, relief, portrait frame, gallery mats, and closing seal. A second pass adds large abstract paper backdrops to the couple, event, story, gallery, gift, and RSVP chapters. Each backdrop enters, crosses the chapter behind content, and exits in the opposite direction as the guest scrolls; chapter headings and whole secondary panels enter once and then settle. Inputs, account numbers, and controls stay on a stable reading plane.
+The current `SigerPrianganView.tsx` has the cover and semantic section order. `siger-priangan.css` has distinct scene planes, an opening cover, viewport-entry card motion, and the full-photo interlude in addition to paper seams, relief, gallery mats, and closing seal. The generated sample photography illustrates the intended tempo; it is not a customer photo or a culturally verified costume reference. Inputs, account numbers, and controls stay on a stable reading plane.
 
 The [approved visual board](siger-priangan-board.md) cites official documentation for Sunda siger bridal context and Garutan diagonal/diamond/flora direction. It does not establish that any generated contour is a correct ceremonial siger, that a diamond carries a specific symbolic meaning, or that an artisan pattern may be copied. A Priangan bridal and Garutan textile practitioner should review the complete designed experience before any authenticity claim or publication.
