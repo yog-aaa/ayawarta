@@ -85,6 +85,8 @@ The A3/T3 code gates below have automated and visual evidence, but live admin ed
 
 **T4 cultural visual concept (2026-11-12):** The owner requested a complete design before practitioner review. The preview now uses a lightweight abstract SVG contour, repeatable edge geometry, and connected paper folds; the two new transparent PNGs remain [source concepts for review](design/siger-priangan-cultural-review.md), not runtime images. Local 390/1280 px visual inspection found no horizontal overflow. Focused Siger tests, TypeScript, scoped ESLint, and `git diff --check` passed. Practitioner review, approved runtime-art delivery, cross-browser, and low-power performance gates remain open; no claim of cultural authenticity or publication is implied.
 
+**T4 section-composition follow-up (2026-11-12):** The illustrative Siger preview now distinguishes profile paper panels, a centered single-event schedule insert, a vertical story timeline, neutral empty gallery mats, a gift note, and a closing seal. Local browser inspection covered the mobile guest flow and desktop event/album composition; widths 360/390/430/768/1280/1440 px had zero horizontal overflow, and the one-event insert remained full width on mobile and centered at a 500 px cap on larger screens. Four focused Siger test files (8 tests), TypeScript, scoped ESLint, and `git diff --check` passed. The existing reduced-motion CSS gate remains; cross-browser, low-power performance, cultural review, and approved Cloudinary artwork are still open.
+
 ### A4 explicit publication gate
 
 - [ ] A read-only review verifies the saved draft, current live version, complete baseline/current snapshots, media pins, and a guest-visible change summary.

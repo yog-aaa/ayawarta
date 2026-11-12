@@ -32,4 +32,16 @@ describe("Siger Priangan static template", () => {
     expect(sample).not.toContain("<form");
     expect(draft).not.toContain("<form");
   });
+
+  it("keeps schedule details and empty gallery media as readable text", () => {
+    const html = renderToStaticMarkup(<SigerPrianganView invitationSlug="siger-priangan-sample" data={sigerPrianganSample.invitation.data} isPreview />);
+    const event = html.match(/<article class="siger-event"[^>]*>.*?<\/article>/)?.[0];
+    expect(event).toMatch(/<header class="siger-event-heading">.*?<h3>Upacara Pernikahan<\/h3><\/header>/);
+    expect(event).toContain("Sabtu, 12 Juni 2027");
+    expect(event).toContain("09.00 WIB");
+    expect(event).toContain("Tempat acara contoh");
+    expect(event).toContain("Alamat contoh, Jawa Barat");
+    expect(html).toContain('class="siger-gallery-placeholder"');
+    expect(html).toContain("Foto belum tersedia");
+  });
 });

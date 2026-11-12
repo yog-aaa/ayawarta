@@ -16,10 +16,11 @@ function Portrait({ src, name, hero = false }: { src: string; name: string; hero
   </div>;
 }
 
-function Profile({ person, label }: { person: Person; label: string }) {
+function Profile({ person, label, index }: { person: Person; label: string; index: number }) {
   return <article className="siger-profile">
+    <span className="siger-profile-index" aria-hidden="true">0{index}</span>
     <Portrait src={person.photo} name={person.name} />
-    <div><p className="siger-overline">{label}</p><h3>{person.name}</h3>{person.parents && <p className="siger-muted">{person.parents}</p>}
+    <div className="siger-profile-copy"><p className="siger-overline">{label}</p><h3>{person.name}</h3>{person.parents && <p className="siger-muted">{person.parents}</p>}
       {person.instagram && <a href={`https://instagram.com/${person.instagram.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="siger-inline-link">Instagram ↗</a>}
     </div>
   </article>;
@@ -79,15 +80,17 @@ export default function SigerPrianganView({ data, invitationSlug, isPreview = fa
         </section>
         {data.sections.couple && <section className="siger-section siger-couple-section" aria-labelledby="siger-couple-title">
           <p className="siger-kicker">Dua cerita, satu perjalanan</p><h2 id="siger-couple-title">Mempelai</h2>
-          <div className="siger-profiles"><Profile person={groom} label="Mempelai" /><Profile person={bride} label="Mempelai" /></div>
+          <div className="siger-profiles"><Profile person={groom} label="Mempelai" index={1} /><Profile person={bride} label="Mempelai" index={2} /></div>
           {(data.greeting || data.prayer) && <div className="siger-message">{data.greeting && <p>{data.greeting}</p>}{data.prayer && <p>{data.prayer}</p>}</div>}
         </section>}
         {data.sections.events && data.events.length > 0 && <section className="siger-section siger-events-section" aria-labelledby="siger-events-title">
           <p className="siger-kicker">Hari bahagia</p><h2 id="siger-events-title">Rangkaian Acara</h2>
           <div className="siger-events">{data.events.map((event, index) => <article className="siger-event" key={`${event.name}-${index}`}>
-            <span className="siger-event-index">0{index + 1} / Acara</span><h3>{event.name}</h3>
-            <p className="siger-event-date">{event.date}</p><p>{event.time}</p>
-            <div className="siger-rule" aria-hidden="true" /><strong>{event.location}</strong><address>{event.address}</address>
+            <header className="siger-event-heading"><span className="siger-event-index">0{index + 1} / Acara</span><h3>{event.name}</h3></header>
+            <div className="siger-event-schedule">
+              <div className="siger-event-when"><p className="siger-event-date">{event.date}</p><p className="siger-event-time">{event.time}</p></div>
+              <div className="siger-event-place"><strong>{event.location}</strong><address>{event.address}</address></div>
+            </div>
             {event.mapLink && <a href={event.mapLink} target="_blank" rel="noopener noreferrer" className="siger-inline-link">Lihat lokasi ↗</a>}
           </article>)}</div>
         </section>}
@@ -97,7 +100,7 @@ export default function SigerPrianganView({ data, invitationSlug, isPreview = fa
         </section>}
         {data.sections.gallery && !!data.gallery?.items.length && <section className="siger-section siger-gallery-section" aria-labelledby="siger-gallery-title">
           <p className="siger-kicker">Album pasangan</p><h2 id="siger-gallery-title">Galeri</h2>
-          <div className="siger-gallery">{data.gallery.items.map((item, index) => <figure key={`${item.url}-${index}`}><div className="siger-gallery-frame">{item.url ? <Image src={item.url} alt={item.altText} fill sizes="(max-width: 600px) 85vw, (max-width: 900px) 45vw, 300px" className="siger-gallery-image" loading="lazy" /> : <span className="siger-gallery-placeholder" aria-label={item.altText}>Foto pasangan</span>}</div>{item.caption && <figcaption>{item.caption}</figcaption>}</figure>)}</div>
+          <div className="siger-gallery">{data.gallery.items.map((item, index) => <figure key={`${item.url}-${index}`}><div className="siger-gallery-frame">{item.url ? <Image src={item.url} alt={item.altText} fill sizes="(max-width: 600px) 85vw, (max-width: 900px) 45vw, 300px" className="siger-gallery-image" loading="lazy" /> : <span className="siger-gallery-placeholder">Foto belum tersedia</span>}</div>{item.caption && <figcaption>{item.caption}</figcaption>}</figure>)}</div>
         </section>}
         {data.sections.gifts && !!data.gifts?.length && <section className="siger-section siger-gifts" aria-labelledby="siger-gifts-title">
           <p className="siger-kicker">Tanda kasih</p><h2 id="siger-gifts-title">Hadiah</h2><p>Kehadiran Anda adalah hadiah terbaik. Bila berkenan, Anda juga dapat mengirim tanda kasih.</p>
