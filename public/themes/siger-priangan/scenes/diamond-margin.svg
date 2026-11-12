@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 540" fill="none">
+  <!-- Original sparse diagonal/diamond rhythm; not a reproduction of a Batik Garutan motif. -->
+  <path d="M12 0v540" stroke="#C9B58E" stroke-opacity=".48" stroke-width="1"/>
+  <path d="M20 22 76 78M20 39l40 40M20 205l56 56M20 222l40 40M20 390l56 56M20 407l40 40" stroke="#B58B53" stroke-opacity=".46" stroke-width="1.1" stroke-linecap="round"/>
+  <g stroke="#A98352" stroke-opacity=".72" stroke-width="1.2" stroke-linejoin="round">
+    <path d="m57 67 12 14-12 14-12-14 12-14Zm0 185 12 14-12 14-12-14 12-14Zm0 185 12 14-12 14-12-14 12-14Z"/>
+    <path d="m57 72 8 9-8 9-8-9 8-9Zm0 185 8 9-8 9-8-9 8-9Zm0 185 8 9-8 9-8-9 8-9Z" stroke-opacity=".36"/>
+  </g>
+  <g stroke="#8B9D88" stroke-opacity=".6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 170c13-12 17-23 17-39M22 359c13-12 17-23 17-39"/>
+    <path d="M35 146c-8-1-12-6-13-12 8 0 12 4 13 12ZM38 136c8-5 11-12 10-18-8 4-11 10-10 18ZM35 335c-8-1-12-6-13-12 8 0 12 4 13 12ZM38 325c8-5 11-12 10-18-8 4-11 10-10 18Z" fill="#C3D0BC" fill-opacity=".28"/>
+  </g>
+</svg>

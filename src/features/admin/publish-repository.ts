@@ -7,6 +7,7 @@ import { CANONICAL_TARGET_CLOUD_NAME } from "@/features/media/canonical-catalog"
 import { listAssociatedMedia } from "./editor-media";
 import { draftFromPublished } from "./draft-service";
 import { isA5Enabled } from "./a5-feature";
+import { enabledPublishThemes } from "./siger-publish-feature";
 import { findVerifiedDraftMedia, verifyDraftMediaReceipt } from "./draft-media-repository";
 import { parseDraftForSave, validateDraftForPublish, type DraftFieldErrors, type DraftPayloadV1 } from "./draft-schema";
 import {
@@ -108,8 +109,7 @@ async function inspect(db: Transaction | Database, draftId: string) {
   const allowed = new Set(media.map((item) => item.id));
   const validated = validateDraftForPublish(parsed.payload, {
     existingPublishedSlug: live.slug, allowedMediaAssetIds: allowed,
-    // The live public query still selects legacy columns before T5 activation.
-    enabledThemes: ["classic-rose"],
+    enabledThemes: enabledPublishThemes(),
   });
   if (!validated.ok) throw new PublishError("validation", "Periksa isi draf sebelum menerbitkan.", validated.fieldErrors);
   const mediaById = new Map(media.map((item) => [item.id, item]));
@@ -146,7 +146,7 @@ async function inspectNew(db: Transaction | Database, draftId: string) {
   const rows = await findVerifiedDraftMedia(db, draft.id, ids);
   const byId = new Map(rows.map((row) => [row.mediaAssetId, row]));
   const allowed = new Set(rows.filter((row) => verifyDraftMediaReceipt(row, CANONICAL_TARGET_CLOUD_NAME)).map((row) => row.mediaAssetId!));
-  const validated = validateDraftForPublish(parsed.payload, { allowedMediaAssetIds: allowed, enabledThemes: ["classic-rose"] });
+  const validated = validateDraftForPublish(parsed.payload, { allowedMediaAssetIds: allowed, enabledThemes: enabledPublishThemes() });
   if (!validated.ok) throw new PublishError("validation", "Periksa isi draf sebelum menerbitkan.", validated.fieldErrors);
   if (validated.payload.musicAssetId) throw new PublishError("validation", "Musik baru belum tersedia untuk undangan baru.", { musicAssetId: ["Kosongkan musik untuk rilis ini."] });
   if (ids.some((id) => !byId.has(id) || !allowed.has(id))) {
@@ -157,10 +157,12 @@ async function inspectNew(db: Transaction | Database, draftId: string) {
 
 export function summarizeChanges(live: InvitationDetailPayload, payload: DraftPayloadV1): string {
   const parts: string[] = [];
+  const siger = payload.meta?.theme === "siger-priangan";
   if (live.theme !== payload.meta?.theme || live.variant !== payload.meta?.variant) parts.push("tema");
-  // Classic Rose uses event display fields for its countdown; weddingDate and
-  // greeting/prayer are not read by the current guest view.
-  if (live.heroAssetId !== payload.heroAssetId || live.musicAssetId !== payload.musicAssetId) parts.push("media utama");
+  if (siger && live.weddingDate.toISOString() !== payload.weddingDate) parts.push("tanggal");
+  if (siger && payload.sections.couple && (live.greeting ?? "") !== payload.greeting) parts.push("salam");
+  if (siger && payload.sections.couple && (live.prayer ?? "") !== payload.prayer) parts.push("doa");
+  if (live.heroAssetId !== payload.heroAssetId || (!siger && live.musicAssetId !== payload.musicAssetId)) parts.push("media utama");
   const partnerView = (role: "GROOM" | "BRIDE", name: string, parents: string, instagram: string, photoAssetId: string | null) =>
     payload.sections.couple ? [role, name, parents, instagram, photoAssetId] : [role, name];
   if (JSON.stringify(live.partners.map((row) => partnerView(row.role, row.name, row.parents, row.instagram ?? "", row.photoAssetId)).sort()) !==
@@ -170,13 +172,12 @@ export function summarizeChanges(live: InvitationDetailPayload, payload: DraftPa
   const ordered = <T extends { position: number }>(rows: T[]) => [...rows].sort((a, b) => a.position - b.position);
   if (payload.sections.events && JSON.stringify(ordered(live.events).map((row) => [row.name, row.displayDate, row.displayTime, row.location, row.address, row.mapUrl])) !==
       JSON.stringify(payload.events.map((row) => [row.name, row.displayDate, row.displayTime, row.location, row.address, row.mapUrl]))) parts.push("acara");
-  // Classic Rose gallery renders images[], without per-image alt/caption.
-  if (payload.sections.gallery && JSON.stringify(ordered(live.galleryItems).map((row) => row.assetId)) !==
-      JSON.stringify(payload.galleryItems.map((row) => row.assetId))) parts.push("galeri");
-  if (payload.sections.gallery && live.galleryVideoUrl !== (payload.galleryVideoUrl || null)) parts.push("video");
+  if (payload.sections.gallery && JSON.stringify(ordered(live.galleryItems).map((row) => siger ? [row.assetId, row.altText, row.caption ?? ""] : row.assetId)) !==
+      JSON.stringify(payload.galleryItems.map((row) => siger ? [row.assetId, row.altText, row.caption] : row.assetId))) parts.push("galeri");
+  if (!siger && payload.sections.gallery && live.galleryVideoUrl !== (payload.galleryVideoUrl || null)) parts.push("video");
   if (payload.sections.loveStory && JSON.stringify(ordered(live.loveStories).map((row) => [row.title, row.content])) !== JSON.stringify(payload.loveStories.map((row) => [row.title, row.content]))) parts.push("cerita");
-  if (payload.sections.gifts && JSON.stringify(ordered(live.giftAccounts).map((row) => [row.platform, row.accountHolder, row.accountNumber, row.logoPath])) !==
-      JSON.stringify(payload.giftAccounts.map((row) => [row.platform, row.accountHolder, row.accountNumber, row.logoPath]))) parts.push("hadiah");
+  if (payload.sections.gifts && JSON.stringify(ordered(live.giftAccounts).map((row) => siger ? [row.platform, row.accountHolder, row.accountNumber] : [row.platform, row.accountHolder, row.accountNumber, row.logoPath])) !==
+      JSON.stringify(payload.giftAccounts.map((row) => siger ? [row.platform, row.accountHolder, row.accountNumber] : [row.platform, row.accountHolder, row.accountNumber, row.logoPath]))) parts.push("hadiah");
   return parts.length ? `Perubahan: ${parts.join(", ")}.` : "Tidak ada perubahan konten.";
 }
 

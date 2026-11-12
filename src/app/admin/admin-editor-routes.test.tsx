@@ -10,21 +10,24 @@ const mocks = vi.hoisted(() => ({
   loadEditor: vi.fn(),
   loadPreview: vi.fn(),
   isA5Enabled: vi.fn(),
+  isSigerPublishEnabled: vi.fn(),
   redirect: vi.fn((href: string) => { throw new Error(`REDIRECT:${href}`); }),
   notFound: vi.fn(() => { throw new Error("NOT_FOUND"); }),
 }));
 vi.mock("@/features/auth/service", () => ({ requireAdminSession: mocks.requireAdminSession }));
 vi.mock("@/features/admin/editor-loader", () => ({ loadAdminEditor: mocks.loadEditor, loadAdminPreview: mocks.loadPreview }));
 vi.mock("@/features/admin/a5-feature", () => ({ isA5Enabled: mocks.isA5Enabled }));
+vi.mock("@/features/admin/siger-publish-feature", () => ({ isSigerPublishEnabled: mocks.isSigerPublishEnabled }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect, notFound: mocks.notFound }));
 vi.mock("@/components/admin/AdminDraftEditor", () => ({
-  AdminDraftEditor: ({ initialPayload, initialDraft, mediaChoices, mediaUploadEnabled, pendingMedia }: {
+  AdminDraftEditor: ({ initialPayload, initialDraft, mediaChoices, mediaUploadEnabled, pendingMedia, sigerPublishEnabled }: {
     initialPayload: { slug: string };
     initialDraft?: { id: string };
     mediaChoices: Array<{ id: string }>;
     mediaUploadEnabled?: boolean;
+    sigerPublishEnabled?: boolean;
     pendingMedia?: Array<{ provisionId: string }>;
-  }) => <div data-draft-id={initialDraft?.id ?? "new"} data-slug={initialPayload.slug} data-media-count={mediaChoices.length} data-upload-enabled={String(Boolean(mediaUploadEnabled))} data-pending-count={pendingMedia?.length ?? 0} />,
+  }) => <div data-draft-id={initialDraft?.id ?? "new"} data-slug={initialPayload.slug} data-media-count={mediaChoices.length} data-upload-enabled={String(Boolean(mediaUploadEnabled))} data-pending-count={pendingMedia?.length ?? 0} data-siger-publish-enabled={String(Boolean(sigerPublishEnabled))} />,
 }));
 vi.mock("@/app/(templates)/wedding/classic-rose/[variant]/components/ClassicRoseClientView", () => ({
   default: ({ invitationSlug, isDraftPreview }: { invitationSlug: string; isDraftPreview?: boolean }) => (
@@ -63,6 +66,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.requireAdminSession.mockResolvedValue({ id: "admin-1" });
   mocks.isA5Enabled.mockReturnValue(true);
+  mocks.isSigerPublishEnabled.mockReturnValue(false);
   mocks.loadEditor.mockResolvedValue({ ok: true, data: { draft, mediaChoices: [{ id: "own-1" }], mediaUploadEnabled: false, pendingMedia: [] } });
   mocks.loadPreview.mockResolvedValue({ ok: true, data: {
     kind: "ready", draftId: "draft-1", slug: "default-preview",
@@ -86,6 +90,14 @@ describe("admin editor routes", () => {
     expect(html).toContain('data-draft-id="draft-1"');
     expect(html).toContain('data-media-count="1"');
     expect(html).toContain('data-upload-enabled="false"');
+  });
+
+  it("passes the local-only Siger publication gate from server pages", async () => {
+    mocks.isSigerPublishEnabled.mockReturnValue(true);
+    const newHtml = renderToStaticMarkup(await NewAdminInvitationPage());
+    const editHtml = renderToStaticMarkup(await EditAdminInvitationPage({ params: Promise.resolve({ id: "draft-1" }) }));
+    expect(newHtml).toContain('data-siger-publish-enabled="true"');
+    expect(editHtml).toContain('data-siger-publish-enabled="true"');
   });
 
   it("passes A5 upload gate and recoverable pending media to a new draft editor", async () => {

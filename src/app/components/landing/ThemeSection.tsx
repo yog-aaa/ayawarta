@@ -9,6 +9,38 @@ import { SHOWCASE_THEMES, THEME_CATEGORIES, type ThemeCategory } from "@/config/
 import { AnimateIn } from "@/components/ui/AnimateIn";
 import { Container } from "@/components/ui/Container";
 
+const SHOWCASE_CARDS = [
+  ...SHOWCASE_THEMES.map((theme) => ({ ...theme, kind: "classic" as const })),
+  {
+    id: "siger-priangan-ivory",
+    kind: "siger" as const,
+    title: "Siger Priangan",
+    colorName: "Ivory",
+    code: "SP-01",
+    category: "Pernikahan" as const,
+    href: "/wedding/siger-priangan/ivory",
+  },
+];
+
+function SigerPreviewArt() {
+  return (
+    <div aria-hidden="true" className="absolute inset-0 bg-[#e9dfce] p-4 sm:p-5">
+      <div className="relative h-full overflow-hidden border border-[#c9b795] bg-[#fffaf2] shadow-[0_16px_32px_#5549322b]">
+        <div className="absolute inset-y-0 left-2 w-3 border-l border-[#b58b53]/50 bg-linear-to-r from-[#e6d8bf] to-transparent" />
+        <div className="absolute inset-y-0 right-2 w-3 border-r border-[#b58b53]/50 bg-linear-to-l from-[#e6d8bf] to-transparent" />
+        <svg viewBox="0 0 320 124" fill="none" className="absolute left-1/2 top-[12%] w-[75%] max-w-[260px] -translate-x-1/2 stroke-[#b58b53] opacity-[0.65]" focusable="false">
+          <path d="M96 48 C124 48 137 31 160 31 C183 31 196 48 224 48" />
+          <path d="M54 78 C96 78 122 52 160 52 C198 52 224 78 266 78" />
+          <path d="M22 112 C75 112 112 73 160 73 C208 73 245 112 298 112" />
+        </svg>
+        <div className="absolute left-1/2 top-[34%] grid aspect-square w-[38%] max-w-36 -translate-x-1/2 place-items-center rounded-full border border-[#b58b53] bg-[#f7f0e4] shadow-[0_0_0_7px_#fffaf2,0_0_0_8px_#d8c7a7]">
+          <span className="h-4 w-4 rotate-45 border border-[#b58b53]/70" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ThemeSection() {
   const [activeCategory, setActiveCategory] = useState<ThemeCategory>("Semua");
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,7 +48,7 @@ export default function ThemeSection() {
   const filteredThemes = useMemo(() => {
     const query = searchTerm.trim().toLocaleLowerCase("id-ID");
 
-    return SHOWCASE_THEMES.filter((theme) => {
+    return SHOWCASE_CARDS.filter((theme) => {
       const matchesCategory =
         activeCategory === "Semua" || theme.category === activeCategory;
       const matchesSearch =
@@ -45,7 +77,7 @@ export default function ThemeSection() {
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
             Setiap momen memiliki jiwa dan ceritanya sendiri. Jelajahi warna
-            Classic Rose yang sudah tersedia dan lihat langsung undangannya.
+            Classic Rose yang sudah tersedia dan lihat konsep pratinjau premium Siger Priangan.
           </p>
         </AnimateIn>
 
@@ -84,7 +116,7 @@ export default function ThemeSection() {
                 type="search"
                 autoComplete="off"
                 spellCheck={false}
-                placeholder="Cari warna atau kode tema"
+                placeholder="Cari nama, warna, atau kode tema"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 className="focus-ring min-h-11 w-full rounded-full border border-brand-secondary/15 bg-brand-soft py-2 pl-11 pr-4 text-sm text-brand-secondary placeholder:text-muted-foreground"
@@ -96,43 +128,45 @@ export default function ThemeSection() {
         {filteredThemes.length > 0 ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-7">
             {filteredThemes.map((theme, index) => (
-              <AnimateIn key={theme.id} delay={Math.min(index * 0.06, 0.24)}>
+              <AnimateIn key={theme.id} delay={Math.min(index * 0.06, 0.24)} className={theme.kind === "siger" ? "sm:col-span-2 sm:mx-auto sm:w-full sm:max-w-[390px] lg:col-span-1 lg:col-start-2" : undefined}>
                 <article className="group overflow-hidden rounded-[1.6rem] border border-brand-secondary/10 bg-white shadow-card transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-floating">
                   <Link
                     href={theme.href}
                     className="focus-ring relative block aspect-[4/4.4] overflow-hidden bg-white"
                     aria-label={`Lihat pratinjau tema ${theme.title} ${theme.colorName}`}
                   >
-                    <Image
-                      src={theme.backgroundSrc}
-                      loader={classicRoseCloudinaryLoader}
-                      alt=""
-                      fill
-                      sizes="(min-width: 1024px) 390px, (min-width: 640px) 50vw, 100vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    />
-                    <div className="absolute inset-x-7 top-7 h-[52%]">
+                    {theme.kind === "classic" ? <>
                       <Image
-                        src={theme.flowerSrc}
+                        src={theme.backgroundSrc}
                         loader={classicRoseCloudinaryLoader}
                         alt=""
                         fill
-                        sizes="(min-width: 1024px) 320px, (min-width: 640px) 40vw, 80vw"
-                        className="object-contain object-top"
+                        sizes="(min-width: 1024px) 390px, (min-width: 640px) 50vw, 100vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                       />
-                    </div>
+                      <div className="absolute inset-x-7 top-7 h-[52%]">
+                        <Image
+                          src={theme.flowerSrc}
+                          loader={classicRoseCloudinaryLoader}
+                          alt=""
+                          fill
+                          sizes="(min-width: 1024px) 320px, (min-width: 640px) 40vw, 80vw"
+                          className="object-contain object-top"
+                        />
+                      </div>
+                    </> : <SigerPreviewArt />}
                     <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/70 bg-white/85 px-4 py-4 text-center shadow-card backdrop-blur-md sm:inset-x-6 sm:bottom-6">
                       <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-secondary/65">
-                        Undangan pernikahan
+                        {theme.kind === "siger" ? "Konsep tema premium" : "Undangan pernikahan"}
                       </p>
                       <p
                         className="mt-1 font-heading text-2xl italic sm:text-3xl"
-                        style={{ color: theme.accent }}
+                        style={{ color: theme.kind === "classic" ? theme.accent : "#243b35" }}
                       >
-                        Classic Rose
+                        {theme.title}
                       </p>
                       <p className="mt-1 text-xs font-semibold text-brand-secondary/70">
-                        Varian {theme.colorName}
+                        {theme.kind === "siger" ? "Pratinjau ilustratif · Ivory" : `Varian ${theme.colorName}`}
                       </p>
                     </div>
                   </Link>
@@ -167,7 +201,7 @@ export default function ThemeSection() {
             </p>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
               Belum ada tema yang cocok dengan pilihanmu. Coba kategori lain
-              atau cari warna Classic Rose.
+              atau cari nama, warna, maupun kode tema.
             </p>
           </div>
         )}

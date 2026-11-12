@@ -164,6 +164,38 @@ describe("Invitation Repository (Hermetic Unit Tests)", () => {
     );
   });
 
+  it("rereads only Siger rows with the full migrated content", async () => {
+    const legacy = createMockPayload("siger-fixture");
+    legacy.theme = "siger-priangan";
+    legacy.variant = "ivory";
+    const full = createMockPayload("siger-fixture");
+    full.theme = "siger-priangan";
+    full.variant = "ivory";
+    full.greeting = "Selamat datang dalam cerita kami.";
+    full.prayer = "Semoga hari ini berkesan.";
+    full.galleryItems[0].caption = "Sore di taman";
+    const mockFindUnique = vi.fn().mockResolvedValueOnce(legacy).mockResolvedValueOnce(full);
+    const repository = createInvitationRepository({ invitation: { findUnique: mockFindUnique } });
+
+    const result = await repository.findBySlug("siger-fixture");
+
+    expect(mockFindUnique).toHaveBeenNthCalledWith(1, { where: { slug: "siger-fixture" }, select: publicInvitationSelect });
+    expect(mockFindUnique).toHaveBeenNthCalledWith(2, { where: { slug: "siger-fixture" }, include: invitationDetailInclude });
+    expect(result?.meta).toEqual({ theme: "siger-priangan", variant: "ivory" });
+    expect(result?.data).toMatchObject({ greeting: "Selamat datang dalam cerita kami.", prayer: "Semoga hari ini berkesan." });
+    expect(result?.data.gallery?.items[0]).toMatchObject({ altText: "Foto Galeri", caption: "Sore di taman" });
+    expect(result?.data.gallery?.images).toEqual(result?.data.gallery?.items.map((item) => item.url));
+  });
+
+  it("fails closed if the Siger row changes between the legacy and full reads", async () => {
+    const legacy = createMockPayload("siger-fixture");
+    legacy.theme = "siger-priangan";
+    const other = createMockPayload("siger-fixture");
+    other.id = "another-invitation";
+    const mockFindUnique = vi.fn().mockResolvedValueOnce(legacy).mockResolvedValueOnce(other);
+    expect(await createInvitationRepository({ invitation: { findUnique: mockFindUnique } }).findBySlug("siger-fixture")).toBeNull();
+  });
+
   it("returns null when slug is not found in database", async () => {
     const mockFindUnique = vi.fn().mockResolvedValue(null);
     const mockDb: InvitationDatabaseClient = {

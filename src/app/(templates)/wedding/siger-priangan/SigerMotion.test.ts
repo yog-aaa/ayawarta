@@ -47,4 +47,44 @@ describe("Siger Priangan decorative motion", () => {
     });
     expect(keyframes).toBeGreaterThan(0);
   });
+
+  it("does not animate photos, captions, or controls directly within entering paper cards", () => {
+    const targets: string[] = [];
+    css.walkDecls("animation-name", (declaration) => {
+      if (declaration.value.startsWith("siger-") && declaration.parent?.type === "rule") {
+        targets.push(declaration.parent.selector);
+      }
+    });
+    const selectors = targets.join(" ");
+    expect(selectors).toContain(".siger-scene::before");
+    expect(selectors).toContain(".siger-cover-horizon");
+    expect(selectors).toContain(".siger-gallery-mat");
+    expect(selectors).not.toMatch(/siger-gallery-(?:frame|image)|siger-portrait|figcaption|siger-button/);
+  });
+
+  it("gives every major scene a full decorative plane with a short scroll reveal", () => {
+    for (const scene of ["opening", "pair", "schedule", "spine", "album", "ending"]) {
+      const plane = css.nodes.find((node) => node.type === "rule" && node.selector === `.siger-scene-${scene}::before`);
+      expect(plane?.type).toBe("rule");
+      if (plane?.type === "rule") {
+        expect(plane.nodes.some((node) => node.type === "decl" && (node.prop === "background" || node.prop === "background-image"))).toBe(true);
+      }
+    }
+    const reveal = css.nodes.find((node) => node.type === "atrule" && node.name === "media" && node.params.includes("no-preference"));
+    expect(reveal?.type).toBe("atrule");
+    if (reveal?.type === "atrule") {
+      const ranges: string[] = [];
+      reveal.walkDecls("animation-range", (declaration) => { ranges.push(declaration.value); });
+      expect(ranges).toContain("entry 0% cover 65%");
+      expect(ranges).toContain("entry 0% entry 80%");
+      const localCardTimeline: string[] = [];
+      reveal.walkDecls("animation-timeline", (declaration) => {
+        if (declaration.value === "view(block)" && declaration.parent?.type === "rule") {
+          localCardTimeline.push(declaration.parent.selector);
+        }
+      });
+      expect(localCardTimeline.join(" ")).toContain(".siger-event");
+      expect(localCardTimeline.join(" ")).toContain(".siger-gallery figure");
+    }
+  });
 });

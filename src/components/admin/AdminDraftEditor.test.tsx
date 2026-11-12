@@ -113,6 +113,26 @@ describe("admin draft editor", () => {
     expect(mocks.review).not.toHaveBeenCalled();
   });
 
+  it("keeps Siger publish controls hidden unless the server enables local testing", async () => {
+    const payload = createEmptyDraftPayload();
+    payload.slug = "siger-test";
+    payload.meta = { theme: "siger-priangan", variant: "ivory" };
+    const draft: AdminDraftDto = {
+      id: "siger-draft", invitationId: "siger-live", proposedSlug: "siger-test",
+      payload, draftVersion: 2, basePublishedVersion: 1,
+      createdAt: "2026-10-30T01:00:00.000Z", updatedAt: "2026-10-30T01:00:00.000Z",
+    };
+    await act(async () => root.render(<AdminDraftEditor initialPayload={payload} initialDraft={draft} mediaChoices={[]} />));
+    expect(container.textContent).toContain("Penerbitan hanya tersedia pada lingkungan uji lokal");
+    expect(container.textContent).not.toContain("Tinjau penerbitan");
+    expect(container.querySelector('a[href="/admin/invitations/siger-draft/preview"]')).not.toBeNull();
+
+    await act(async () => root.render(<AdminDraftEditor initialPayload={payload} initialDraft={draft} mediaChoices={[]} sigerPublishEnabled />));
+    expect(container.textContent).toContain("Penerbitan Siger Priangan aktif hanya pada lingkungan uji lokal");
+    expect(container.textContent).toContain("Tinjau penerbitan");
+    expect(mocks.review).not.toHaveBeenCalled();
+  });
+
   it("locks editor changes during upload, then selects verified media for an explicit save", async () => {
     const payload = createEmptyDraftPayload();
     payload.slug = "rani-bima";

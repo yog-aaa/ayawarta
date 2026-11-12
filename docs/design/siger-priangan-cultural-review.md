@@ -2,6 +2,8 @@
 
 **Status 12 November 2026:** pemilik meminta desain dibuat lengkap terlebih dahulu, lalu ditinjau secara budaya. Semua gambar di bawah adalah konsep orisinal dan belum mendapat penilaian praktisi. Tidak satu pun sudah disetujui sebagai representasi tata rias adat atau diunggah ke Cloudinary. [Preview yang berjalan](https://ayawarta.my.id/wedding/siger-priangan/ivory) masih ilustratif; relief yang dirender adalah bentuk abstrak ringan, terpisah dari foto dan teks.
 
+Pada T5, kartu ketujuh di etalase tema memakai ilustrasi CSS/SVG dan menaut ke preview tersebut. Jalur uji lokal untuk menyimpan dan menerbitkan draf Siger tidak mengubah status budaya gambar ini. Konsep PNG tetap bahan sumber untuk review praktisi; tidak ada persetujuan untuk menjadikannya aset runtime, klaim keaslian budaya, atau aktivasi undangan pelanggan.
+
 ## Tujuan review
 
 AyaWarta ingin membuat undangan pernikahan digital dengan arah Priangan umum dan aksen Garutan yang tertahan. Kami memerlukan penilaian dari penata rias pengantin Sunda atau praktisi budaya Priangan sebelum bentuk yang dapat terbaca sebagai atribut pengantin dipakai pada template premium. Penilaian ini menyangkut **kecocokan bentuk, penempatan, istilah, dan kesan keseluruhan**, bukan sertifikasi bahwa gambar ini menyalin siger tertentu.

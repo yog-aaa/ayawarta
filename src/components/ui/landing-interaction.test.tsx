@@ -296,7 +296,7 @@ describe("Landing Interactive Behavior & Rendered State Tests (UI-10, UI-11, UI-
   });
 
   describe("Theme Section Preview and Filtering (UI-10, UI-12)", () => {
-    it("links every Classic Rose card to its own live variant", async () => {
+    it("links six Classic Rose variants and the Siger premium preview", async () => {
       await act(async () => {
         root.render(<ThemeSection />);
       });
@@ -308,19 +308,29 @@ describe("Landing Interactive Behavior & Rendered State Tests (UI-10, UI-11, UI-
         'a[aria-label^="Buka pratinjau tema"][aria-label$="di tab baru"]'
       );
 
-      expect(previewLinks.length).toBe(6);
-      expect(externalLinks.length).toBe(6);
+      expect(previewLinks.length).toBe(7);
+      expect(externalLinks.length).toBe(7);
       const variants = ["red", "green", "blue", "orange", "black", "white"];
 
-      previewLinks.forEach((link, index) => {
+      Array.from(previewLinks).slice(0, 6).forEach((link, index) => {
         expect(link.getAttribute("href")).toBe(`/wedding/classic-rose/${variants[index]}`);
         expect(link.hasAttribute("target")).toBe(false);
       });
-      externalLinks.forEach((link, index) => {
+      Array.from(externalLinks).slice(0, 6).forEach((link, index) => {
         expect(link.getAttribute("href")).toBe(`/wedding/classic-rose/${variants[index]}`);
         expect(link.getAttribute("target")).toBe("_blank");
         expect(link.getAttribute("rel")).toBe("noopener noreferrer");
       });
+
+      const sigerPreview = previewLinks[6];
+      const sigerExternal = externalLinks[6];
+      expect(sigerPreview.getAttribute("href")).toBe("/wedding/siger-priangan/ivory");
+      expect(sigerPreview.textContent).toContain("Konsep tema premium");
+      expect(sigerPreview.textContent).toContain("Pratinjau ilustratif · Ivory");
+      expect(sigerPreview.querySelector("img")).toBeNull();
+      expect(sigerExternal.getAttribute("href")).toBe("/wedding/siger-priangan/ivory");
+      expect(sigerExternal.getAttribute("target")).toBe("_blank");
+      expect(sigerExternal.getAttribute("rel")).toBe("noopener noreferrer");
     });
 
     it("shows an honest empty state for categories without available templates", async () => {
@@ -340,6 +350,25 @@ describe("Landing Interactive Behavior & Rendered State Tests (UI-10, UI-11, UI-
       expect(birthdayButton.getAttribute("aria-pressed")).toBe("true");
       expect(container.querySelectorAll('a[aria-label^="Lihat pratinjau tema"]').length).toBe(0);
       expect(container.textContent).toContain("Belum ada tema yang cocok");
+    });
+
+    it("finds the Siger preview by name without changing the Classic Rose catalog", async () => {
+      await act(async () => {
+        root.render(<ThemeSection />);
+      });
+
+      const search = container.querySelector<HTMLInputElement>("#theme-search");
+      expect(search).toBeTruthy();
+      await act(async () => {
+        if (!search) return;
+        const nativeSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+        nativeSetter?.call(search, "Siger");
+        search.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+
+      const previews = container.querySelectorAll('a[aria-label^="Lihat pratinjau tema"]');
+      expect(previews.length).toBe(1);
+      expect(previews[0].getAttribute("href")).toBe("/wedding/siger-priangan/ivory");
     });
   });
 

@@ -13,6 +13,8 @@ describe("Siger Priangan static template", () => {
     const html = renderToStaticMarkup(<SigerPrianganView invitationSlug="siger-priangan-sample" data={sigerPrianganSample.invitation.data} isPreview />);
     expect(html).toContain("Damar &amp; Raras");
     expect(html).toContain('href="#siger-content"');
+    expect(html).toContain('<noscript><style>');
+    expect(html).toContain('display:block!important');
     expect(html).toMatch(/class="siger-cover-relief" aria-hidden="true"><svg[^>]+focusable="false"/);
     expect(html).toContain("Upacara Pernikahan");
     expect(html).toContain("Alamat contoh, Jawa Barat");
@@ -43,5 +45,17 @@ describe("Siger Priangan static template", () => {
     expect(event).toContain("Alamat contoh, Jawa Barat");
     expect(html).toContain('class="siger-gallery-placeholder"');
     expect(html).toContain("Foto belum tersedia");
+  });
+
+  it("renders each visual scene as decoration around stable invitation content", () => {
+    const html = renderToStaticMarkup(<SigerPrianganView invitationSlug="siger-priangan-sample" data={sigerPrianganSample.invitation.data} isPreview />);
+    for (const scene of ["opening", "pair", "schedule", "spine", "album", "ending"]) {
+      expect(html).toContain(`class="siger-scene siger-scene-${scene}" aria-hidden="true"`);
+    }
+    expect(html).toContain('class="siger-cover-horizon" aria-hidden="true"');
+    expect(html).toContain('class="siger-gallery-mat" aria-hidden="true"');
+    expect(html).toMatch(/<h2 id="siger-events-title">Rangkaian Acara<\/h2>.*?<article class="siger-event"/);
+    expect(html.indexOf('class="siger-lede"')).toBeLessThan(html.indexOf('class="siger-scene siger-scene-opening"'));
+    expect(html).toMatch(/<h2 id="siger-events-title">Rangkaian Acara<\/h2><div class="siger-event-stage"><div class="siger-scene siger-scene-schedule" aria-hidden="true"/);
   });
 });

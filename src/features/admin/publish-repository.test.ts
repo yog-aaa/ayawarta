@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { publishedFixture } from "./testing/published-fixture";
 import { buildPublicationSnapshot, digestPublicationSnapshot, publicationMediaIds } from "./publication-snapshot";
 import { createEmptyDraftPayload } from "./draft-schema";
 import { listAssociatedMedia } from "./editor-media";
 import { createPublishRepository, summarizeChanges } from "./publish-repository";
+import { draftFromPublished } from "./draft-service";
 
 vi.mock("./editor-media", () => ({ listAssociatedMedia: vi.fn() }));
 
@@ -73,6 +74,7 @@ function harness(slug = "rika-fauzi") {
 }
 
 describe("publish repository", () => {
+  afterEach(() => vi.unstubAllEnvs());
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(listAssociatedMedia).mockResolvedValue([
@@ -105,6 +107,40 @@ describe("publish repository", () => {
     const h = harness("new-nonlegacy");
     await expect(createPublishRepository(h.db).review("draft-1")).rejects.toMatchObject({ code: "dependency_failure" });
     expect(h.tx.invitation.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("keeps Siger publication off without the exact disposable target", async () => {
+    const h = harness();
+    h.draft.payload.meta = { theme: "siger-priangan", variant: "ivory" };
+    const repo = createPublishRepository(h.db);
+    await expect(repo.review("draft-1")).rejects.toMatchObject({ code: "validation", fieldErrors: { "meta.theme": expect.any(Array) } });
+    await expect(repo.publish({ id: "draft-1", expectedDraftVersion: 2, expectedPublishedVersion: 1, confirmationSlug: "rika-fauzi", actorId: "admin-1" }))
+      .rejects.toMatchObject({ code: "validation" });
+    expect(h.tx.invitation.updateMany).not.toHaveBeenCalled();
+
+    vi.stubEnv("AYAWARTA_SIGER_PUBLISH", "enabled");
+    vi.stubEnv("DATABASE_URL", "postgresql://postgres@127.0.0.1:55436/ayawarta_siger");
+    vi.stubEnv("DATABASE_URL_POOLED", "postgresql://postgres@127.0.0.1:55436/ayawarta_siger");
+    vi.stubEnv("VERCEL_ENV", "preview");
+    expect(await repo.review("draft-1")).toMatchObject({ changeSummary: expect.stringContaining("tema") });
+  });
+
+  it("counts Siger visible date, greeting, prayer and gallery metadata changes", () => {
+    const h = harness();
+    h.live.theme = "siger-priangan";
+    h.live.variant = "ivory";
+    const payload = draftFromPublished(h.live);
+    expect(summarizeChanges(h.live, payload)).toBe("Tidak ada perubahan konten.");
+    payload.weddingDate = "2027-01-01T08:00:00.000Z";
+    payload.greeting = "Selamat datang dalam cerita kami.";
+    payload.prayer = "Semoga hari ini berkesan.";
+    payload.galleryItems[0].altText = "Pasangan tersenyum";
+    payload.galleryItems[0].caption = "Di taman";
+    expect(summarizeChanges(h.live, payload)).toBe("Perubahan: tanggal, salam, doa, galeri.");
+    payload.sections.couple = false;
+    payload.sections.gallery = false;
+    expect(summarizeChanges(h.live, payload)).not.toContain("salam");
+    expect(summarizeChanges(h.live, payload)).not.toContain("galeri");
   });
 
   it("blocks stale tokens and mismatched confirmation before any live write", async () => {

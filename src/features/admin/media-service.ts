@@ -7,6 +7,7 @@ import { createDraftMediaRepository, DraftMediaError, verifyDraftMediaReceipt } 
 import type { AdminDraftResult } from "./draft-service";
 import { parseDraftForSave, validateDraftForPublish } from "./draft-schema";
 import { A5UnavailableError, requireA5Enabled } from "./a5-feature";
+import { enabledPublishThemes } from "./siger-publish-feature";
 import { AdminCloudIdentityError, RealAdminMediaCloudClient, cloudinaryHttpCode, verifyAdminCloudImage, type AdminCloudImage, type AdminMediaCloudClient } from "./media-cloudinary";
 import { AdminImageInputError, parseAdminImageSlot, prepareAdminImage, type AdminImageSlot } from "./media-image";
 
@@ -217,7 +218,7 @@ export async function preflightNewDraftMedia(draftId: string, expectedDraftVersi
     const rows = await createDraftMediaRepository().listVerifiedForDraft(draftId);
     const byId = new Map(rows.map((row) => [row.mediaAssetId, row]));
     const allowed = new Set(rows.filter((row) => verifyDraftMediaReceipt(row, "uhwi7xvb")).map((row) => row.mediaAssetId!));
-    const validated = validateDraftForPublish(parsed.payload, { allowedMediaAssetIds: allowed, enabledThemes: ["classic-rose"] });
+    const validated = validateDraftForPublish(parsed.payload, { allowedMediaAssetIds: allowed, enabledThemes: enabledPublishThemes() });
     if (!validated.ok) return { ok: false, code: "validation", message: "Periksa isi draf sebelum menerbitkan.", fieldErrors: validated.fieldErrors };
     if (ids.some((id) => !allowed.has(id))) return invalid("Semua foto harus terverifikasi milik draf ini.", "media");
     const cloud = cloudClient();

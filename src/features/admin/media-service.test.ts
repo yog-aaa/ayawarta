@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { requireAdminSession } from "@/features/auth/service";
 import { getServerEnv } from "@/lib/server/env";
 import { createDraftRepository } from "./draft-repository";
@@ -41,6 +41,7 @@ const mediaRepo = { reserve: vi.fn(), findByIdForDraft: vi.fn(), finalizeVerifie
 const cloud = { read: vi.fn(), upload: vi.fn(), contentSha256: vi.fn() };
 
 describe("A5 authenticated media service", () => {
+  afterEach(() => vi.unstubAllEnvs());
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(requireAdminSession).mockResolvedValue({ id: "admin-1", email: "admin@example.com", name: "Admin", role: "ADMIN" });
@@ -143,5 +144,30 @@ describe("A5 authenticated media service", () => {
     expect(await preflightNewDraftMedia("draft-1", 2)).toMatchObject({ ok: true, data: null });
     expect(cloud.read).toHaveBeenCalledTimes(4);
     expect(cloud.contentSha256).toHaveBeenCalledTimes(3);
+  });
+
+  it("blocks Siger remote preflight unless the separate disposable publish gate is active", async () => {
+    const payload = createEmptyDraftPayload();
+    payload.slug = "damar-raras-siger";
+    payload.meta = { theme: "siger-priangan", variant: "ivory" };
+    payload.weddingDate = "2027-06-12T02:00:00.000Z";
+    payload.heroAssetId = "hero-id";
+    payload.partners.groom = { name: "Damar", parents: "", instagram: "", photoAssetId: "groom-id" };
+    payload.partners.bride = { name: "Raras", parents: "", instagram: "", photoAssetId: "bride-id" };
+    payload.events = [{ key: "event-1", name: "Upacara Pernikahan", displayDate: "12 Juni 2027", displayTime: "09.00 WIB", location: "Bandung", address: "Bandung", mapUrl: "https://maps.example.com" }];
+    draftRepo.findDraftById.mockResolvedValue({ ...draft, payload });
+    const rows = ["hero-id", "groom-id", "bride-id"].map((mediaAssetId) => ({ ...verified, mediaAssetId,
+      cloudinaryAssetId: "cloud-1", mediaAsset: { ...verified.mediaAsset, id: mediaAssetId } }));
+    mediaRepo.listVerifiedForDraft.mockResolvedValue(rows);
+
+    expect(await preflightNewDraftMedia("draft-1", 2)).toMatchObject({ ok: false, code: "validation", fieldErrors: { "meta.theme": expect.any(Array) } });
+    expect(cloud.read).not.toHaveBeenCalled();
+
+    vi.stubEnv("AYAWARTA_SIGER_PUBLISH", "enabled");
+    vi.stubEnv("DATABASE_URL", "postgresql://postgres@127.0.0.1:55436/ayawarta_siger");
+    vi.stubEnv("DATABASE_URL_POOLED", "postgresql://postgres@127.0.0.1:55436/ayawarta_siger");
+    vi.stubEnv("VERCEL_ENV", "preview");
+    expect(await preflightNewDraftMedia("draft-1", 2)).toMatchObject({ ok: true, data: null });
+    expect(cloud.read).toHaveBeenCalledTimes(3);
   });
 });

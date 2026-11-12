@@ -39,10 +39,10 @@ export type InvitationDetailPayload = Prisma.InvitationGetPayload<{
 }>;
 
 /**
- * Public reads use only columns present before the admin/Siger migration. The
- * operator's local app currently targets an unmigrated Neon database; Prisma
- * `include` would otherwise select newly generated scalar columns eagerly.
- * Select the new content columns after the reviewed production migration in T5.
+ * Classic Rose public reads retain the legacy column selection to preserve its
+ * established data contract. Prisma `include` selects all scalar columns.
+ * Siger rows are reread with invitationDetailInclude after the theme
+ * discriminator so greeting, prayer, and gallery captions are available.
  */
 export const publicInvitationSelect = {
   id: true,

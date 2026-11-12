@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { AdminDraftEditor } from "@/components/admin/AdminDraftEditor";
 import { AdminListError } from "@/components/admin/AdminListError";
 import { loadAdminEditor } from "@/features/admin/editor-loader";
+import { isSigerPublishEnabled } from "@/features/admin/siger-publish-feature";
 
 export const metadata = {
   title: "Sunting Draf Undangan | AyaWarta",
@@ -16,5 +17,5 @@ export default async function EditAdminInvitationPage({ params }: { params: Prom
     return <AdminListError retryHref={`/admin/invitations/${encodeURIComponent(id)}/edit`} title="Editor belum dapat dimuat" headingLevel="h1" />;
   }
 
-  return <AdminDraftEditor initialDraft={result.data.draft} initialPayload={result.data.draft.payload} mediaChoices={result.data.mediaChoices} pendingMedia={result.data.pendingMedia} mediaUploadEnabled={result.data.mediaUploadEnabled} />;
+  return <AdminDraftEditor initialDraft={result.data.draft} initialPayload={result.data.draft.payload} mediaChoices={result.data.mediaChoices} pendingMedia={result.data.pendingMedia} mediaUploadEnabled={result.data.mediaUploadEnabled} sigerPublishEnabled={isSigerPublishEnabled()} />;
 }

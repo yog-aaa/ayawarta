@@ -108,12 +108,14 @@ export function AdminDraftEditor({
   mediaChoices,
   pendingMedia = [],
   mediaUploadEnabled = false,
+  sigerPublishEnabled = false,
 }: {
   initialPayload: DraftPayloadV1;
   initialDraft?: AdminDraftDto | null;
   mediaChoices: readonly AdminEditorMediaChoice[];
   pendingMedia?: readonly PendingDraftMedia[];
   mediaUploadEnabled?: boolean;
+  sigerPublishEnabled?: boolean;
 }) {
   const router = useRouter();
   const [payload, setPayload] = useState(initialPayload);
@@ -135,6 +137,8 @@ export function AdminDraftEditor({
   const leavingByHistoryRef = useRef(false);
   const saving = state === "saving";
   const errorEntries = Object.entries(fieldErrors);
+  const sigerSelected = payload.meta?.theme === "siger-priangan";
+  const publishAvailable = !sigerSelected || sigerPublishEnabled;
 
   useEffect(() => {
     dirtyRef.current = dirty;
@@ -358,8 +362,10 @@ export function AdminDraftEditor({
         </p>
         {published ? <p className="mt-1 text-xs text-muted-foreground">Editor ini memuat data sebelum penerbitan. Buka ulang dari daftar untuk melihat versi terbaru.</p> : <>
           {draft && <p className="mt-1 text-xs text-muted-foreground">Terakhir disimpan {savedLabel(draft.updatedAt)} · versi draf {draft.draftVersion}</p>}
-          {draft && !draft.invitationId && <p className="mt-2 text-xs leading-5 text-muted-foreground">{mediaUploadEnabled ? "Unggah foto sampul dan kedua mempelai, simpan draf, lalu tinjau penerbitan." : "Unggahan foto dan penerbitan undangan baru belum diaktifkan pada target ini."}</p>}
-          {payload.meta?.theme === "siger-priangan" && <p className="mt-2 text-xs leading-5 text-muted-foreground">Siger Priangan dapat disimpan dan dipratinjau; penerbitannya belum tersedia.</p>}
+          {draft && !draft.invitationId && <p className="mt-2 text-xs leading-5 text-muted-foreground">{mediaUploadEnabled ? "Unggah foto sampul dan kedua mempelai, lalu simpan draf untuk pratinjau." : "Unggahan foto dan penerbitan undangan baru belum diaktifkan pada target ini."}</p>}
+          {sigerSelected && <p className="mt-2 text-xs leading-5 text-muted-foreground">{sigerPublishEnabled
+            ? "Penerbitan Siger Priangan aktif hanya pada lingkungan uji lokal ini. Simpan draf, lengkapi foto, lalu tinjau sebelum menerbitkan."
+            : "Siger Priangan dapat disimpan dan dipratinjau. Penerbitan hanya tersedia pada lingkungan uji lokal yang diaktifkan."}</p>}
         </>}
       </div>
 
@@ -414,7 +420,7 @@ export function AdminDraftEditor({
           </div>
         </div>
       </form>
-      {draft && (draft.invitationId || mediaUploadEnabled) && <AdminPublishPanel
+      {draft && publishAvailable && (draft.invitationId || mediaUploadEnabled) && <AdminPublishPanel
         key={`${draft.id}:${draft.draftVersion}:${dirty}:${saving}:${mediaBusy}`}
         draftId={draft.id}
         draftVersion={draft.draftVersion}

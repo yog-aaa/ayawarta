@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 330" fill="none">
+  <!-- Original layered paper landscape. Decorative atmosphere, not a literal place or ceremonial object. -->
+  <path d="M0 213c36-19 65-21 98-11 25 8 43 25 76 20 33-5 58-35 89-32 39 4 74 33 127 13v127H0V213Z" fill="#E7DCCB" fill-opacity=".78"/>
+  <path d="M0 234c40-15 73-11 105 7 27 15 53 17 83 4 37-17 57-30 92-19 34 11 66 23 110 9v95H0v-96Z" fill="#C9D3C6" fill-opacity=".68"/>
+  <path d="M0 277c50-15 88 5 126 3 39-2 61-20 98-13 45 9 77 33 166 14v49H0v-53Z" fill="#F6F1E8"/>
+  <path d="M0 211c36-19 65-21 98-11 25 8 43 25 76 20 33-5 58-35 89-32 39 4 74 33 127 13M0 233c40-15 73-11 105 7 27 15 53 17 83 4 37-17 57-30 92-19 34 11 66 23 110 9" stroke="#B58B53" stroke-opacity=".38" stroke-width="1.2"/>
+  <path d="M0 278c50-15 88 5 126 3 39-2 61-20 98-13 45 9 77 33 166 14" stroke="#809787" stroke-opacity=".55" stroke-width="1.2"/>
+  <g stroke="#B58B53" stroke-opacity=".48" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 317c19-42 27-78 23-119M382 318c-19-43-27-78-23-119"/>
+    <path d="M24 265c-13-4-18-13-17-24 11 2 17 9 17 24ZM29 242c11-8 14-18 11-28-10 6-14 15-11 28ZM31 219c-10-5-14-13-12-22 9 3 13 10 12 22Z" fill="#D8C6AA" fill-opacity=".35"/>
+    <path d="M366 265c13-4 18-13 17-24-11 2-17 9-17 24ZM361 242c-11-8-14-18-11-28 10 6 14 15 11 28ZM359 219c10-5 14-13 12-22-9 3-13 10-12 22Z" fill="#D8C6AA" fill-opacity=".35"/>
+    <path d="m49 165 5 7-5 7-5-7 5-7ZM341 165l5 7-5 7-5-7 5-7Z"/>
+  </g>
+</svg>
