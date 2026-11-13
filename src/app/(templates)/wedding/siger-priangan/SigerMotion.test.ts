@@ -36,16 +36,19 @@ describe("Siger Priangan decorative motion", () => {
     expect(animatedRules).toBeGreaterThan(0);
   });
 
-  it("animates only composited transform and opacity properties", () => {
+  it("keeps clipping limited to the photo aperture and schedule veil", () => {
     let keyframes = 0;
+    const clippedKeyframes = new Set<string>();
     css.walkAtRules("keyframes", (rule) => {
       if (!rule.params.startsWith("siger-")) return;
       keyframes += 1;
       rule.walkDecls((declaration) => {
-        expect(["transform", "opacity"]).toContain(declaration.prop);
+        if (declaration.prop === "clip-path") clippedKeyframes.add(rule.params);
+        else expect(["transform", "opacity"]).toContain(declaration.prop);
       });
     });
     expect(keyframes).toBeGreaterThan(0);
+    expect(clippedKeyframes).toEqual(new Set(["siger-photo-aperture", "siger-photo-to-schedule"]));
   });
 
   it("does not animate photos, captions, or controls directly within entering paper cards", () => {
@@ -59,7 +62,8 @@ describe("Siger Priangan decorative motion", () => {
     expect(selectors).toContain(".siger-scene::before");
     expect(selectors).toContain(".siger-cover-horizon");
     expect(selectors).toContain(".siger-gallery-mat");
-    expect(selectors).not.toMatch(/siger-gallery-(?:frame|image)|siger-portrait|figcaption|siger-button/);
+    expect(selectors).toContain(".siger-gallery-frame::after");
+    expect(selectors.replaceAll(".siger-gallery-frame::after", "")).not.toMatch(/siger-gallery-(?:frame|image)|siger-portrait|figcaption|siger-button/);
   });
 
   it("gives every major scene a full decorative plane with a short scroll reveal", () => {
